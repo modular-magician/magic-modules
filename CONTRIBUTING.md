@@ -93,5 +93,6 @@ accept your pull requests.
 6. Ensure that your code has an appropriate set of unit tests which all pass.
 7. Run `rake test` to verify that all unit tests and linters pass.
 8. Submit a pull request.
+9. Wait for the PR to be reviewed and approved.  The downstream modules will be updated and merged automatically.
 
 [ruby-style-guide][https://github.com/bbatsov/ruby-style-guide]
