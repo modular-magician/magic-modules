@@ -16,18 +16,19 @@
 <%= compile('templates/terraform/autogen_notice.erb').gsub("//", "") -%>
 --->
 <%
+  object_name_snake = Google::StringUtils.underscore(object.name)
   api_name_lower = product_ns.downcase
   properties = effective_properties(config, object.all_user_properties)
 -%>
 ---
 layout: "google"
-page_title: "Google: google_<%= api_name_lower %>_<%= object.out_name %>"
-sidebar_current: "docs-google-<%= api_name_lower %>-<%= object.out_name.gsub("_", "-") %>"
+page_title: "Google: google_<%= api_name_lower %>_<%= object_name_snake %>"
+sidebar_current: "docs-google-<%= api_name_lower %>-<%= object_name_snake.gsub("_", "-") %>"
 description: |-
   <%= object.description.lines.first -%>
 ---
 
-# google\_<%= api_name_lower %>\_<%= object.out_name.gsub("_", "\\_") %>
+# google\_<%= api_name_lower %>\_<%= object_name_snake.gsub("_", "\\_") %>
 
 <%= object.description.strip %>
 
@@ -48,7 +49,7 @@ To get more information about <%= object.name %>, see:
 ## Example Usage
 
 ```hcl
-resource "google_<%= api_name_lower %>_<%= object.out_name %>" "default" {
+resource "google_<%= api_name_lower %>_<%= object_name_snake %>" "default" {
   TODO: Add fields
 }
 ```
@@ -94,12 +95,4 @@ In addition to the arguments listed above, the following computed attributes are
 <%= build_nested_property_documentation(config, prop) %>
 <% end -%>
 
-## Import
-
-<%= object.name %> can be imported using any of these accepted formats:
-
-```
-<% import_id_formats(object).each do |id_format| -%>
-$ terraform import google_<%= api_name_lower %>_<%= object.out_name %>.default <%= id_format %>
-<% end -%>
-```
+TODO: Add import section
