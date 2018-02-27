@@ -62,7 +62,7 @@ EXAMPLES = '''
 <% end -%>
 
 RETURN = '''
-<% object.all_user_properties.select(&:output).each do |prop| -%>
+<% object.all_user_properties.each do |prop| -%>
     <%= Google::StringUtils.underscore(prop.name) -%>:
         description:
 <%= lines(indent(bullet_lines(prop.description, 12), 12)) -%>
@@ -77,11 +77,11 @@ RETURN = '''
 
 from ansible.module_utils.gcp_utils import navigate_hash, GcpSession, GcpModule, GcpRequestException
 import json
-<% if config['imports'] && !config['imports'].empty? -%>
-<% config['imports'].each do |import| -%>
-<%= lines("import #{import}") -%>
-<% end # config['imports'].each -%>
-<% end # config['imports'] -%>
+<%
+  config['imports'] ||= []
+  config['imports'] << 'time' if object.async
+-%>
+<%= lines(config['imports'].sort.uniq.map { |i| "import #{i}" }) -%>
 
 ################################################################################
 # Main
@@ -108,8 +108,7 @@ def main():
     )
 
 <%
-  rrefs = object.all_user_properties
-                .select { |x| x.is_a? Api::Type::ResourceRef }
+  rrefs = nonvirtual_rrefs(object)
 -%>
 <% unless rrefs.empty? -%>
     # Replace the dictionary of results from other GCP modules with the
@@ -181,7 +180,7 @@ def main():
     module.exit_json(**fetch)
 
 
-<% prod_name = object.__product.prefix[1::-1] -%>
+<% prod_name = object.__product.prefix[1..-1] -%>
 <% unless object.virtual -%>
 <% custom_create = get_code_multiline config, 'create' -%>
 def create(module, link, kind):
@@ -196,7 +195,11 @@ def create(module, link, kind):
     raise "Ansible does not support create_verb #{object.create_verb}"
   end
 -%>
+<% if object.async -%>
+    return wait_for_operation(module, auth<%= create_verb -%>(link, resource_to_request(module)))
+<% else # object.async -%>
     return return_if_object(module, auth<%= create_verb -%>(link, resource_to_request(module)), kind)
+<% end -%>
 <% else -%>
 <%= lines(indent(custom_create, 4)) -%>
 <% end -%>
@@ -211,7 +214,11 @@ def update(module, link, kind):
 <%   end # if save_api_results -%>
 <%   if !object.input -%>
     auth = GcpSession(module, <%= quote_string(prod_name) -%>)
+<% if object.async -%>
+    return wait_for_operation(module, auth.put(link, resource_to_request(module)))
+<% else # object.async -%>
     return return_if_object(module, auth.put(link, resource_to_request(module)), kind)
+<% end # object.async -%>
 <%   else # !object.input -%>
     module.fail_json(msg="<%= object.name -%> cannot be edited")
 <%   end # !object.input-%>
@@ -228,7 +235,11 @@ def delete(module, link, kind):
 <% end # if save_api_results -%>
 <% if custom_delete.nil? -%>
     auth = GcpSession(module, <%= quote_string(prod_name) -%>)
+<% if object.async -%>
+    return wait_for_operation(module, auth.delete(link))
+<% else # object.async -%>
     return return_if_object(module, auth.delete(link), kind)
+<% end # object.async -%>
 <% else # if custom_delete.nil? -%>
 <%= lines(indent(custom_delete, 4)) -%>
 <% end # if custom_delete.nil? -%>
@@ -304,6 +315,7 @@ def return_if_object(module, response, kind):
 
 def is_different(module, response):
     request = resource_to_request(module)
+    response = response_to_hash(module, response)
 
     # Remove all output-only from response.
     response_vals = {}
@@ -318,6 +330,22 @@ def is_different(module, response):
 
     return response_vals != request_vals
 
+
+# Remove unnecessary properties from the response.
+# This is for doing comparisons with Ansible's current parameters.
+def response_to_hash(module, response):
+    return {
+<%
+  f2h = []
+  object.properties.map do |prop|
+    name = quote_string(Google::StringUtils.underscore(prop.name))
+    f2h << "#{name}: response.get(#{name})"
+  end
+-%>
+<%= lines(indent_list(f2h, 8)) -%>
+    }
+
+<%= compile('templates/ansible/async.erb') -%>
 <%= compile('templates/ansible/provider_helpers.erb') -%>
 if __name__ == '__main__':
     main()
