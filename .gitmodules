@@ -70,4 +70,4 @@
 [submodule "build/terraform"]
 	path = build/terraform
 	url = git@github.com:modular-magician/terraform-provider-google.git
-	branch = 33e73a6
+	branch = 28465e1
