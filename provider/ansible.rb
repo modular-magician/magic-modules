@@ -17,6 +17,7 @@ require 'provider/ansible/manifest'
 require 'provider/ansible/example'
 require 'provider/ansible/documentation'
 require 'provider/ansible/module'
+require 'provider/ansible/resource_override'
 require 'provider/ansible/resourceref'
 
 module Provider

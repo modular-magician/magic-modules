@@ -24,10 +24,11 @@ manifest: !ruby/object:Provider::Ansible::Manifest
   version_added: '2.5'
   author: Google Inc. (@googlecloudplatform)
 # This is where custom code would be defined eventually.
-objects: !ruby/object:Api::Resource::HashArray
-  Project:
+overrides: !ruby/object:Provider::ResourceOverrides
+  Project: !ruby/object:Provider::Ansible::ResourceOverride
     # TODO(alexstephen): Re-evaluate merging Project into Ansible
-    skip: true
+    exclude: true
+objects: !ruby/object:Api::Resource::HashArray
   ResourceRecordSet:
     version_added: '2.6'
     imports:
