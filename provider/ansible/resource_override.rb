@@ -18,13 +18,12 @@ module Provider
     # Ansible specific properties to be added to Api::Resource
     module OverrideProperties
       attr_reader :access_api_results
-      attr_reader :aliases
       attr_reader :collection
       attr_reader :create
+      attr_reader :custom_decoder
+      attr_reader :custom_encoder
       attr_reader :custom_self_link
-      attr_reader :decoder
       attr_reader :delete
-      attr_reader :encoder
       attr_reader :exclude
       attr_reader :editable
       attr_reader :hidden
@@ -42,7 +41,6 @@ module Provider
         super
 
         default_value_property :access_api_results, false
-        default_value_property :aliases, {}
         default_value_property :decoder, false
         default_value_property :exclude, false
         default_value_property :editable, true
@@ -50,10 +48,20 @@ module Provider
         default_value_property :provider_helpers, []
 
         check_property :access_api_results, :boolean
-        check_property :aliases, ::Hash
+        check_optional_property :collection, ::String
+        check_optional_property :create, ::String
+        check_optional_property :custom_decoder, ::String
+        check_optional_property :custom_encoder, ::String
+        check_optional_property :custom_self_link, ::String
+        check_optional_property :delete, ::String
         check_property :editable, :boolean
         check_property :exclude, :boolean
+        check_optional_property :hidden, ::Array
+        check_optional_property :hidden, ::Array
         check_property :imports, ::Array
+        check_property :provider_helpers, ::Array
+        check_optional_property :update, ::String
+        check_optional_property :version_added, ::String
       end
 
       private
