@@ -269,11 +269,11 @@ def resource_to_request(module):
 <%
   encoder_name = if object.encoder?
                    object.transport.encoder
-                 else object.encoder
-                   object.encoder
+                 else object.custom_encoder
+                   object.custom_encoder
                  end
 -%>
-<% if object.encoder? || object.encoder -%>
+<% if object.encoder? || object.custom_encoder -%>
     request = <%= encoder_name -%>(request, module)
 <% end -%>
     return_vals = {}
@@ -320,11 +320,11 @@ def resource_to_request(module):
 <%
   decoder_name = if object.decoder?
                    object.transport.decoder
-                 else object.decoder
-                   object.decoder
+                 else object.custom_decoder
+                   object.custom_decoder
                  end
 -%>
-<% if object.decoder? || object.decoder -%>
+<% if object.decoder? || object.custom_decoder -%>
     result = <%= decoder_name -%>(result, module)
 
 <% end -%>
@@ -344,11 +344,11 @@ def is_different(module, response):
 <%
   decoder_name = if object.decoder?
                    object.transport.decoder
-                 else object.decoder
-                   object.decoder
+                 else object.custom_decoder
+                   object.custom_decoder
                  end
 -%>
-<% if object.decoder? || object.decoder -%>
+<% if object.decoder? || object.custom_decoder -%>
     request = <%= decoder_name -%>(request, module)
 <% end -%>
 
