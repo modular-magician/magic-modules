@@ -26,12 +26,12 @@ manifest: !ruby/object:Provider::Ansible::Manifest
 # This is where custom code would be defined eventually.
 overrides: !ruby/object:Provider::ResourceOverrides
   Topic: !ruby/object:Provider::Ansible::ResourceOverride
-    encoder: encode_request
+    custom_encoder: encode_request
     provider_helpers:
       - 'products/pubsub/helpers/provider_topic.py'
   Subscription: !ruby/object:Provider::Ansible::ResourceOverride
     editable: false
-    encoder: encode_request
+    custom_encoder: encode_request
     provider_helpers:
       - 'products/pubsub/helpers/provider_subscription.py'
 examples: !ruby/object:Api::Resource::HashArray
