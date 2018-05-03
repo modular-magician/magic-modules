@@ -13,34 +13,61 @@
 --- !ruby/object:Provider::Ansible::Example
 dependencies:
   - !ruby/object:Provider::Ansible::Task
+    name: gcp_compute_disk
+    register: disk
+    code: |
+      name: <%= dependency_name('disk', 'instance') %>
+      size_gb: 50
+      source_image: 'projects/ubuntu-os-cloud/global/images/family/ubuntu-1604-lts'
+      zone: us-central1-a
+      project: <%= ctx[:project] %>
+      auth_kind: <%= ctx[:auth_kind] %>
+      service_account_file: <%= ctx[:service_account_file] %>
+  - !ruby/object:Provider::Ansible::Task
     name: gcp_compute_network
     register: network
     code: |
-      name: <%= dependency_name('network', 'instanceGroup') %>
+      name: <%= dependency_name('network', 'instance') %>
+      project: <%= ctx[:project] %>
+      auth_kind: <%= ctx[:auth_kind] %>
+      service_account_file: <%= ctx[:service_account_file] %>
+  - !ruby/object:Provider::Ansible::Task
+    name: gcp_compute_address
+    register: address
+    code: |
+      name: <%= dependency_name('address', 'instance') %>
+      region: 'us-central1'
       project: <%= ctx[:project] %>
       auth_kind: <%= ctx[:auth_kind] %>
       service_account_file: <%= ctx[:service_account_file] %>
 task: !ruby/object:Provider::Ansible::Task
-  name: gcp_compute_instance_group
+  name: gcp_compute_instance
   code: |
     name: <%= ctx[:name] %>
-    named_ports:
-      - name: ansible
-        port: 1234
-    network: "{{ network }}"
+    machine_type: n1-standard-1
+    disks:
+      - auto_delete: true
+        boot: true
+        source: "{{ disk }}"
+    metadata:
+      startup-script-url: 'gs:://graphite-playground/bootstrap.sh'
+      cost-center: '12345'
+    network_interfaces:
+        - network: "{{ network }}"
+          access_configs:
+            - name: 'External NAT'
+              nat_ip: "{{ address }}"
+              type: 'ONE_TO_ONE_NAT'
     zone: 'us-central1-a'
     project: <%= ctx[:project] %>
     auth_kind: <%= ctx[:auth_kind] %>
     service_account_file: <%= ctx[:service_account_file] %>
 verifier: !ruby/object:Provider::Ansible::Verifier
   command: |
-    gcloud compute instance-groups unmanaged describe
+    gcloud compute instances describe
       --project="{{ gcp_project }}"
       --zone="us-central1-a"
       "{{ resource_name }}"
   failure: !ruby/object:Provider::Ansible::ComputeFailureCondition
     region: zones/us-central1-a
-    type: instanceGroups
-    name: "{{ resource_name }}"
-  failed_name: |
-    'projects/{{ gcp_project }}/zones/us-central1-a/instanceGroups/{{ resource_name }}' was not found
+    type: instances
