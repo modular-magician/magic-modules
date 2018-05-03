@@ -11,36 +11,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 --- !ruby/object:Provider::Ansible::Example
-dependencies:
-  - !ruby/object:Provider::Ansible::Task
-    name: gcp_compute_network
-    register: network
-    code: |
-      name: <%= dependency_name('network', 'instanceGroup') %>
-      project: <%= ctx[:project] %>
-      auth_kind: <%= ctx[:auth_kind] %>
-      service_account_file: <%= ctx[:service_account_file] %>
 task: !ruby/object:Provider::Ansible::Task
-  name: gcp_compute_instance_group
+  name: gcp_compute_firewall
   code: |
     name: <%= ctx[:name] %>
-    named_ports:
-      - name: ansible
-        port: 1234
-    network: "{{ network }}"
-    zone: 'us-central1-a'
+    allowed:
+      - ip_protocol: 'tcp'
+        ports:
+          - "22"
+    target_tags:
+      - test-ssh-server
+      - staging-ssh-server
+    source_tags:
+      - test-ssh-clients
     project: <%= ctx[:project] %>
     auth_kind: <%= ctx[:auth_kind] %>
     service_account_file: <%= ctx[:service_account_file] %>
 verifier: !ruby/object:Provider::Ansible::Verifier
   command: |
-    gcloud compute instance-groups unmanaged describe
-      --project="{{ gcp_project }}"
-      --zone="us-central1-a"
+    gcloud compute firewall-rules describe
+      --project="{{ gcp_project}}"
       "{{ resource_name }}"
   failure: !ruby/object:Provider::Ansible::ComputeFailureCondition
-    region: zones/us-central1-a
-    type: instanceGroups
-    name: "{{ resource_name }}"
-  failed_name: |
-    'projects/{{ gcp_project }}/zones/us-central1-a/instanceGroups/{{ resource_name }}' was not found
+    region: global
+    type: firewalls
