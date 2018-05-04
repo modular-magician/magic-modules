@@ -6,7 +6,8 @@
 	url = git@github.com:GoogleCloudPlatform/puppet-google-auth
 [submodule "build/puppet/compute"]
 	path = build/puppet/compute
-	url = git@github.com:GoogleCloudPlatform/puppet-google-compute
+	url = git@github.com:modular-magician/puppet-google-compute.git
+	branch = codegen-pr-161
 [submodule "build/chef/dns"]
 	path = build/chef/dns
 	url = git@github.com:GoogleCloudPlatform/chef-google-dns
@@ -18,7 +19,8 @@
 	url = git@github.com:GoogleCloudPlatform/puppet-google-storage
 [submodule "build/puppet/sql"]
 	path = build/puppet/sql
-	url = git@github.com:GoogleCloudPlatform/puppet-google-sql
+	url = git@github.com:modular-magician/puppet-google-sql.git
+	branch = codegen-pr-161
 [submodule "build/puppet/container"]
 	path = build/puppet/container
 	url = git@github.com:GoogleCloudPlatform/puppet-google-container
@@ -70,5 +72,5 @@
 	branch = devel
 [submodule "build/terraform"]
 	path = build/terraform
-	url = git@github.com:terraform-providers/terraform-provider-google.git
-	branch = master
+	url = git@github.com:modular-magician/terraform-provider-google.git
+	branch = codegen-pr-161
