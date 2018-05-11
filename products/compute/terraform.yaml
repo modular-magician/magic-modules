@@ -200,6 +200,45 @@ overrides: !ruby/object:Provider::ResourceOverrides
         sensitive: true
       privateKey: !ruby/object:Provider::Terraform::PropertyOverride
         sensitive: true
+  SslPolicy: !ruby/object:Provider::Terraform::ResourceOverride
+    exclude: false
+    examples: |
+      ```hcl
+      resource "google_compute_ssl_policy" "prod-ssl-policy" {
+        name    = "production-ssl-policy"
+        profile = "MODERN"
+      }
+
+      resource "google_compute_ssl_policy" "nonprod-ssl-policy" {
+        name            = "nonprod-ssl-policy"
+        profile         = "MODERN"
+        min_tls_version = "TLS_1_2"
+      }
+
+      resource "google_compute_ssl_policy" "custom-ssl-policy" {
+        name            = "custom-ssl-policy"
+        min_tls_version = "TLS_1_2"
+        profile         = "CUSTOM"
+        custom_features = ["TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384", "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"]
+      }
+      ```
+    custom_code: !ruby/object:Provider::Terraform::CustomCode
+      update_encoder: 'templates/terraform/update_encoder/ssl_policy.erb'
+    properties:
+      id: !ruby/object:Provider::Terraform::PropertyOverride
+        exclude: true
+      customFeatures: !ruby/object:Provider::Terraform::PropertyOverride
+        is_set: true
+      enabledFeatures: !ruby/object:Provider::Terraform::PropertyOverride
+        is_set: true
+      profile: !ruby/object:Provider::Terraform::PropertyOverride
+        default: !ruby/object:Provider::Terraform::Default
+          value: :COMPATIBLE
+      minTlsVersion: !ruby/object:Provider::Terraform::PropertyOverride
+        default: !ruby/object:Provider::Terraform::Default
+          value: :TLS_1_0
+      warnings: !ruby/object:Provider::Terraform::PropertyOverride
+        exclude: true
   Subnetwork: !ruby/object:Provider::Terraform::ResourceOverride
     id_format: "{{region}}/{{name}}"
     exclude: true
