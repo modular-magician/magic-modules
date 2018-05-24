@@ -4,23 +4,66 @@ This document specified the basic principles behind the Magic Modules and its
 "golden rules" that _shall not be infringed_ without a very strong (and
 documented) reason.
 
-In this doc the term _'must'_ means something that **have to** be followed at
-all times (aside some specific exceptions detailed in the
-[Exceptions](#exceptions) section), and _'should'_ means something that have to
-be followed **as much as possible**.
+In this doc the terms:
+
+  - **must**: means something that _have to be followed at all times_
+  - **should**: means something that have to be followed _as much as possible_
+
+Please refer to the top-level [README][readme] and [Philosophy][phylosophy]
+before reading this guide.  All code-reviews of Magic Modules (regardless of
+changes to core, providers, or products) must follow the guidelines outlined
+here.
 
 
 ## Table of Contents
 
+- [Development Principles](#development-principles)
 - [Folder Locations & Usage](#folder-locations--usage)
 - [Code Style](#code-style)
 - [Templates](#templates)
-- [Testing](#testing)
 - [Exceptions](#exceptions)
 - [Ruby Best Practices & Style Guide](#ruby-best-practices--style-guide)
 
 
+## Development Principles
+
+  - All changes **must** be tested for:
+      * Unit tests
+      * Code style compliance
+  - Changes to _Provider Independent_ code **must** be tested against **all**
+    providers
+  - Changes to _Product Indepedent_ code **must** be tested against **all**
+    products
+  - Changes to core Magic Modules features (which are both _Product_ and
+    _Provider_ independent) **must** be tested against *all* products **and**
+    **all** providers.
+  - Code coverage **must** always stay >80% and **should** be >90%
+
+
+### Object References & Self Links
+
+Resource URL and other self link constructs **must not** be exposed to
+customers. Use resource reference properties instead.
+
+For the cases where a URL is unavoidable, provide a function that constructs the
+URL based on the required properties of the resource being referenced. For
+example to build an image family source disk a function similar to this is to be
+provided: `gcompute_address_self_link(name, region, project)`.
+
+
 ## Folder Locations & Usage
+
+Definitions:
+
+  - Folders:
+    * Folders suffixed with `...` means folder and its children.
+    * Folders without `...` represents the folder only.
+  - _Provider Independent_: Provider specific code, files or especializations
+    **must not** be placed in this area
+  - _Product Independent_: Product specific code, files or especializations
+    **must not** be placed in this area
+
+### Folders
 
   - `api`: Holds all definitions of objects used for defining products,
     serialization and deserialization
@@ -44,18 +87,8 @@ be followed **as much as possible**.
   - `templates/<provider>/...`: Holds all templates for the provider
       * product independent
 
-In the list above folders without `...` means the folder only. `...` represents
-folder and all its children, if applicable.
-
 > Corollary: To completely remove (or add) a product to Magic Modules, removing
 > (or adding) the `products/<product>/...` folder is all it takes.
-
-Definitions:
-
-  - _Provider Independent_: Provider specific code, files or especializations
-    **must not** be placed in this area
-  - _Product Independent_: Product specific code, files or especializations
-    **must not** be placed in this area
 
 
 ## Code Style
@@ -91,23 +124,6 @@ If the function is useful for all providers then consider adding it to the
 global (core) provider namespace.
 
 
-## Testing
-
-  - All changes **must** be tested for:
-      * Unit tests
-      * Code style compliance
-  - Changes to _Provider Independent_ code **must** be tested against **all**
-    providers
-  - Changes to _Product Indepedent_ code **must** be tested against **all**
-    products
-  - Changes to core Magic Modules features (which are both _Product_ and
-    _Provider_ independent) **must** be tested against *all* products **and**
-    **all** providers.
-  - Code coverage **must** always stay >80% and **should** be >90%
-
-Refer to [CONTRIBUTING][contrib] for details on how to test your changes.
-
-
 ## Exceptions
 
 Any _permanent_ exceptions to these rules **must** be thoroughly documented in
@@ -116,6 +132,9 @@ it lives an issue **must** be created and referenced for context.
 
 For any _temporary_ exceptions a tracking issue **must** be filed and added as a
 "TODO" in the code for future fixing.
+
+Exceptions have to have the LGTM (approval) core team member, or from another
+core team member if the exception is introduced by a core team member.
 
 
 ## Ruby Best Practices & Style Guide
@@ -407,6 +426,8 @@ Ruby's [Enumerable][ruby-enumerable] interface contains a list of methods that
 can be used in such cases.
 
 
+[readme]: README.md
+[phylosophy]: docs/philosophy.md
 [contrib]: CONTRIBUTING.md
 [rspec-style-guide]: http://betterspecs.org
 [ruby-style-guide]: https://github.com/bbatsov/ruby-style-guide 
