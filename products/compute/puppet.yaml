@@ -56,6 +56,8 @@ overrides: !ruby/object:Provider::ResourceOverrides
         ].join(' ')
     provider_helpers:
       - 'products/compute/helpers/provider_disk_type.rb'
+  InterconnectAttachment: !ruby/object:Provider::Puppet::ResourceOverride
+    broken_export_test: true
   Instance: !ruby/object:Provider::Puppet::ResourceOverride
     provider_helpers:
       - 'products/compute/helpers/provider_instance.rb'
@@ -491,6 +493,8 @@ examples: !ruby/object:Api::Resource::HashArray
   Instance:
     - delete_instance.pp
     - instance.pp
+  InterconnectAttachment:
+    - interconnect_attachment.pp
   # License -- useful?
   License:
     - license.pp
