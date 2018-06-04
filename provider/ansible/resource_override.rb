@@ -41,7 +41,7 @@ module Provider
         default_value_property :access_api_results, false
         default_value_property :exclude, false
         default_value_property :editable, true
-        default_value_property :facts_exclude, false
+        default_value_property :facts_exclude, true
         default_value_property :imports, []
         default_value_property :provider_helpers, []
         default_value_property :unwrap_resource, false
