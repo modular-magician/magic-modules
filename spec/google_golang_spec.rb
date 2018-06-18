@@ -12,38 +12,38 @@
 # limitations under the License.
 
 require 'spec_helper'
-require 'google/golang_utils'
+require 'compile/core'
 
 class Test
-  include Google::GolangUtils
+  include Compile::Core
 end
 
-describe Google::GolangUtils do
-  context '#go_literal' do
-    let(:golang) { Test.new }
+describe Compile::Core do
+  context '#quote_value' do
+    let(:compile) { Test.new }
 
     describe 'string' do
-      subject { golang.go_literal('foo') }
+      subject { compile.quote_value('foo') }
       it { is_expected.to eq '"foo"' }
     end
 
     describe 'integer' do
-      subject { golang.go_literal(123) }
+      subject { compile.quote_value(123) }
       it { is_expected.to eq '123' }
     end
 
     describe 'float' do
-      subject { golang.go_literal(0.987) }
+      subject { compile.quote_value(0.987) }
       it { is_expected.to eq '0.987' }
     end
 
     describe 'symbol' do
-      subject { golang.go_literal(:NONE) }
+      subject { compile.quote_value(:NONE) }
       it { is_expected.to eq '"NONE"' }
     end
 
     describe 'unknown type' do
-      subject { -> { golang.go_literal(Class.new) } }
+      subject { -> { compile.quote_value(Class.new) } }
       it { is_expected.to raise_error(/Unsupported/) }
     end
   end

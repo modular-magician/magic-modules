@@ -110,7 +110,7 @@
     Sensitive: true,
 <% end -%>
 <% unless property.default_value.nil? -%>
-    Default: <%= go_literal(property.default_value) -%>,
+    Default: <%= quote_value(property.default_value) -%>,
 <% end -%>
 },
 <% else -%>

@@ -18,7 +18,6 @@ require 'provider/terraform/custom_code'
 require 'provider/terraform/property_override'
 require 'provider/terraform/resource_override'
 require 'provider/terraform/sub_template'
-require 'google/golang_utils'
 
 module Provider
   # Code generator for Terraform Resources that manage Google Cloud Platform
@@ -26,7 +25,6 @@ module Provider
   class Terraform < Provider::AbstractCore
     include Provider::Terraform::Import
     include Provider::Terraform::SubTemplate
-    include Google::GolangUtils
 
     # Sorts properties in the order they should appear in the TF schema:
     # Required, Optional, Computed
