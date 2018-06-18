@@ -225,6 +225,16 @@ module Compile
       end
     end
 
+    def quote_value(value)
+      if value.is_a?(String) || value.is_a?(Symbol)
+        "\"#{value}\""
+      elsif value.is_a?(Numeric)
+        value.to_s
+      else
+        raise "Unsupported go literal #{value}"
+      end
+    end
+
     def lines(code, number = 0)
       return if code.nil? || code.empty?
       code = code.join("\n") if code.is_a?(Array)
