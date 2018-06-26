@@ -12,9 +12,9 @@
 # limitations under the License.
 
 module Google
-  # Functions to deal with the Python language.
-  module PythonUtils
-    # Prints literal in Python
+  # Functions to deal with the Ruby language.
+  module RubyUtils
+    # Prints literal in Ruby
     #
     # For instance, an int is printed as-is and a string is quoted:
     #  some_key: 80
@@ -24,15 +24,13 @@ module Google
     # quotes becomes a ruby string without quotes unless you explicitly set
     # quotes in the string like "\"foo\"" which is not a pattern we want to
     # see in our yaml config files.
-    def python_literal(value)
+    def ruby_literal(value)
       if value.is_a?(String) || value.is_a?(Symbol)
         "'#{value}'"
       elsif value.is_a?(Numeric)
         value.to_s
-      elsif value.is_a?(Array)
-        "[#{value.map { |x| python_literal(x) }.join(' ,')}]"
       else
-        raise "Unsupported Python literal #{value}"
+        raise "Unsupported Ruby literal #{value}"
       end
     end
   end
