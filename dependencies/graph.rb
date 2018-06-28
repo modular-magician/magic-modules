@@ -24,20 +24,24 @@ module Dependencies
       @start = object.name
     end
 
-    # Adds an object to the graph. This object is represented by a ResourceRef
+    # Adds an object to the graph. This object is represented by a ResourceRefs
     # property
     def add_ref(prop, seed)
-      raise 'Only ResourceRef may be inserted' unless \
-        prop.is_a? Api::Type::ResourceRef
+      raise 'Only ResourceRefs may be inserted' unless \
+        prop.is_a? Api::Type::ResourceRefs
 
+      # Since this is testing, we're always going to use the first reference.
+      # It doesn't matter which we choose, but we have to choose one.
+      reference = prop.resource_refs.first
       # Add each item to its proper node.
-      referenced_by = prop.__resource.name
-      object = prop.resource_ref.name
+
+      referenced_by = reference.__resource.name
+      object = reference.resource_ref.name
 
       if @pointers.key?(object)
-        @pointers[object].add(prop.resource_ref, seed, prop)
+        @pointers[object].add(reference.resource_ref, seed, prop)
       else
-        node = ItemListNode.new(prop.resource_ref, seed, prop)
+        node = ItemListNode.new(reference.resource_ref, seed, prop)
         @pointers[object] = node
       end
 

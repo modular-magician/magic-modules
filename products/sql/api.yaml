@@ -331,13 +331,14 @@ objects:
       Google's cloud.
 <%= indent(compile('templates/async.yaml.erb'), 4) %>
     parameters:
-      - !ruby/object:Api::Type::ResourceRef
+      - !ruby/object:Api::Type::ResourceRefs
         name: 'instance'
         description: |
           The name of the Cloud SQL instance. This does not include the project
           ID.
-        resource: 'Instance'
-        imports: 'name'
+        resource_refs:
+          - resource: 'Instance'
+            imports: 'name'
         required: true
     properties:
       - !ruby/object:Api::Type::String
@@ -368,13 +369,14 @@ objects:
       The Users resource represents a database user in a Cloud SQL instance.
 <%= indent(compile('templates/async.yaml.erb'), 4) %>
     parameters:
-      - !ruby/object:Api::Type::ResourceRef
+      - !ruby/object:Api::Type::ResourceRefs
         name: 'instance'
         description: |
           The name of the Cloud SQL instance. This does not include the project
           ID.
-        resource: 'Instance'
-        imports: 'name'
+        resource_refs:
+          - resource: 'Instance'
+            imports: 'name'
         required: true
       - !ruby/object:Api::Type::String
         name: 'password'
@@ -409,13 +411,14 @@ objects:
     identity:
       - sha1Fingerprint
     parameters:
-      - !ruby/object:Api::Type::ResourceRef
+      - !ruby/object:Api::Type::ResourceRefs
         name: 'instance'
         description: |
           The name of the Cloud SQL instance. This does not include the project
           ID.
-        resource: 'Instance'
-        imports: 'name'
+        resource_refs:
+          - resource: 'Instance'
+            imports: 'name'
         required: true
       - !ruby/object:Api::Type::String
         name: 'sha1Fingerprint'

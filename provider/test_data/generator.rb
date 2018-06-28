@@ -58,7 +58,7 @@ module Provider
 
         # Array of ResourceRefs
         return alt_size if inside_array &&
-                           prop.item_type.is_a?(Api::Type::ResourceRef)
+                           prop.item_type.is_a?(Api::Type::ResourceRefs)
 
         # Array of NestedObjects with ResourceRefs
         return alt_size if inside_array &&
@@ -84,7 +84,7 @@ module Provider
           Api::Type::Array::NESTED_ARRAY_TYPE => method(:array_nested_cb),
           Api::Type::Array::RREF_ARRAY_TYPE => method(:array_rref_cb),
           Api::Type::NameValues => method(:name_values),
-          Api::Type::ResourceRef => method(:resource_value),
+          Api::Type::ResourceRefs => method(:resource_value),
           Api::Type::NestedObject => method(:nested_value)
         }
       end
@@ -99,7 +99,7 @@ module Provider
           Api::Type::Integer => 'eq',
           Api::Type::NameValues => 'eq',
           Api::Type::NestedObject => 'eq',
-          Api::Type::ResourceRef => 'eq',
+          Api::Type::ResourceRefs => 'eq',
           Api::Type::String => 'eq',
           Api::Type::Time => 'eq'
         }
@@ -154,7 +154,10 @@ module Provider
       end
 
       def resource_value(prop, seed)
-        name = Google::StringUtils.underscore(prop.resource_ref.name)
+        # Always use the first in the list for testing purposes.
+        name = Google::StringUtils.underscore(
+          prop.resource_refs.first.resource_ref.name
+        )
         "'resource(#{name},#{seed})'"
       end
 
@@ -191,8 +194,10 @@ module Provider
           (0..size - 1).map do |index|
             if hash[:exported_values]
               # Return the exported value.
-              imports = prop.item_type.imports.downcase
-              resource = Google::StringUtils.underscore(prop.item_type.resource)
+              imports = prop.item_type.resource_refs.first.imports.downcase
+              resource = Google::StringUtils.underscore(
+                prop.item_type.resource_refs.first.resource
+              )
               "#{imports}(resource(#{resource},#{index}))"
             else
               resource_value(prop.item_type, index)
@@ -207,12 +212,12 @@ module Provider
       def contains_resourcerefs?(prop)
         return false unless prop.is_a? Api::Type::NestedObject
         prop.properties.each do |p|
-          return true if p.is_a? Api::Type::ResourceRef
+          return true if p.is_a? Api::Type::ResourceRefs
 
           if p.is_a? Api::Type::NestedObject
             return true if contains_resourcerefs?(p)
           elsif p.is_a? Api::Type::Array
-            return true if p.item_type == 'Api::Type::ResourceRef'
+            return true if p.item_type == 'Api::Type::ResourceRefs'
             return true if contains_resourcerefs?(p.item_type)
           end
         end

@@ -11,10 +11,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-- !ruby/object:Api::Type::ResourceRef
+- !ruby/object:Api::Type::ResourceRefs
   name: 'bucket'
-  resource: 'Bucket'
-  imports: 'name'
+  resource_refs:
+    - resource: 'Bucket'
+      imports: 'name'
   description: 'The name of the bucket.'
   required: true
 - !ruby/object:Api::Type::String

@@ -64,10 +64,11 @@ objects:
           the instance is created. Values are of the form
           projects/<project>/instances/[a-z][-a-z0-9]*[a-z0-9]. The final
           segment of the name must be between 6 and 30 characters in length.
-      - !ruby/object:Api::Type::ResourceRef
+      - !ruby/object:Api::Type::ResourceRefs
         name: 'config'
-        resource: 'InstanceConfig'
-        imports: 'name'
+        resource_refs:
+          - resource: 'InstanceConfig'
+            imports: 'name'
         description: 'A reference to the instance configuration.'
       - !ruby/object:Api::Type::String
         name: 'displayName'
@@ -118,10 +119,11 @@ objects:
     transport: !ruby/object:Api::Resource::Transport
       decoder: decode_response
     parameters:
-      - !ruby/object:Api::Type::ResourceRef
+      - !ruby/object:Api::Type::ResourceRefs
         name: 'instance'
-        resource: 'Instance'
-        imports: 'name'
+        resource_refs:
+          - resource: 'Instance'
+            imports: 'name'
         description: 'The instance to create the database on.'
         required: true
     properties:

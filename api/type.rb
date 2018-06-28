@@ -223,7 +223,7 @@ module Api
     end
 
     # Forwarding declaration to allow defining Array::RREF_ARRAY_TYPE
-    class ResourceRef < Type
+    class ResourceRefs < Type
     end
 
     # Represents an array, and stores its items' type
@@ -233,17 +233,18 @@ module Api
 
       STRING_ARRAY_TYPE = [Api::Type::Array, Api::Type::String].freeze
       NESTED_ARRAY_TYPE = [Api::Type::Array, Api::Type::NestedObject].freeze
-      RREF_ARRAY_TYPE = [Api::Type::Array, Api::Type::ResourceRef].freeze
+      RREF_ARRAY_TYPE = [Api::Type::Array, Api::Type::ResourceRefs].freeze
 
       def validate
         super
-        if @item_type.is_a?(NestedObject) || @item_type.is_a?(ResourceRef)
+        if @item_type.is_a?(NestedObject) || @item_type.is_a?(ResourceRefs)
           @item_type.set_variable(@name, :__name)
           @item_type.set_variable(@__resource, :__resource)
           @item_type.set_variable(self, :__parent)
         end
-        check_property :item_type, [::String, NestedObject, ResourceRef]
-        unless @item_type.is_a?(NestedObject) || @item_type.is_a?(ResourceRef) \
+        check_property :item_type, [::String, NestedObject, ResourceRefs]
+        unless @item_type.is_a?(NestedObject) \
+          || @item_type.is_a?(ResourceRefs) \
           || type?(@item_type)
           raise "Invalid type #{@item_type}"
         end
@@ -253,12 +254,12 @@ module Api
 
       def item_type_class
         return Api::Type::NestedObject if @item_type.is_a? NestedObject
-        return Api::Type::ResourceRef if @item_type.is_a? ResourceRef
+        return Api::Type::ResourceRefs if @item_type.is_a? ResourceRefs
         get_type("Api::Type::#{@item_type}")
       end
 
       def property_class
-        if @item_type.is_a?(NestedObject) || @item_type.is_a?(ResourceRef)
+        if @item_type.is_a?(NestedObject) || @item_type.is_a?(ResourceRefs)
           type = @item_type.property_class
         else
           type = property_ns_prefix
@@ -282,7 +283,7 @@ module Api
 
       # Returns the file that implements this property
       def requires
-        if @item_type.is_a?(NestedObject) || @item_type.is_a?(ResourceRef)
+        if @item_type.is_a?(NestedObject) || @item_type.is_a?(ResourceRefs)
           return @item_type.requires
         end
         [property_file]
@@ -324,15 +325,8 @@ module Api
     end
 
     # Represents a reference to another resource
-    class ResourceRef < Type
-      ALLOWED_WITHOUT_PROPERTY = [SelfLink::EXPORT_KEY].freeze
-
-      attr_reader :resource
-      attr_reader :imports
-
-      def out_type
-        resource_ref.out_name
-      end
+    class ResourceRefs < Type
+      attr_reader :resource_refs
 
       def validate
         super
@@ -340,31 +334,34 @@ module Api
         @description = "A reference to #{@resource} resource" \
           if @description.nil?
 
-        return if @__resource.nil? || @__resource.exclude || @exclude
+        @resource_refs = @resource_refs.map do |hash|
+          ResourceRef.new(hash)
+        end
 
-        check_property :resource, ::String
-        check_property :imports, ::String
-        check_resource_ref_exists
-        check_resource_ref_property_exists
+        # __resource used for validation.
+        # In pattern of NestedObject, setting each ResourceRef's
+        # parent to the ResourceRefs.
+        @resource_refs.each do |p|
+          p.set_variable(@__resource, :__resource)
+          p.set_variable(self, :__parent)
+        end
+
+        @resource_refs.each(&:validate)
       end
 
-      def property
-        props = resource_ref.exported_properties
-                            .select { |prop| prop.name == @imports }
-        return props.first unless props.empty?
-        raise "#{@imports} does not exist on #{@resource}" if props.empty?
-      end
-
-      def resource_ref
-        product = @__resource.__product
-        resources = product.objects.select { |obj| obj.name == @resource }
-        raise "Unknown item type '#{@resource}'" if resources.empty?
-        resources[0]
+      def out_type
+        if @resource_refs.length > 1
+          "multi_#{@resource_refs.first.resource_ref.out_name}"
+        else
+          @resource_refs.first.resource_ref.out_name
+        end
       end
 
       def property_class
+        # Create name based on the first resourceref.
         type = property_ns_prefix
-        type << [@resource, @imports, 'Ref']
+        type << [@resource_refs.first.resource,
+                 @resource_refs.first.imports, 'Ref']
         shrink_type_name(type)
       end
 
@@ -373,27 +370,16 @@ module Api
       end
 
       def property_file
+        # Property file names are based on one of the resource_refs.
+        # As a convention, we'll stick to the first.
+        resource = @resource_refs.first.resource
+        imports = @resource_refs.first.imports
         File.join('google', @__resource.__product.prefix[1..-1], 'property',
-                  "#{resource}_#{@imports}").downcase
+                  "#{resource}_#{imports}").downcase
       end
 
       def requires
         [property_file]
-      end
-
-      private
-
-      def check_resource_ref_exists
-        product = @__resource.__product
-        resources = product.objects.select { |obj| obj.name == @resource }
-        raise "Missing '#{@resource}'" \
-          if resources.empty? || resources[0].exclude
-      end
-
-      def check_resource_ref_property_exists
-        exported_props = resource_ref.exported_properties
-        raise "'#{@imports}' does not exist on '#{@resource}'" \
-          if exported_props.none? { |p| p.name == @imports }
       end
     end
 
@@ -473,6 +459,61 @@ module Api
                                      :upper),
         'Property'
       ]
+    end
+
+    # Responsible for handling the logic involved with a single ResourceRefs.
+    # A ResourceRefs is made up of one-or-more of these Individual ResourceRefs.
+    class ResourceRef < Type
+      ALLOWED_WITHOUT_PROPERTY = [SelfLink::EXPORT_KEY].freeze
+
+      attr_reader :resource
+      attr_reader :imports
+
+      def initialize(hash)
+        raise 'No resource given' unless hash['resource']
+        raise 'No imports given' unless hash['imports']
+        hash.each do |key, value|
+          instance_variable_set("@#{key}", value)
+        end
+      end
+
+      def validate
+        return if @__resource.nil? || @__resource.exclude || @exclude
+
+        check_property :resource, ::String
+        check_property :imports, ::String
+        check_resource_ref_exists
+        check_resource_ref_property_exists
+      end
+
+      def property
+        props = resource_ref.exported_properties
+                            .select { |prop| prop.name == @imports }
+        return props.first unless props.empty?
+        raise "#{@imports} does not exist on #{@resource}" if props.empty?
+      end
+
+      def resource_ref
+        product = @__resource.__product
+        resources = product.objects.select { |obj| obj.name == @resource }
+        raise "Unknown item type '#{@resource}'" if resources.empty?
+        resources.first
+      end
+
+      private
+
+      def check_resource_ref_exists
+        product = @__resource.__product
+        resources = product.objects.select { |obj| obj.name == @resource }
+        raise "Missing '#{@resource}'" \
+          if resources.empty? || resources.first.exclude
+      end
+
+      def check_resource_ref_property_exists
+        exported_props = resource_ref.exported_properties
+        raise "'#{@imports}' does not exist on '#{@resource}'" \
+          if exported_props.none? { |p| p.name == @imports }
+      end
     end
   end
   # rubocop:enable Metrics/ClassLength

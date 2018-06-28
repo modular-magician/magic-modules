@@ -75,15 +75,16 @@
     - :AH
     - :SCTP
     - :ICMP
-- !ruby/object:Api::Type::ResourceRef
+- !ruby/object:Api::Type::ResourceRefs
   # TODO(https://github.com/GoogleCloudPlatform/magic-modules/issues/200)
   # After adding the RegionBackendService resource, move this field out
   # of the common fields for forwarding rules. This field should refer
   # to a RegionBackendService for a ForwardingRule and to a BackendService
   # for a GlobalForwardingRule.
   name: 'backendService'
-  resource: 'BackendService'
-  imports: 'selfLink'
+  resource_refs:
+    - resource: 'BackendService'
+      imports: 'selfLink'
   description: |
     A reference to a BackendService to receive the matched traffic.
 
@@ -120,10 +121,11 @@
     characters must be a dash, lowercase letter, or digit, except the last
     character, which cannot be a dash.
   required: true
-- !ruby/object:Api::Type::ResourceRef
+- !ruby/object:Api::Type::ResourceRefs
   name: 'network'
-  resource: 'Network'
-  imports: 'selfLink'
+  resource_refs:
+    - resource: 'Network'
+      imports: 'selfLink'
   description: |
     For internal load balancing, this field identifies the network that
     the load balanced IP should belong to for this Forwarding Rule. If
@@ -170,10 +172,11 @@
 
     You may specify a maximum of up to 5 ports.
   item_type: Api::Type::String
-- !ruby/object:Api::Type::ResourceRef
+- !ruby/object:Api::Type::ResourceRefs
   name: 'subnetwork'
-  resource: 'Subnetwork'
-  imports: 'selfLink'
+  resource_refs:
+    - resource: 'Subnetwork'
+      imports: 'selfLink'
   description: |
     A reference to a subnetwork.
 

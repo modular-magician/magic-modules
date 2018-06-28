@@ -50,11 +50,12 @@ objects:
     base_url: 'anotherResource'
     description: 'blah blah'
     parameters:
-      - !ruby/object:Api::Type::ResourceRef
+      - !ruby/object:Api::Type::ResourceRefs
         name: 'property5'
-        resource: 'ReferencedResource'
-        imports: 'name'
         description: 'an explanation whats this about'
+        resource_refs:
+          - resource: 'ReferencedResource'
+            imports: 'name'
     properties:
       - !ruby/object:Api::Type::String
         name: 'property1'

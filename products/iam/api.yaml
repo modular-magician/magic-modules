@@ -65,11 +65,12 @@ objects:
     description: |
       A service account in the Identity and Access Management API.
     parameters:
-      - !ruby/object:Api::Type::ResourceRef
+      - !ruby/object:Api::Type::ResourceRefs
         name: serviceAccount
         description: The name of the serviceAccount.
-        resource: ServiceAccount
-        imports: name
+        resource_refs:
+          - resource: ServiceAccount
+            imports: name
       # A non-API property to allow writing results to a specific output file.
       - !ruby/object:Api::Type::String
         name: path

@@ -61,9 +61,12 @@ module Provider
           rref_list = object.uri_properties.map do |ref|
             # We need to verify that only resourcerefs directly belonging to
             # this object are inserted into the expectation.
-            next unless ref.is_a? Api::Type::ResourceRef
-            name = Google::StringUtils.underscore(ref.resource_ref.name)
-            value = @data_gen.value(ref.property.class, ref.property, 0)
+            next unless ref.is_a? Api::Type::ResourceRefs
+            name = Google::StringUtils.underscore(
+              ref.resource_refs.first.resource_ref.name
+            )
+            value = @data_gen.value(ref.resource_refs.first.property.class,
+                                    ref.resource_refs.first.property, 0)
             { name => value }
           end
 
@@ -131,7 +134,7 @@ module Provider
 
           if test[:exists]
             has_rrefs = !object.uri_properties
-                               .select { |p| p.is_a? Api::Type::ResourceRef }
+                               .select { |p| p.is_a? Api::Type::ResourceRefs }
                                .empty?
             # Delete specifies name as a parameter, not as part of data
             params = []
@@ -171,6 +174,7 @@ module Provider
 
       # rubocop:disable Metrics/AbcSize
       # rubocop:disable Metrics/ParameterLists
+      # rubocop:disable Metrics/MethodLength
       # Given an expectation (i.e. "expect_network_get_success"),
       # returns that expectation with all necessary parameters.
       #
@@ -191,9 +195,11 @@ module Provider
         rref_list = object.uri_properties.map do |ref|
           # We need to verify that only resourcerefs directly belonging to this
           # object are inserted into the expectation.
-          next unless ref.is_a? Api::Type::ResourceRef
-          name = Google::StringUtils.underscore(ref.resource_ref.name)
-          value = @data_gen.value(ref.property.class, ref.property, id - 1)
+          next unless ref.is_a? Api::Type::ResourceRefs
+          name = Google::StringUtils.underscore(ref.resource_refs.first
+                                                   .resource_ref.name)
+          value = @data_gen.value(ref.resource_refs.first.property.class,
+                                  ref.resource_refs.first.property, id - 1)
           { name => value }
         end
 

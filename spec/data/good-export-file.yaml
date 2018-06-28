@@ -48,11 +48,12 @@ objects:
       - property1
       - superLongName
     parameters:
-      - !ruby/object:Api::Type::ResourceRef
-        resource: 'ReferencedResource'
+      - !ruby/object:Api::Type::ResourceRefs
         name: 'property5'
-        imports: 'name'
         description: 'an explanation whats this about'
+        resource_refs:
+          - resource: 'ReferencedResource'
+            imports: 'name'
     properties:
       - !ruby/object:Api::Type::String
         name: 'property1'
