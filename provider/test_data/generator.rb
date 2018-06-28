@@ -154,7 +154,10 @@ module Provider
       end
 
       def resource_value(prop, seed)
-        name = Google::StringUtils.underscore(prop.resource_ref.name)
+        # Always use the first in the list for testing purposes.
+        name = Google::StringUtils.underscore(
+          prop.resource_refs.first.resource_ref.name
+        )
         "'resource(#{name},#{seed})'"
       end
 
@@ -191,8 +194,10 @@ module Provider
           (0..size - 1).map do |index|
             if hash[:exported_values]
               # Return the exported value.
-              imports = prop.item_type.imports.downcase
-              resource = Google::StringUtils.underscore(prop.item_type.resource)
+              imports = prop.item_type.resource_refs.first.imports.downcase
+              resource = Google::StringUtils.underscore(
+                prop.item_type.resource_refs.first.resource
+              )
               "#{imports}(resource(#{resource},#{index}))"
             else
               resource_value(prop.item_type, index)

@@ -125,8 +125,12 @@ module Provider
     end
 
     def generate_resourceref_object(data, prop)
-      resource = Google::StringUtils.underscore(prop.resource_ref.name)
-      imports = Google::StringUtils.underscore(prop.imports)
+      # One file is created per ResourceRef object.
+      #
+      resource = Google::StringUtils.underscore(
+        prop.resource_refs.first.resource_ref.name
+      )
+      imports = Google::StringUtils.underscore(prop.resource_refs.first.imports)
       return if resourceref_tracker.key?([resource, imports])
       resourceref_tracker[[resource, imports]] = false
 
@@ -141,8 +145,11 @@ module Provider
     end
 
     def generate_resourceref_array(data, prop)
-      resource = Google::StringUtils.underscore(prop.resource_ref.name)
-      imports = Google::StringUtils.underscore(prop.imports)
+      # One file is created per ResourceRef object.
+      resource = Google::StringUtils.underscore(
+        prop.resource_refs.first.resource_ref.name
+      )
+      imports = Google::StringUtils.underscore(prop.resource_refs.first.imports)
       return if resourceref_tracker.key?([resource, imports]) \
         && resourceref_tracker[[resource, imports]] == true
       resourceref_tracker[[resource, imports]] = true

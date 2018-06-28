@@ -79,8 +79,10 @@ module Provider
           # All ResourceRefs should expect the fetched value
           # Without this, the JSON call will be expecting the title of the
           # ResourceRef block, not a value within that block.
-          ["'#{prop.field_name}'", '=>', value(prop.property.class,
-                                               prop.property,
+          ["'#{prop.field_name}'", '=>', value(prop.resource_refs
+                                                   .first.property.class,
+                                               prop.resource_refs
+                                                   .first.property,
                                                seed)].join(' ')
         else
           ["'#{prop.field_name}'", '=>', value(prop.class, prop,
@@ -119,8 +121,12 @@ module Provider
 
       def expect_array_item_rref(item, seed = 0)
         size = @data_gen.object_size(item, seed, true)
-        imports = Google::StringUtils.underscore(item.item_type.imports)
-        resource = Google::StringUtils.underscore(item.item_type.resource)
+        imports = Google::StringUtils.underscore(
+          item.item_type.resource_refs.first.imports
+        )
+        resource = Google::StringUtils.underscore(
+          item.item_type.resource_refs.first.resource
+        )
         @provider.indent_list(
           (0..size - 1).map do |index|
             "'#{imports.tr('_', '')}(resource(#{resource},#{index}))'"
@@ -152,8 +158,9 @@ module Provider
                    # ResourceRef block, not a value within that block.
                    [
                      "'#{prop.field_name}' =>",
-                     value(prop.property.class,
-                           prop.property, (seed + index - 1) % MAX_ARRAY_SIZE)
+                     value(prop.resource_refs.first.property.class,
+                           prop.resource_refs.first.property,
+                           (seed + index - 1) % MAX_ARRAY_SIZE)
                    ].join(' ')
                  elsif prop.is_a? Api::Type::Array
                    expect_array_hash(prop, (seed + index - 1))
