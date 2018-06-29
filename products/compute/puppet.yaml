@@ -107,10 +107,10 @@ overrides: !ruby/object:Provider::ResourceOverrides
     exclude: true
   RegionAutoscaler: !ruby/object:Provider::Puppet::ResourceOverride
     exclude: true
-  TargetVpnGateway: !ruby/object:Provider::Puppet::ResourceOverride
-    exclude: true
   SslPolicy: !ruby/object:Provider::Puppet::ResourceOverride
     exclude: true
+  VpnTunnel: !ruby/object:Provider::Puppet::ResourceOverride
+    broken_exports: true
 functions:
   - !ruby/object:Provider::Config::Function
     name: 'gcompute_address_ip'
@@ -547,11 +547,13 @@ examples: !ruby/object:Api::Resource::HashArray
   TargetSslProxy:
     - delete_target_ssl_proxy.pp
     - target_ssl_proxy.pp
-  # TargetVpnGateway
+  TargetVpnGateway:
+    - target_vpn_gateway.pp
   UrlMap:
     - delete_url_map.pp
     - url_map.pp
-  # VpnTunnel
+  VpnTunnel:
+    - vpn_tunnel.pp
   # ZoneOperation -- not useful for state convergence
   Zone:
     - zone.pp
