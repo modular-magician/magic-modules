@@ -2148,6 +2148,13 @@ objects:
       Represents a MachineType resource. Machine types determine the virtualized
       hardware specifications of your virtual machine instances, such as the
       amount of memory or number of virtual CPUs.
+    parameters:
+      - !ruby/object:Api::Type::ResourceRef
+        name: 'zone'
+        resource: 'Zone'
+        imports: 'name'
+        description: 'The zone where the machine type is defined'
+        required: true
     properties:
       - !ruby/object:Api::Type::Time
         name: 'creationTimestamp'
@@ -2239,12 +2246,6 @@ objects:
       - !ruby/object:Api::Type::String
         name: 'name'
         description: 'Name of the resource.'
-      - !ruby/object:Api::Type::ResourceRef
-        name: 'zone'
-        resource: 'Zone'
-        imports: 'name'
-        description: 'The zone the machine type is defined.'
-        required: true
   - !ruby/object:Api::Resource
     name: 'Network'
     kind: 'compute#network'
@@ -2875,6 +2876,15 @@ objects:
                         delete_sec: 6 * 60}},
                       'templates/regional_async.yaml.erb'), 4)
 %>
+    parameters:
+      - !ruby/object:Api::Type::ResourceRef
+        name: 'region'
+        resource: 'Region'
+        imports: 'name'
+        description: |
+          URL of the region where the subnetwork resides
+        required: true
+        input: true
     properties:
       - !ruby/object:Api::Type::Time
         name: 'creationTimestamp'
@@ -2977,14 +2987,6 @@ objects:
           assigned external IP addresses.
         update_verb: :POST
         update_url: 'projects/{{project}}/regions/{{region}}/subnetworks/{{name}}/setPrivateIpGoogleAccess'
-      - !ruby/object:Api::Type::ResourceRef
-        name: 'region'
-        resource: 'Region'
-        imports: 'name'
-        description: |
-          URL of the GCP region for this subnetwork.
-        required: true
-        input: true
     references: !ruby/object:Api::Resource::ReferenceLinks
       guides:
         'Private Google Access':
@@ -2992,7 +2994,6 @@ objects:
         'Cloud Networking':
           'https://cloud.google.com/vpc/docs/using-vpc'
       api: 'https://cloud.google.com/compute/docs/reference/rest/beta/subnetworks'
-
   - !ruby/object:Api::Resource
     name: 'TargetHttpProxy'
     kind: 'compute#targetHttpProxy'
