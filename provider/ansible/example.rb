@@ -174,7 +174,7 @@ module Provider
       def validate
         super
         check_property :name, String
-        check_property :code, String
+        check_property :code, Hash
         check_optional_property_list :scopes, ::String
       end
 
@@ -208,7 +208,9 @@ module Provider
           indent([
             "#{@name}:",
             indent([
-                     compile_string(hash, @code),
+                     @code.map do |key, value|
+                       "#{key}: #{compile_string(value, @code)}"
+                     end,
                      'scopes:',
                      indent(lines(scopes), 2),
                      "state: #{state}"
