@@ -20,10 +20,10 @@ require 'provider/ansible/manifest'
 module Provider
   module Ansible
     INTEGRATION_TEST_DEFAULTS = {
-      project: '"{{ gcp_project }}"',
-      auth_kind: '"{{ gcp_cred_kind }}"',
-      service_account_file: '"{{ gcp_cred_file }}"',
-      name: '"{{ resource_name }}"'
+      project: '{{ gcp_project }}',
+      auth_kind: '{{ gcp_cred_kind }}',
+      service_account_file: '{{ gcp_cred_file }}',
+      name: '{{ resource_name }}'
     }.freeze
 
     EXAMPLE_DEFAULTS = {
@@ -33,15 +33,81 @@ module Provider
       service_account_file: '/tmp/auth.pem'
     }.freeze
 
-    # Holds all information necessary to run gcloud and verify the creation
-    # of a resource.
-    #
-    # command         - The gcloud command being run
-    # failed_name     - The name of the resource being created
-    #                   (defaults to {{resource_name}})
-    #                   Used for verifying deletion.
-    # failed_verifier - A custom Jinja2 verifier to test if gcloud
-    #                   command post-deletion worked as intended.
+    # Examples are used to generate the EXAMPLES block of Ansible documentation
+    # and the integration tests.
+    # Integration tests are a series of YAML tasks (standalone actions).
+    # Integration tests are broken into three parts:
+    # * a list of dependency tasks that should be run.
+    # * a 'task' that is being tested (also used for EXAMPLES block)
+    # * a verifier that will verify cloud status
+    class Example < Api::Object
+      attr_reader :task
+      attr_reader :verifier
+      attr_reader :dependencies
+
+      def validate
+        super
+        check_property :task, Task
+        check_optional_property :verifier, Verifier
+        check_optional_property_list :dependencies, Task
+      end
+    end
+
+    # A Task represents a single Ansible action. This action is represented
+    # as a standalone YAML block.
+    class Task < Api::Object
+      include Compile::Core
+      attr_reader :name
+      attr_reader :code
+      attr_reader :scopes
+      attr_reader :register
+
+      def validate
+        super
+        check_property :name, String
+        check_property :code, Hash
+        check_optional_property_list :scopes, ::String
+      end
+
+      def build_test(state, object, noop = false)
+        build_task(state, INTEGRATION_TEST_DEFAULTS, object, noop)
+      end
+
+      def build_example(state, object)
+        build_task(state, EXAMPLE_DEFAULTS, object)
+      end
+
+      private
+
+      # rubocop:disable Lint/UnusedMethodArgument
+      def build_task(state, hash, object, noop = false)
+        compile 'templates/ansible/tasks/task.yaml.erb'
+      end
+      # rubocop:enable Lint/UnusedMethodArgument
+
+      def object_name_from_module_name(mod_name)
+        product_name = mod_name.match(/gcp_[a-z]*_(.*)/).captures.first
+        product_name.tr('_', ' ')
+      end
+
+      def dependency_name(dependency, resource)
+        "#{dependency.downcase}-#{resource.downcase}"
+      end
+
+      def verbs
+        {
+          present: 'create',
+          absent: 'delete'
+        }
+      end
+    end
+
+    # Verifiers verify that the Ansible modules actually created changes
+    # in the cloud.
+    # A Verifier has:
+    # * A bash command.
+    # * A failure check. If the bash command fails, that may not be enough
+    #   to verify that the cloud status is correct.
     class Verifier < Api::Object
       include Compile::Core
       attr_reader :command
@@ -54,41 +120,14 @@ module Provider
         check_property :failure, FailureCondition
       end
 
-      # rubocop:disable Metrics/AbcSize
-      # rubocop:disable Metrics/MethodLength
+      # rubocop:disable Lint/UnusedMethodArgument
       def build_task(state, object)
         raise 'State must be present or absent' \
           unless %w[present absent].include? state
 
-        obj_name = Google::StringUtils.underscore(object.name)
-        verb = verbs[state.to_sym]
-        check_on_failure = @failure.enabled && state == 'absent'
-        status = state == 'present' ? 0 : 1
-        [
-          "- name: verify that #{obj_name} was #{verb}",
-          indent([
-            'shell: |',
-            # Ansible doesn't like multiline shell commands in playbooks.
-            indent(@command.tr("\n", ''), 2),
-            'register: results',
-            ('failed_when: results.rc == 0' if state == 'absent')
-          ].compact, 2),
-
-          '- name: verify that command succeeded',
-          indent([
-                   'assert:',
-                   indent([
-                            'that:',
-                            indent([
-                              "- results.rc == #{status}",
-                              ("- #{@failure.test}" if check_on_failure)
-                            ].compact, 2)
-                          ], 2)
-                 ], 2)
-        ].compact
+        compile 'templates/ansible/tasks/verifier.yaml.erb'
       end
-      # rubocop:enable Metrics/MethodLength
-      # rubocop:enable Metrics/AbcSize
+      # rubocop:enable Lint/UnusedMethodArgument
 
       private
 
@@ -159,89 +198,6 @@ module Provider
           "projects/{{ gcp_project }}/#{plural}/#{@name}"
         ].join(' ')
         super
-      end
-    end
-
-    # Class responsible for holding a single Ansible task. This task may create
-    # a GCP resource or create a dependent GCP resource.
-    class Task < Api::Object
-      include Compile::Core
-      attr_reader :name
-      attr_reader :code
-      attr_reader :scopes
-      attr_reader :register
-
-      def validate
-        super
-        check_property :name, String
-        check_property :code, String
-        check_optional_property_list :scopes, ::String
-      end
-
-      def build_test(state, object, noop = false)
-        build_task(state, INTEGRATION_TEST_DEFAULTS, object, noop)
-      end
-
-      def build_example(state, object)
-        build_task(state, EXAMPLE_DEFAULTS, object)
-      end
-
-      def verbs
-        {
-          present: 'create',
-          absent: 'delete'
-        }
-      end
-
-      private
-
-      # rubocop:disable Metrics/CyclomaticComplexity
-      def build_task(state, hash, object, noop = false)
-        verb = verbs[state.to_sym]
-
-        again = ''
-        again = ' that already exists' if noop && state == 'present'
-        again = ' that does not exist' if noop && state == 'absent'
-        scopes = (@scopes || object.__product.scopes).map { |x| "- #{x}" }
-        [
-          "- name: #{verb} a #{object_name_from_module_name(@name)}#{again}",
-          indent([
-            "#{@name}:",
-            indent([
-                     compile_string(hash, @code),
-                     'scopes:',
-                     indent(lines(scopes), 2),
-                     "state: #{state}"
-                   ], 4),
-            ("register: #{@register}" unless @register.nil?)
-          ].compact, 2)
-        ]
-      end
-      # rubocop:enable Metrics/MethodLength
-      # rubocop:enable Metrics/CyclomaticComplexity
-
-      def object_name_from_module_name(mod_name)
-        product_name = mod_name.match(/gcp_[a-z]*_(.*)/).captures[0]
-        product_name.tr('_', ' ')
-      end
-
-      def dependency_name(dependency, resource)
-        quote_string("#{dependency.downcase}-#{resource.downcase}")
-      end
-    end
-
-    # Class responsible for holding all information relating to Ansible
-    # examples.
-    class Example < Api::Object
-      attr_reader :task
-      attr_reader :verifier
-      attr_reader :dependencies
-
-      def validate
-        super
-        check_property :task, Task
-        check_optional_property :verifier, Verifier
-        check_optional_property_list :dependencies, Task
       end
     end
   end
