@@ -14,6 +14,7 @@
 require 'compile/core'
 require 'dependencies/dependency_graph'
 require 'fileutils'
+require 'google/extensions'
 require 'google/logger'
 require 'pathname'
 require 'provider/properties'
@@ -120,7 +121,7 @@ module Provider
         output_folder,
         @config.test_data.network,
         lambda do |object, file|
-          type = Google::StringUtils.underscore(object.name)
+          type = object.name.underscore
           ["spec/data/network/#{object.out_name}/#{file}.yaml",
            "products/#{@api.prefix[1..-1]}/files/spec~#{type}~#{file}.yaml"]
         end
@@ -170,7 +171,7 @@ module Provider
       create_object_list(
         test_data,
         lambda do |object, file|
-          type = Google::StringUtils.underscore(object.name)
+          type = object.name.underscore
           ["spec/data/network/#{object.out_name}/#{file}.yaml",
            "products/#{@api.prefix[1..-1]}/files/spec~#{type}~#{file}.yaml"]
         end
@@ -202,7 +203,7 @@ module Provider
             output_folder: output_folder,
             out_file: target_file,
             prop_ns_dir: @api.prefix[1..-1].downcase,
-            product_ns: Google::StringUtils.camelize(@api.prefix[1..-1], :upper)
+            product_ns: @api.prefix[1..-1].camelize(:upper)
           )
         )
 
@@ -346,8 +347,7 @@ module Provider
 
     def generate_resource_file(data)
       product_ns = if @config.name.nil?
-                     Google::StringUtils.camelize(data[:object].__product
-                       .prefix[1..-1], :upper)
+                     data[:object].__product.prefix[1..-1].camelize(:upper)
                    else
                      @config.name
                    end
@@ -702,9 +702,8 @@ module Provider
     end
 
     def emit_user_agent(product, extra, notes, file_name)
-      prov_text = Google::StringUtils.camelize(self.class.name.split('::').last,
-                                               :upper)
-      prod_text = Google::StringUtils.camelize(product, :upper)
+      prov_text = self.class.name.split('::').last.camelize(:upper)
+      prod_text = product.camelize(:upper)
       ua_generator = notes.map { |n| "# #{n}" }.concat(
         [
           "version = '1.0.0'",
