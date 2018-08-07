@@ -212,6 +212,19 @@ module Api
       end
     end
 
+    # Represents a status message.  These are output-only
+    # fields which return string messages meant to be human-readable.
+    class Status < String
+      def validate
+        super
+        @output = true if @output.nil?
+        # This mostly isn't useful information - operation errors cover the
+        # same ground and are already handled. Consequently we exclude it
+        # by default and override it where useful.
+        @exclude ||= true
+      end
+    end
+
     # Represents a timestamp
     class Time < Primitive
     end
@@ -367,8 +380,12 @@ module Api
     class ResourceRef < Type
       ALLOWED_WITHOUT_PROPERTY = [SelfLink::EXPORT_KEY].freeze
 
-      attr_reader :resource
-      attr_reader :imports
+      # The fields which can be overridden in provider.yaml.
+      module Fields
+        attr_reader :resource
+        attr_reader :imports
+      end
+      include Fields
 
       def out_type
         resource_ref.out_name
@@ -488,8 +505,12 @@ module Api
 
     # Represents an array of name=value pairs, and stores its items' type
     class NameValues < Composite
-      attr_reader :key_type
-      attr_reader :value_type
+      # The fields which can be overridden in provider.yaml.
+      module Fields
+        attr_reader :key_type
+        attr_reader :value_type
+      end
+      include Fields
 
       def validate
         super
