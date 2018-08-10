@@ -49,6 +49,9 @@ overrides: !ruby/object:Provider::ResourceOverrides
         message = 'Instance cannot be edited'
         Chef::Log.fatal message
         raise message
+    provider_helpers:
+      - 'products/compute/helpers/ruby/provider_instance.rb'
+      - 'products/compute/helpers/ruby/instance_metadata.rb'
   Network: !ruby/object:Provider::Chef::ResourceOverride
     handlers: !ruby/object:Provider::Chef::Handlers
       # TODO(alexstephen): Better editing from auto to custom
