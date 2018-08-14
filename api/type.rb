@@ -29,6 +29,7 @@ module Api
 
       attr_reader :output # If set value will not be sent to server on sync
       attr_reader :input # If set to true value is used only on creation
+      attr_reader :url_param_only # If, true will not be send in request body
       attr_reader :required
       attr_reader :update_verb
       attr_reader :update_url
@@ -60,9 +61,12 @@ module Api
 
       check_optional_property :output, :boolean
       check_optional_property :required, :boolean
+      check_optional_property :url_param_only, :boolean
 
       raise 'Property cannot be output and required at the same time.' \
         if @output && @required
+      raise 'Property must be required if it is a URL-only parameter.' \
+        if @url_param_only && !@required
 
       check_optional_property_oneof_default \
         :update_verb, %i[POST PUT PATCH NONE], @__resource&.update_verb, Symbol
@@ -257,9 +261,9 @@ module Api
           @item_type.set_variable(@__resource, :__resource)
           @item_type.set_variable(self, :__parent)
         end
-        check_property :item_type, [::String, NestedObject, ResourceRef]
+        check_property :item_type, [::String, NestedObject, ResourceRef, Enum]
         unless @item_type.is_a?(NestedObject) || @item_type.is_a?(ResourceRef) \
-          || type?(@item_type)
+            || @item_type.is_a?(Enum) || type?(@item_type)
           raise "Invalid type #{@item_type}"
         end
 
@@ -276,6 +280,8 @@ module Api
       def property_class
         if @item_type.is_a?(NestedObject) || @item_type.is_a?(ResourceRef)
           type = @item_type.property_class
+        elsif @item_type.is_a?(Enum)
+          raise 'aaaa'
         else
           type = property_ns_prefix
           type << get_type(@item_type).new(@name).type
