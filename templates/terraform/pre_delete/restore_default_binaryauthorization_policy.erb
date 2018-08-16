@@ -12,7 +12,8 @@
 	# See the License for the specific language governing permissions and
 	# limitations under the License.
 <% end -%>
-obj = map[string]interface{}{
+obj, err = replaceVars(d, config, map[string]interface{}{
+	"name": "projects/{{project}}/policy",
 	"admissionWhitelistPatterns": []interface{}{
 		map[string]interface{}{
 			"namePattern": "gcr.io/google_containers/*",
@@ -22,4 +23,7 @@ obj = map[string]interface{}{
 		"evaluationMode": "ALWAYS_ALLOW",
 		"enforcementMode": "ENFORCED_BLOCK_AND_AUDIT_LOG",
 	},
+})
+if err != nil {
+	return err
 }
