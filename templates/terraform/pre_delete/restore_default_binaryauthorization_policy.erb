@@ -12,7 +12,13 @@
 	# See the License for the specific language governing permissions and
 	# limitations under the License.
 <% end -%>
+fullName, err := replaceVars(d, config, "projects/{{project}}/policy")
+if err != nil {
+	return err
+}
+
 obj = map[string]interface{}{
+	"name": fullName,
 	"admissionWhitelistPatterns": []interface{}{
 		map[string]interface{}{
 			"namePattern": "gcr.io/google_containers/*",
