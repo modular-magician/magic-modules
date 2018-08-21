@@ -1,0 +1,29 @@
+if _, ok := res["name"]; !ok {
+	return nil, errors.New("could not get owner backend of signed URL keys, invalid name")
+}
+
+signedUrlKey := make(map[string]interface{})
+
+// Read values we need from data
+keyName := d.Get("name").(string)
+if policyRaw, ok := res["cdnPolicy"]; ok {
+	policy := policyRaw.(map[string]interface{})
+	if namesRaw, ok := policy["signedUrlKeyNames"]; ok {
+		names := namesRaw.([]interface{})
+		for _, kName := range names {
+			if keyName == kName.(string) {
+				signedUrlKey["keyName"] = keyName
+				signedUrlKey["backendName"] = res["name"]
+				// Sensitive keys is not returned to user
+				// All we can do is verify a key with this name exists
+				// and assume the same key value.
+				signedUrlKey["keyValue"] = d.Get("key_value")
+				// Project is a URL parameter and thus the
+				// same as the object's self-link value.
+				signedUrlKey["project"] = d.Get("project")
+				return signedUrlKey, nil
+			}
+		}
+	}
+}
+return nil, nil
