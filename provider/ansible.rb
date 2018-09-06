@@ -21,6 +21,7 @@ require 'provider/ansible/request'
 require 'provider/ansible/resourceref'
 require 'provider/ansible/resource_override'
 require 'provider/ansible/property_override'
+require 'provider/ansible/facts_override'
 
 module Provider
   module Ansible
@@ -56,7 +57,8 @@ module Provider
         'Api::Type::Array' => 'list',
         'Api::Type::Boolean' => 'bool',
         'Api::Type::Integer' => 'int',
-        'Api::Type::NameValues' => 'dict'
+        'Api::Type::NameValues' => 'dict',
+        'FilterProp' => 'list'
       }.freeze
 
       include Provider::Ansible::Documentation
@@ -240,6 +242,11 @@ module Provider
       end
 
       def generate_resource(data)
+        # Add facts from datasources to non-datasource if they exist.
+        # Some values from datasources.facts may be necessary for building integration
+        # tests, which is done before datasource building.
+        # We don't want to duplicate those .facts values though.
+        datasource_info(data)
         target_folder = data[:output_folder]
         FileUtils.mkpath target_folder
         name = module_name(data[:object])
@@ -289,6 +296,14 @@ module Provider
           out_file: File.join(target_folder,
                               "lib/ansible/modules/cloud/google/#{name}.py")
         )
+      end
+
+      def datasource_info(data)
+        name = "@#{data[:object].name}".to_sym
+        facts_info = @config&.datasources&.instance_variable_get(name)&.facts
+        facts_info ||= Provider::Ansible::FactsOverride.new
+        facts_info.validate
+        data[:object].instance_variable_set(:@facts, facts_info)
       end
 
       def generate_network_datas(data, object) end

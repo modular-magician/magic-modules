@@ -210,11 +210,18 @@ module Provider
                           .map(&:name)
                           .reject { |x| ignored_props.include? x }
         # Grab all code values for parameters
-        object.all_user_properties
+        parameters = object.all_user_properties
               .map(&:name)
               .select { |para| url_parts.include? para }
               .map { |para| { para => sample_code[para] } }
               .reduce({}, :merge)
+
+        # Grab values for filters.
+        underscore_name = object.facts.filter.name.underscore
+        if sample_code[underscore_name]
+          parameters[underscore_name] = sample_code[underscore_name]
+        end
+        parameters.compact
       end
 
       def name_parameter
@@ -312,8 +319,11 @@ module Provider
 
       private
 
+      # rubocop:disable Metrics/AbcSize
       def build_code(object, hash)
         sample_code = @__example.task.code
+        return '' unless sample_code
+
         ignored_props = %w[project name]
 
         url_parts = object.uri_properties
@@ -326,10 +336,18 @@ module Provider
                      .map { |para| { para => sample_code[para] } }
                      .reduce({}, :merge)
 
-        code['filters'] = ["name = #{hash[:name]}"]
+        if object.facts.has_filters
+          if object.facts.filter.name != 'filters'
+            underscore_name = object.facts.filter.name.underscore
+            code[underscore_name] = sample_code[underscore_name]
+          else
+            code['filters'] = ["name = #{hash[:name]}"]
+          end
+        end
         hash.each { |k, v| code[k.to_s] = v unless k == :name }
         code
       end
+      # rubocop:enable Metrics/AbcSize
     end
   end
 end

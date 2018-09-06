@@ -5,10 +5,19 @@
 -%>
 - name: verify that <%= object.name.underscore -%> was <%= lines(verbs[_state.to_sym]) -%>
   <%= module_name -%>:
+<% if object.facts.has_filters && object.facts.filter.name == 'filters' -%>
       filters:
          - name = <%= name_parameter %>
+<% end #if object.facts.has_filters -%>
 <% @parameters.each do |k, v| -%>
-      <%= k -%>: <%= lines(v) -%>
+<%
+  value = if @parameters.keys.first == k && v.include?('{{')
+            "\"#{v}\""
+          else
+            v
+          end
+-%>
+      <%= k -%>: <%= lines(value) -%>
 <% end -%>
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
@@ -19,4 +28,8 @@
 - name: verify that command succeeded
   assert:
     that:
+<% if object.facts.test -%>
+      - <%= lines(object.facts.test) -%>
+<% else # object.facts.test -%>
       - results['items'] | length == <%= _state == 'present' ? 1 : 0 %>
+<% end # object.facts.test -%>
