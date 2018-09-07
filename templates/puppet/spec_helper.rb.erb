@@ -25,41 +25,20 @@
 ENV['TZ'] = 'UTC'
 
 #----------------------------------------------------------
-# Setup code coverage
-
-require 'simplecov'
-SimpleCov.start unless ENV['DISABLE_COVERAGE']
-
-#----------------------------------------------------------
 # Add test path to the search libs
 
 $LOAD_PATH.unshift(File.expand_path('.'))
 <% if spec_stubs? -%>
 $LOAD_PATH.unshift(File.expand_path('./spec/stubs'))
+# Add fixtures so that they can be loaded by integration tests.
+$LOAD_PATH.unshift(File.expand_path('./spec/fixtures/modules/gauth/lib'))
+$LOAD_PATH.unshift(File.expand_path('./spec/fixtures/modules/<%= @api.prefix -%>/lib'))
 <% end # spec_stubs? -%>
 
 #----------------------------------------------------------
 # Block all network traffic
-
-require 'network_blocker'
-
-#----------------------------------------------------------
-# Auto require files
-
-files = []
-files << 'spec/bundle.rb'
-files << 'spec/copyright.rb'
-files << 'spec/fake_auth.rb'
-files << 'spec/test_constants.rb'
-files << File.join('lib', '**', '*.rb')
-
-# Require all files so we can track them via code coverage
-Dir[*files].reject { |p| File.directory? p }
-           .each do |f|
-             puts "Auto requiring #{f}" \
-               if ENV['RSPEC_DEBUG']
-             require f
-           end
+require 'puppetlabs_spec_helper/module_spec_helper'
+require 'webmock/rspec'
 
 #----------------------------------------------------------
 # Setup PuppetSpec to allow executing the Puppet manifests from within tests
@@ -90,6 +69,10 @@ RSpec.configure do |c|
     Puppet::Test::TestHelper.after_all_tests
   end
 
+  c.mock_with :rspec do |conf|
+    conf.syntax = [:should, :expect]
+  end
+
   c.before :each do
     base = PuppetSpec::Files.tmpdir('tmp_settings')
     Puppet[:vardir] = File.join(base, 'var')
@@ -106,8 +89,76 @@ RSpec.configure do |c|
 
   c.after :each do
     Puppet::Test::TestHelper.after_each_test
-    Dir.stub(:entries)
     PuppetSpec::Files.cleanup
+  end
+end
+
+def get_example(example_name)
+  # This is a little nutty, but we actually put a mocked up
+  # version of the ruby function for healthchecks at the top
+  # of the manifest.  Any other function which gets used in an
+  # example is going to need the same treatment.  This *IS*
+  # limiting, not everything that can be expressed in a ruby
+  # function can be expressed in a puppet function - but see comment
+  # in integration_spec.rb.  We haven't figured out a better way yet.
+  ex = read_example(example_name)
+  healthcheck_fn = File.open('spec/fixtures/mock_hc_fn.pp').read
+  healthcheck_fn + "\n\n" + ex
+end
+
+def read_example(example_name)
+  # It's not ideal, but puppet unit tests don't support
+  # these facts-as-variables, so we have to do these
+  # substitutions ourselves.
+  File.open("examples/#{example_name}.pp", 'rb').read\
+      .gsub('$project', "\"#{ENV['GOOGLE_PROJECT']}\"")\
+      .gsub('$cred_path', "\"#{ENV['GOOGLE_CREDENTIALS_PATH']}\"")
+end
+
+def run_example(example_name)
+  # This function runs an example specified by name (not
+  # including '.pp'.  It generates a puppet environment,
+  # tricks puppet into feeling semi-initialized by
+  # compiling the example, catching the failure, then
+  # compiling it again within the context of the failure,
+  # and then applies it.
+  mods = [File.expand_path('.'), File.expand_path('./spec/fixtures/modules/')]
+  example = get_example(example_name)
+  test = Puppet::Node::Environment.create(:test, mods)
+  loaders = Puppet::Pops::Loaders.new(test, true)
+  Puppet.override(current_environment: test, loaders: loaders) do
+    begin
+      compile_to_ral(example)
+    rescue
+      apply_with_error_check(example)
+    end
+  end
+end
+
+def validate_no_flush_calls(example_name)
+  # This function is very much like run_example, above, except
+  # that it also validates that no POST calls are made to a
+  # google API during the 'flush' step (i.e. 'update if
+  # necessary' step).
+  mods = [File.expand_path('.'), File.expand_path('./spec/fixtures/modules/')]
+  example = get_example(example_name)
+  test = Puppet::Node::Environment.create(:test, mods)
+  loaders = Puppet::Pops::Loaders.new(test, true)
+  Puppet.override(current_environment: test, loaders: loaders) do
+    begin
+      compile_to_ral(example)
+    rescue
+      apply_compiled_manifest(example) do |res|
+        if res.provider&.respond_to? 'flush'
+          # Any request to Google APIs during a flush is not
+          # acceptable - that means that a diff was detected.
+          omnistub = stub_request(:any, /google/)
+                     .to_raise("Shouldn't have made network call.")
+          res.provider.flush
+          remove_request_stub(omnistub)
+        end
+      end
+    end
   end
 end
 
