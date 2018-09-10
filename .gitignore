@@ -21,3 +21,7 @@ coverage/*
 
 # Keep project coverage statistics under source control
 !coverage/.last_run.json
+
+# Ansible PR Script
+tools/ansible-pr/templates/*
+!tools/ansible-pr/templates/.keep
