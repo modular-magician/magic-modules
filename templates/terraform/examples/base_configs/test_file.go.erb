@@ -1,0 +1,13 @@
+<%= lines(autogen_notice :go) -%>
+
+package google
+
+import (
+	"fmt"
+)
+
+<% object.example.each do |example| -%>
+func testAcc<%= product -%><%= resource_name %>_<%= example.name.camelize -%>Example(val string) string {
+<%= example.config_test -%>
+}
+<%- end %>
