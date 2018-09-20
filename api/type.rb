@@ -65,8 +65,6 @@ module Api
 
       raise 'Property cannot be output and required at the same time.' \
         if @output && @required
-      raise 'Property must be required if it is a URL-only parameter.' \
-        if @url_param_only && !@required
 
       check_optional_property_oneof_default \
         :update_verb, %i[POST PUT PATCH NONE], @__resource&.update_verb, Symbol
@@ -254,6 +252,7 @@ module Api
       NESTED_ARRAY_TYPE = [Api::Type::Array, Api::Type::NestedObject].freeze
       RREF_ARRAY_TYPE = [Api::Type::Array, Api::Type::ResourceRef].freeze
 
+      # rubocop:disable Metrics/CyclomaticComplexity
       def validate
         super
         if @item_type.is_a?(NestedObject) || @item_type.is_a?(ResourceRef)
@@ -270,6 +269,7 @@ module Api
         check_optional_property :min_size, ::Integer
         check_optional_property :max_size, ::Integer
       end
+      # rubocop:enable Metrics/CyclomaticComplexity
 
       def item_type_class
         return Api::Type::NestedObject if @item_type.is_a? NestedObject
