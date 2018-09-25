@@ -61,7 +61,7 @@ datasources: !ruby/object:Provider::ResourceOverrides
   InstanceTemplate: !ruby/object:Provider::Ansible::ResourceOverride
     version_added: '2.7'
   InterconnectAttachment: !ruby/object:Provider::Ansible::ResourceOverride
-    version_added: '2.7'
+    version_added: '2.8'
   Network: !ruby/object:Provider::Ansible::ResourceOverride
     version_added: '2.7'
   RegionAutoscaler: !ruby/object:Provider::Ansible::ResourceOverride
