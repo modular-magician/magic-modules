@@ -209,6 +209,21 @@ module Provider
         "#{object.kind}List"
       end
 
+      # Grabs all conflicted properties and returns an array of arrays without
+      # any duplicates.
+      def conflicted_property_batches(object)
+        sets = object.all_user_properties.map do |p|
+          if !p.conflicting_properties.empty?
+            p.conflicting_properties.map(&:name).map(&:underscore) + [p.name.underscore]
+          else
+            []
+          end
+        end
+        sets.map(&:sort)
+            .uniq
+            .reject(&:empty?)
+      end
+
       private
 
       def get_example(cfg_file)
