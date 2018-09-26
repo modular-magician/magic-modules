@@ -64,6 +64,28 @@ Puppet::Type.newtype(:<%= object.out_name -%>) do
         Google::LOGGER.info \
           "Generating autorequire #{object.name}.#{param.name}: #{param.type}"
 -%>
+<% if object.readonly -%>
+  autorequire(:<%= param.out_type -%>) do
+    reference = self[:<%= param.out_name -%>]
+<% if param.required -%>
+<%=
+  lines(format(
+    [
+      ["raise \"\#{ref} required property '#{param.out_name}' is missing\"",
+       'if reference.nil?'].join(' '),
+      [
+        "raise \"\#{ref} required property '#{param.out_name}' is missing\" \\",
+        indent('if reference.nil?', 2)
+      ]
+    ], 4
+  ))
+-%>
+    reference.autorequires
+<% else # param.required -%>
+    reference.autorequires unless reference.nil?
+<% end # param.required -%>
+  end
+<% else # object.readonly -%>
   autorequire(:<%= param.out_type -%>) do
     if self[:ensure] == :present
       reference = self[:<%= param.out_name -%>]
@@ -88,7 +110,30 @@ Puppet::Type.newtype(:<%= object.out_name -%>) do
       []
     end
   end
+<% end -%>
 
+<% if object.readonly -%>
+  autobefore(:<%= param.out_type -%>) do
+    reference = self[:<%= param.out_name -%>]
+<% if param.required -%>
+<%=
+  lines(format(
+    [
+      ["raise \"\#{ref} required property '#{param.out_name}' is missing\"",
+       'if reference.nil?'].join(' '),
+      [
+        "raise \"\#{ref} required property '#{param.out_name}' is missing\" \\",
+        indent('if reference.nil?', 2)
+      ]
+    ], 4
+  ))
+-%>
+    reference.autorequires
+<% else # param.required -%>
+    reference.autorequires unless reference.nil?
+<% end # param.required -%>
+  end
+<% else # object.readonly -%>
   autobefore(:<%= param.out_type -%>) do
     if self[:ensure] == :absent
       reference = self[:<%= param.out_name -%>]
@@ -113,6 +158,7 @@ Puppet::Type.newtype(:<%= object.out_name -%>) do
       []
     end
   end
+<% end -%>
 
 
 <%
