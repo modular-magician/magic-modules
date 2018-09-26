@@ -29,6 +29,8 @@ module Google
         "\"#{value}\""
       elsif value.is_a?(Numeric)
         value.to_s
+      elsif value.is_a?(Array) && value.all? { |v| v.is_a?(String) || v.is_a?(Symbol) }
+        "[]string{#{value.map(&method(:go_literal)).join(', ')}}"
       else
         raise "Unsupported go literal #{value}"
       end
