@@ -28,12 +28,34 @@
 <% Google::LOGGER.info "Generating #{object.name}: #{object.out_name}" -%>
 Puppet::Type.newtype(:<%= object.out_name -%>) do
 <%= format_description(object, 2, '@doc =') %>
+<% if !object.readonly -%>
 
+  autorequire(:gauth_credential) do
+    if self[:ensure] == :present
+      credential = self[:credential]
+      raise "#{ref}: required property 'credential' is missing" if credential.nil?
+      [credential]
+    else
+      []
+    end
+  end
+
+  autobefore(:gauth_credential) do
+    if self[:ensure] == :absent
+      credential = self[:credential]
+      raise "#{ref}: required property 'credential' is missing" if credential.nil?
+      [credential]
+    else
+      []
+    end
+  end
+<% else -%>
   autorequire(:gauth_credential) do
     credential = self[:credential]
     raise "#{ref}: required property 'credential' is missing" if credential.nil?
     [credential]
   end
+<% end -%>
 
 <%
   unless object.parameters.nil?
@@ -43,7 +65,8 @@ Puppet::Type.newtype(:<%= object.out_name -%>) do
           "Generating autorequire #{object.name}.#{param.name}: #{param.type}"
 -%>
   autorequire(:<%= param.out_type -%>) do
-    reference = self[:<%= param.out_name -%>]
+    if self[:ensure] == :present
+      reference = self[:<%= param.out_name -%>]
 <% if param.required -%>
 <%=
   lines(format(
@@ -54,14 +77,43 @@ Puppet::Type.newtype(:<%= object.out_name -%>) do
         "raise \"\#{ref} required property '#{param.out_name}' is missing\" \\",
         indent('if reference.nil?', 2)
       ]
-    ], 4
+    ], 6
   ))
 -%>
-    reference.autorequires
+      reference.autorequires
 <% else # param.required -%>
-    reference.autorequires unless reference.nil?
+      reference.autorequires unless reference.nil?
 <% end # param.required -%>
+    else
+      []
+    end
   end
+
+  autobefore(:<%= param.out_type -%>) do
+    if self[:ensure] == :absent
+      reference = self[:<%= param.out_name -%>]
+<% if param.required -%>
+<%=
+  lines(format(
+    [
+      ["raise \"\#{ref} required property '#{param.out_name}' is missing\"",
+       'if reference.nil?'].join(' '),
+      [
+        "raise \"\#{ref} required property '#{param.out_name}' is missing\" \\",
+        indent('if reference.nil?', 2)
+      ]
+    ], 6
+  ))
+-%>
+      reference.autorequires
+<% else # param.required -%>
+      reference.autorequires unless reference.nil?
+<% end # param.required -%>
+    else
+      []
+    end
+  end
+
 
 <%
       end
