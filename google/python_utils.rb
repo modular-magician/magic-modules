@@ -30,7 +30,7 @@ module Google
       elsif value.is_a?(Numeric)
         value.to_s
       elsif value.is_a?(Array)
-        "[#{value.map { |x| python_literal(x) }.join(' ,')}]"
+        "[#{value.map { |x| python_literal(x) }.join(', ')}]"
       else
         raise "Unsupported Python literal #{value}"
       end
