@@ -9,10 +9,11 @@ import (
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 )
-<% object.example.each do |example| -%>
+<% object.example.reject(&:skip_test).each do |example| -%>
 <%
+	resource_name = product_ns + object.name
 	# {Compute}{Address}_{addressBasic}
-	test_slug = "#{product}#{resource_name}_#{example.name.camelize}Example"
+	test_slug = "#{resource_name}_#{example.name.camelize}Example"
 -%>
 
 func TestAcc<%= test_slug -%>(t *testing.T) {
@@ -21,13 +22,13 @@ func TestAcc<%= test_slug -%>(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheck<%= "#{product}#{resource_name}" -%>Destroy,
+		CheckDestroy: testAccCheck<%= "#{resource_name}" -%>Destroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAcc<%= test_slug -%>(acctest.RandString(10)),
 			},
 			{
-				ResourceName:      "<%= "google_#{product.downcase}_#{resource_name.underscore}" -%>.<%= example.primary_resource_id -%>",
+				ResourceName:      "<%= "google_#{resource_name.underscore}" -%>.<%= example.primary_resource_id -%>",
 				ImportState:       true,
 				ImportStateVerify: true,
 			},

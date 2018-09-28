@@ -66,6 +66,9 @@ module Provider
       # vars is a Hash from template variable names to output variable names
       attr_reader :vars
 
+      # Whether to skip generating tests for this resource
+      attr_reader :skip_test
+
       def config_documentation
         body = lines(compile_file(
                        {
@@ -103,6 +106,7 @@ module Provider
         check_property :name, String
         check_property :primary_resource_id, String
         check_property :vars, Hash
+        check_optional_property :skip_test, Boolean
       end
     end
 
