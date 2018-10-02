@@ -85,12 +85,6 @@ resources:
         private_key: ((repo-key.private_key))
 {% endfor %}
 
-    - name: terraform-head
-      type: git-branch
-      source:
-          uri: git@github.com:terraform-providers/terraform-provider-google.git
-          private_key: ((repo-key.private_key))
-
     - name: mm-approved-prs
       type: github-pull-request
       source:
