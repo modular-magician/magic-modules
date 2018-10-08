@@ -10,12 +10,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# These files contains code that needs to be compiled before being delivered to
+# the final module tree structure:
 
---- !ruby/object:Api::Bundle
-name: Google Cloud Auth
-prefix: gauth
-versions:
-  - !ruby/object:Api::Product::Version
-    name: ga
-    base_url: 'dummy_url'
-    default: true
+<% dir = _version_name == 'beta' ? 'google-beta' : 'google' -%>
+'<%= dir -%>/provider_<%= api.prefix[1..-1] -%>_gen.go': 'templates/terraform/provider_gen.erb'
