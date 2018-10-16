@@ -38,7 +38,8 @@ module Provider
         'Api::Type::Boolean' => 'bool',
         'Api::Type::Integer' => 'int',
         'Api::Type::NameValues' => 'dict',
-        'Provider::Ansible::FilterProp' => 'list'
+        'Provider::Ansible::FilterProp' => 'list',
+        'Api::Type::Path' => 'path'
       }.freeze
 
       include Provider::Ansible::Documentation
