@@ -231,12 +231,36 @@ module Provider
         end
       end
     end
+
+    def filter_properties_by_version(object, version)
+      object.reject_properties_below_version(version) if object.is_a?(Api::Type::NestedObject)
+
+      object.properties.each do |prop|
+        filter_properties_by_version(prop, version) if prop.is_a?(Api::Type::NestedObject)
+      end
+    end
+
+    # filter_by_version recursively removes properties specified at a
+    # incompatible minimum version
+    #
+    # This makes sure regardless of depth of nesting a 'beta' property will not
+    # get added to a non-beta resource or provider.
+    def filter_by_version(object, version)
+      filter_properties_by_version(object, version)
+
+      object.parameters&.each do |param|
+        filter_properties_by_version(param, version) if param.is_a?(Api::Type::NestedObject)
+      end
+    end
+
     # rubocop:enable Metrics/CyclomaticComplexity
     # rubocop:enable Metrics/PerceivedComplexity
     # rubocop:enable Metrics/AbcSize
 
     def generate_object(object, output_folder, version)
       data = build_object_data(object, output_folder, version)
+
+      filter_by_version(object, version)
 
       generate_resource data
       generate_resource_tests data

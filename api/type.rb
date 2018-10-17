@@ -499,6 +499,10 @@ module Api
       def properties
         @properties.reject(&:exclude)
       end
+
+      def reject_properties_below_version(version)
+        @properties.reject! { |p| p.min_version > version }
+      end
     end
 
     # Represents an array of name=value pairs, and stores its items' type
