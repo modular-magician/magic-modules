@@ -16,7 +16,9 @@ def wait_for_operation(response, resource)
   return if op_result.nil?
 <%   stat_path = Google::HashUtils.path2navigate(object.async.status.path) -%>
   status = ::Google::HashUtils.navigate(op_result, <%= stat_path -%>)
+<% if object.async.result.path -%>
 <%   res_path = Google::HashUtils.path2navigate(object.async.result.path) -%>
+<% end -%>
 <% if object.self_link_query.nil? -%>
 <%=
   lines(format(
