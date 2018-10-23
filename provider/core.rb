@@ -361,9 +361,7 @@ module Provider
                    end
       generate_file(data.clone.merge(
         # Override with provider specific template for this object, if needed
-        template: Google::HashUtils.navigate(data[:config], ['template',
-                                                             data[:type]],
-                                             data[:default_template]),
+        template: data[:default_template],
         product_ns: product_ns
       ))
     end
