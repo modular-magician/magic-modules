@@ -1,3 +1,4 @@
+<% autogen_exception -%>
 package google
 
 import (
@@ -172,8 +173,10 @@ resource "google_compute_forwarding_rule" "foobar" {
   ip_protocol = "UDP"
   name        = "%s"
   port_range  = "80-81"
-  target      = "${google_compute_target_pool.foo-tp.self_link}"
-  labels      = {"foo" = "bar"}
+	target      = "${google_compute_target_pool.foo-tp.self_link}"
+<% unless version.nil? || version == 'ga' -%>
+	labels      = {"foo" = "bar"}
+<% end -%>
 }
 `, poolName, ruleName)
 }
@@ -195,8 +198,10 @@ resource "google_compute_forwarding_rule" "foobar" {
   ip_protocol = "UDP"
   name        = "%s"
   port_range  = "80-81"
-  target      = "${google_compute_target_pool.bar-tp.self_link}"
-  labels      = {"baz" = "qux"}
+	target      = "${google_compute_target_pool.bar-tp.self_link}"
+<% unless version.nil? || version == 'ga' -%>
+	labels      = {"baz" = "qux"}
+<% end -%>
 }
 `, poolName, poolName, ruleName)
 }
