@@ -15,6 +15,7 @@ require 'api/object'
 require 'compile/core'
 require 'provider/resource_override'
 require 'provider/resource_overrides'
+require 'provider/override_runner'
 
 module Provider
   # Settings for the provider
@@ -208,10 +209,17 @@ module Provider
       # class features
       source = config.compile(cfg_file)
       config = Google::YamlValidator.parse(source)
+
       config.default_overrides
+      # Handle overrides
+      runner = Provider::OverrideRunner.new(api, config.overrides,
+                                            config.resource_override,
+                                            config.property_override)
+      api = runner.build
+
       config.spread_api config, api, [], '' unless api.nil?
       config.validate
-      config
+      return api, config
     end
 
     def provider
@@ -224,8 +232,6 @@ module Provider
 
     def validate
       super
-
-      default_overrides
 
       check_optional_property :examples, Api::Resource::HashArray
       check_optional_property :files, Provider::Config::Files
@@ -257,7 +263,6 @@ module Provider
       end
     end
 
-    # TODO(nelsonjr): Investigate why we need to call default_overrides twice.
     def default_overrides
       @overrides ||= Provider::ResourceOverrides.new
     end
