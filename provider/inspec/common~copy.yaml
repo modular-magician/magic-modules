@@ -1,4 +1,3 @@
-<%# The license inside this block applies to this file.
 # Copyright 2017 Google Inc.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,26 +10,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
--%>
 
-<% autogen_exception -%>
+# These files are okay to be copied "AS-IS" to the module's final destination:
 
----
-title: About the <%= object.name -%> resource
-platform: gcp2
----
-
-## Syntax
-A `<%= resource_name(object, product_ns) -%>` is used to test a Google <%= object.name -%> resource
-
-TODO: Examples
-
-## Properties
-Properties that can be accessed from the `<%= resource_name(object, product_ns) -%>` resource:
-
-<% object.properties.each do |prop| -%>
-  * `<%= "#{prop.out_name}" -%>`: <%= "#{prop.description.split("\n").join(' ')}" -%>
-
-
-<%= sub_property_descriptions(prop) -%>
-<% end -%>
+'libraries/google/hash_utils.rb': 'google/hash_utils.rb'
+'libraries/google/string_utils.rb': 'google/string_utils.rb'
