@@ -33,7 +33,6 @@ RSpec.describe Zone, "parse" do
     time = Time.at(628232400).to_datetime
     expect(zone_mock.creation_timestamp).to eq time
   end
-
 end
 
 RSpec.describe Zone, "#parse" do

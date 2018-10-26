@@ -40,7 +40,6 @@ RSpec.describe Firewall, '#parse' do
     it { expect(@firewall_mock.direction).to eq 'INGRESS' }
     it { expect(@firewall_mock.network).to match('/default$') }
     it { expect(@firewall_mock.source_ranges).to include "113.197.104.0/22" }
-
   end
 end
 
