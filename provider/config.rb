@@ -13,9 +13,8 @@
 
 require 'api/object'
 require 'compile/core'
-require 'provider/resource_override'
-require 'provider/resource_overrides'
-require 'provider/override_runner'
+require 'provider/overrides/runner'
+require 'provider/overrides/resources'
 
 module Provider
   # Settings for the provider
@@ -236,7 +235,7 @@ module Provider
       check_optional_property :examples, Api::Resource::HashArray
       check_optional_property :files, Provider::Config::Files
       check_optional_property :objects, Api::Resource::HashArray
-      check_property :overrides, Provider::ResourceOverrides
+      check_property :overrides, Provider::Overrides::ResourceOverrides
       check_optional_property :test_data, Provider::Config::TestData
       check_optional_property :tests, Api::Resource::HashArray
 
@@ -264,7 +263,7 @@ module Provider
     end
 
     def default_overrides
-      @overrides ||= Provider::ResourceOverrides.new
+      @overrides ||= Provider::Overrides::ResourceOverrides.new
     end
   end
 end
