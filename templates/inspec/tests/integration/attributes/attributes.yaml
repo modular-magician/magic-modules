@@ -1,0 +1,11 @@
+project_name: 'graphite-test-sam-chef'
+region: 'us-west1'
+zone: 'us-west1-a'
+
+network:
+  name: 'inspec-gcp-network'
+  routing_mode: 'REGIONAL'
+
+subnetwork:
+  name: 'inspec-gcp-subnetwork'
+  ip_range: '10.2.0.0/29'

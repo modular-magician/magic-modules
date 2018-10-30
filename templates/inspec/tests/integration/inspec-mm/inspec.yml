@@ -1,0 +1,24 @@
+name: inspec-mm
+title: InSpec Profile
+maintainer: slevenick@google.com
+copyright: Google
+copyright_email: slevenick@google.com
+license: TODO
+summary: An InSpec Compliance Profile for testing Magic Modules generated resources
+version: 0.1.0
+attributes:
+  - name: project_name
+    type: string
+    required: true
+  - name: network
+    type: hash
+    required: true
+  - name: subnetwork
+    type: hash
+    required: true
+  - name: zone
+    type: string
+    required: true
+  - name: region
+    type: string
+    required: true

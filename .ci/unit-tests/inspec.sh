@@ -3,7 +3,7 @@
 set -e
 set -x
 
-pushd "magic-modules/build/inspec/test/unit"
+pushd "magic-modules/build/inspec/test"
 
 bundle install
 rspec -I ../../libraries *
