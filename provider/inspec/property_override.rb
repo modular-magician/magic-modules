@@ -13,24 +13,12 @@
 
 require 'api/object'
 require 'provider/abstract_core'
-require 'provider/property_override'
+require 'provider/overrides/resources'
 
 module Provider
   class Inspec < Provider::Core
-    # Collection of fields allowed in the PropertyOverride section for
-    # inspec. All fields should be `attr_reader :<property>`
-    module OverrideFields
-    end
-
     # inspec-specific overrides to api.yaml.
-    class PropertyOverride < Provider::PropertyOverride
-      include OverrideFields
-
-      private
-
-      def overriden
-        Provider::Inspec::OverrideFields
-      end
+    class PropertyOverride < Provider::Overrides::PropertyOverride
     end
   end
 end

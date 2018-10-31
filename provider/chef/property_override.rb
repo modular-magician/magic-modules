@@ -13,7 +13,7 @@
 
 require 'api/object'
 require 'provider/abstract_core'
-require 'provider/property_override'
+require 'provider/overrides/resources'
 
 module Provider
   class Chef < Provider::Core
@@ -23,7 +23,7 @@ module Provider
     end
 
     # Chef-specific overrides to api.yaml.
-    class PropertyOverride < Provider::PropertyOverride
+    class PropertyOverride < Provider::Overrides::PropertyOverride
       include OverrideFields
 
       private

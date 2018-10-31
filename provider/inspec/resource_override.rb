@@ -12,15 +12,10 @@
 # limitations under the License.
 
 require 'provider/core'
-require 'provider/resource_override'
+require 'provider/overrides/resources'
 
 module Provider
   class Inspec < Provider::Core
-    # inspec specific properties to be added to Api::Resource
-    module OverrideProperties
-      attr_reader :manual
-    end
-
     # Custom inspec code to handle type convergence operations
     class Handlers < Api::Object
       def validate
@@ -29,8 +24,12 @@ module Provider
     end
 
     # Product specific overriden properties for inspec
-    class ResourceOverride < Provider::ResourceOverride
-      include OverrideProperties
+    class ResourceOverride < Provider::Overrides::ResourceOverride
+      def self.attributes
+        [:manual]
+      end
+
+      attr_reader(*attributes)
 
       def validate
         assign_defaults
@@ -43,10 +42,6 @@ module Provider
 
       def assign_defaults
         default_value_property :manual, false
-      end
-
-      def overriden
-        Provider::Inspec::OverrideProperties
       end
     end
   end
