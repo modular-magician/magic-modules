@@ -218,7 +218,7 @@ module Provider
       config.validate
 
       config.spread_api config, api, [], '' unless api.nil?
-      return api, config
+      [api, config]
     end
 
     def provider
