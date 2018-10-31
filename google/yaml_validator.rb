@@ -39,7 +39,6 @@ module Google
 
     def set_variable(value, property)
       Google::LOGGER.debug "Setting variable of #{value} to #{self}"
-      ensure_property_does_not_exist property
       instance_variable_set("@#{property}", value)
     end
 
@@ -86,7 +85,7 @@ module Google
       Google::LOGGER.debug "Checking '#{property}' on #{object_display_name}"
       raise "Missing '#{property}' on #{object_display_name}" if prop_value.nil?
       check_type property, prop_value, type unless type.nil?
-      prop_value.validate if prop_value.is_a?(Api::Object)
+      prop_value.validate if prop_value.is_a?(Api::Object) || prop_value.is_a?(Provider::Overrides::OverrideResource)
     end
 
     def default_value_property(property, def_value)

@@ -13,7 +13,7 @@
 
 require 'api/object'
 require 'provider/abstract_core'
-require 'provider/property_override'
+require 'provider/overrides/resources'
 
 module Provider
   class Puppet < Provider::Core
@@ -24,7 +24,7 @@ module Provider
     end
 
     # Puppet-specific overrides to api.yaml.
-    class PropertyOverride < Provider::PropertyOverride
+    class PropertyOverride < Provider::Overrides::PropertyOverride
       include OverrideFields
 
       def validate
