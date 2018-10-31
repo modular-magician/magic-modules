@@ -24,7 +24,7 @@ manifest: !ruby/object:Provider::Chef::Manifest
 <%= indent(compile('provider/chef/common~depends.yaml'), 4) %>
   operating_systems:
 <%= indent(include('provider/chef/common~operating_systems.yaml'), 4) %>
-overrides: !ruby/object:Provider::ResourceOverrides
+overrides: !ruby/object:Provider::Overrides::ResourceOverrides
   Database: !ruby/object:Provider::Chef::ResourceOverride
     handlers: !ruby/object:Provider::Chef::Handlers
       # TODO(nelsonjr): Once bugs in the body are resolved remove this override.

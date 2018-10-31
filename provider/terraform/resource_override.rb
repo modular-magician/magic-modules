@@ -12,7 +12,7 @@
 # limitations under the License.
 
 require 'provider/abstract_core'
-require 'provider/resource_override'
+require 'provider/overrides/resources'
 require 'provider/terraform/custom_code'
 
 module Provider
@@ -42,8 +42,12 @@ module Provider
 
     # A class to control overridden properties on terraform.yaml in lieu of
     # values from api.yaml.
-    class ResourceOverride < Provider::ResourceOverride
-      include OverrideProperties
+    class ResourceOverride < Provider::Overrides::ResourceOverride
+      attr_reader :description
+
+      def self.attributes
+        [:id_format, :import_format, :custom_code, :docs, :mutex, :examples, :example]
+      end
 
       def validate
         super

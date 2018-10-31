@@ -12,7 +12,7 @@
 # limitations under the License.
 
 --- !ruby/object:Provider::Terraform::Config
-overrides: !ruby/object:Provider::ResourceOverrides
+overrides: !ruby/object:Provider::Overrides::ResourceOverrides
   Instance: !ruby/object:Provider::Terraform::ResourceOverride
     exclude: false
     id_format: "{{project}}/{{zone}}/{{name}}"
@@ -24,12 +24,13 @@ overrides: !ruby/object:Provider::ResourceOverrides
         version: <%= _version_name %>
         vars:
           instance_name: "test-instance"
+    parameters:
+      zone: !ruby/object:Provider::Terraform::PropertyOverride
+        ignore_read: true
     properties:
       name: !ruby/object:Provider::Terraform::PropertyOverride
         custom_flatten: 'templates/terraform/custom_flatten/name_from_self_link.erb'
-      zone: !ruby/object:Provider::Terraform::PropertyOverride
-        ignore_read: true
-      networks.reservedIpRange: !ruby/object:Provider::Terraform::PropertyOverride
+      networks[].reservedIpRange: !ruby/object:Provider::Terraform::PropertyOverride
         default_from_api: true
     custom_code: !ruby/object:Provider::Terraform::CustomCode
       pre_update: templates/terraform/pre_update/update_mask.erb

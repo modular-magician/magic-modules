@@ -12,7 +12,7 @@
 # limitations under the License.
 
 require 'provider/core'
-require 'provider/resource_override'
+require 'provider/overrides/resources'
 
 module Provider
   class Chef < Provider::Core
@@ -59,7 +59,7 @@ module Provider
     end
 
     # Product specific overriden properties for Chef
-    class ResourceOverride < Provider::ResourceOverride
+    class ResourceOverride < Provider::Overrides::ResourceOverride
       include OverrideProperties
 
       def validate

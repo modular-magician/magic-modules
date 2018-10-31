@@ -13,31 +13,26 @@
 
 require 'api/object'
 require 'provider/abstract_core'
-require 'provider/property_override'
+require 'provider/overrides/resources'
 
 module Provider
   module Ansible
-    # Collection of fields allowed in the PropertyOverride section for
-    # Ansible. All fields should be `attr_reader :<property>`
-    module OverrideFields
-      attr_reader :aliases
-      attr_reader :version_added
-    end
 
     # Ansible-specific overrides to api.yaml.
-    class PropertyOverride < Provider::PropertyOverride
-      include OverrideFields
+    class PropertyOverride < Provider::Overrides::PropertyOverride
+      # Collection of fields allowed in the PropertyOverride section for
+      # Ansible. All fields should be `attr_reader :<property>`
+      def self.attributes
+        [:aliases, :version_added]
+      end
+      
+      attr_reader *self.attributes
+
       def validate
         super
 
         check_optional_property :aliases, ::Array
         check_optional_property :version_added, ::String
-      end
-
-      private
-
-      def overriden
-        Provider::Ansible::OverrideFields
       end
     end
   end
