@@ -11,14 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'api/object'
-require 'provider/abstract_core'
-require 'provider/overrides/resources'
-
-module Provider
-  class Inspec < Provider::Core
-    # inspec-specific overrides to api.yaml.
-    class PropertyOverride < Provider::Overrides::PropertyOverride
-    end
-  end
-end
+sourceSnapshot: !ruby/object:Provider::Terraform::PropertyOverride
+  name: snapshot
+  description: |
+    {{description}}* `snapshot`
