@@ -38,7 +38,8 @@ module Provider
         'Api::Type::Boolean' => 'bool',
         'Api::Type::Integer' => 'int',
         'Api::Type::NameValues' => 'dict',
-        'Provider::Ansible::FilterProp' => 'list'
+        'Provider::Ansible::FilterProp' => 'list',
+        'Api::Type::Path' => 'path'
       }.freeze
 
       include Provider::Ansible::Documentation
@@ -225,7 +226,7 @@ module Provider
         FileUtils.mkpath target_folder
         name = module_name(data[:object])
         generate_resource_file data.clone.merge(
-          default_template: 'templates/ansible/resource.erb',
+          default_template: data[:object].template || 'templates/ansible/resource.erb',
           out_file: File.join(target_folder,
                               "lib/ansible/modules/cloud/google/#{name}.py")
         )
