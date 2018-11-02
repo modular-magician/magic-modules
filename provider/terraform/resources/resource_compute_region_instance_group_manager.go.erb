@@ -479,6 +479,9 @@ func resourceComputeRegionInstanceGroupManagerRead(d *schema.ResourceData, meta 
 		update_strategy = "NONE"
 	}
 	d.Set("update_strategy", update_strategy.(string))
+
+	// Terraform _really_ doesn't like removing lists.
+	d.Set("version" , nil)
 <% else -%>
 	if err := d.Set("auto_healing_policies", flattenAutoHealingPolicies(manager.AutoHealingPolicies)); err != nil {
 		return fmt.Errorf("Error setting auto_healing_policies in state: %s", err.Error())
