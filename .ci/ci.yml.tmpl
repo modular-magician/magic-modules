@@ -381,6 +381,6 @@ jobs:
     - name: inspec-integration-test
       plan:
         - task: inspec-integration
-          file: magic-modules/.ci/acceptance-tests/inspec-integration/yml
+          file: magic-modules/.ci/acceptance-tests/inspec-integration.yml
           params:
             GOOGLE_JSON_ACCOUNT: "TODO"
