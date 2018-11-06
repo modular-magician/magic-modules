@@ -13,7 +13,7 @@ export GOPATH=${PWD}/go
 # to disk for use in tests.
 echo "${GOOGLE_JSON_ACCOUNT}" > /tmp/google-account.json
 
-git clone https://github.com/modular-magician/inspec-gcp.git
+git clone https://github.com/slevenick/inspec-gcp.git
 pushd inspec-gcp/test/integration
 
 # Generate tfvars
