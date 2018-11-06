@@ -13,7 +13,7 @@ export GOPATH=${PWD}/go
 # to disk for use in tests.
 echo "${GOOGLE_JSON_ACCOUNT}" > /tmp/google-account.json
 
-git clone https://github.com/modular-magician/inspec-gcp.git
+git clone https://github.com/slevenick/inspec-gcp.git
 pushd inspec-gcp/test/integration
 
 # Generate tfvars
@@ -24,6 +24,9 @@ popd
 
 # Run terraform
 pushd terraform
+wget https://releases.hashicorp.com/terraform/0.11.10/terraform_0.11.10_linux_amd64.zip
+unzip terraform_0.11.10_linux_amd64.zip
+terraform init
 terraform plan
 terraform apply -auto-approve
 export GOOGLE_APPLICATION_CREDENTIALS="${PWD}/inspec.json"
@@ -37,5 +40,7 @@ popd
 # Run inspec
 rbenv exec inspec exec inspec-mm --attrs=attributes/attributes.yaml -t gcp2://
 
+pushd terraform
 terraform destroy -auto-approve
+popd
 popd
