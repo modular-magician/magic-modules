@@ -23,6 +23,18 @@ manifest: !ruby/object:Provider::Ansible::Manifest
     - google-auth >= 1.3.0
   version_added: '2.7'
   author: Google Inc. (@googlecloudplatform)
+datasources: !ruby/object:Provider::ResourceOverrides
+  Instance: !ruby/object:Provider::Ansible::ResourceOverride
+    version_added: '2.8'
+    facts: !ruby/object:Provider::Ansible::FactsOverride
+      has_filters: false
+  Database: !ruby/object:Provider::Ansible::ResourceOverride
+    version_added: '2.8'
+    facts: !ruby/object:Provider::Ansible::FactsOverride
+      has_filters: false
+  # Virtual => true objects that don't need dedicated resources.
+  InstanceConfig: !ruby/object:Provider::Ansible::ResourceOverride
+    exclude: true
 overrides: !ruby/object:Provider::ResourceOverrides
   Instance: !ruby/object:Provider::Ansible::ResourceOverride
     custom_create_resource: true
@@ -38,11 +50,7 @@ overrides: !ruby/object:Provider::ResourceOverrides
   # Virtual => true objects that don't need dedicated resources.
   InstanceConfig: !ruby/object:Provider::Ansible::ResourceOverride
     exclude: true
-examples: !ruby/object:Api::Resource::HashArray
 files: !ruby/object:Provider::Config::Files
-  copy:
-<%= lines(indent(compile('provider/ansible/common~copy.yaml'), 4)) -%>
   compile:
-<%= lines(indent(compile('provider/ansible/common~compile.yaml'), 4)) -%>
+<%= lines(indent(compile('provider/ansible/product~compile.yaml'), 4)) -%>
 tests: !ruby/object:Api::Resource::HashArray
-test_data: !ruby/object:Provider::Config::TestData

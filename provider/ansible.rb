@@ -30,14 +30,13 @@ module Provider
     # Code generator for Ansible Cookbooks that manage Google Cloud Platform
     # resources.
     # TODO(alexstephen): Split up class into multiple modules.
-    # rubocop:disable Metrics/ClassLength
     class Core < Provider::Core
       PYTHON_TYPE_FROM_MM_TYPE = {
         'Api::Type::NestedObject' => 'dict',
         'Api::Type::Array' => 'list',
         'Api::Type::Boolean' => 'bool',
         'Api::Type::Integer' => 'int',
-        'Api::Type::NameValues' => 'dict',
+        'Api::Type::KeyValuePairs' => 'dict',
         'Provider::Ansible::FilterProp' => 'list'
       }.freeze
 
@@ -101,17 +100,14 @@ module Provider
       # * module will always be included.
       # * extra_data is a dict of extra information.
       # * extra_url will have a URL chunk to be appended after the URL.
-      # rubocop:disable Metrics/MethodLength
-      # rubocop:disable Metrics/AbcSize
       def emit_link(name, url, object, has_extra_data = false)
         params = emit_link_var_args(url, has_extra_data)
-        extra = (' + extra_url' if url.include?('<|extra|>')) || ''
         if rrefs_in_link(url, object)
-          url_code = "#{url}.format(**res)#{extra}"
+          url_code = "#{url}.format(**res)"
           [
             "def #{name}(#{params.join(', ')}):",
             indent("res = #{resourceref_hash_for_links(url, object)}", 4),
-            indent("return #{url_code}", 4).gsub('<|extra|>', '')
+            indent("return #{url_code}", 4)
           ].join("\n")
         elsif has_extra_data
           [
@@ -120,7 +116,7 @@ module Provider
                      'if extra_data is None:',
                      indent('extra_data = {}', 4)
                    ], 4),
-            indent("url = #{url}#{extra}", 4).gsub('<|extra|>', ''),
+            indent("url = #{url}", 4),
             indent([
                      'combined = extra_data.copy()',
                      'combined.update(module.params)',
@@ -128,15 +124,13 @@ module Provider
                    ], 4)
           ].compact.join("\n")
         else
-          url_code = "#{url}.format(**module.params)#{extra}"
+          url_code = "#{url}.format(**module.params)"
           [
             "def #{name}(#{params.join(', ')}):",
-            indent("return #{url_code}", 4).gsub('<|extra|>', '')
+            indent("return #{url_code}", 4)
           ].join("\n")
         end
       end
-      # rubocop:enable Metrics/MethodLength
-      # rubocop:enable Metrics/AbcSize
 
       def emit_method(name, args, code, _file_name, _opts = {})
         [
@@ -153,7 +147,6 @@ module Provider
         end.any?
       end
 
-      # rubocop:disable Metrics/AbcSize
       def resourceref_hash_for_links(link, object)
         props_in_link = link.scan(/{([a-z_]*)}/).flatten
         props = props_in_link.map do |p|
@@ -174,8 +167,6 @@ module Provider
         end
         ['{', indent_list(props, 4), '}'].join("\n")
       end
-      # rubocop:enable Metrics/MethodLength
-      # rubocop:enable Metrics/AbcSize
 
       def emit_link_var_args(url, extra_data)
         extra_url = url.include?('<|extra|>')
@@ -246,6 +237,7 @@ module Provider
         path = ["products/#{data[:product_name]}",
                 "examples/ansible/#{prod_name}.yaml"].join('/')
 
+        return unless data[:object].has_tests
         # Unlike other providers, all resources will not be built at once or
         # in close timing to each other (due to external PRs).
         # This means that examples might not be built out for every resource
@@ -287,19 +279,6 @@ module Provider
         facts_info.validate
         data[:object].instance_variable_set(:@facts, facts_info)
       end
-
-      def generate_network_datas(data, object) end
-
-      def generate_base_property(data) end
-
-      def generate_simple_property(type, data) end
-
-      def generate_typed_array(type, data) end
-
-      def emit_nested_object(data) end
-
-      def emit_resourceref_object(data) end
     end
-    # rubocop:enable Metrics/ClassLength
   end
 end

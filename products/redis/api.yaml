@@ -18,6 +18,10 @@ versions:
   - !ruby/object:Api::Product::Version
     name: beta
     base_url: https://redis.googleapis.com/v1beta1/
+  - !ruby/object:Api::Product::Version
+    name: ga
+    base_url: https://redis.googleapis.com/v1/
+    default: true
 scopes:
   - https://www.googleapis.com/auth/cloud-platform
 objects:
@@ -36,8 +40,11 @@ objects:
           'https://cloud.google.com/memorystore/docs/redis/'
       api: 'https://cloud.google.com/memorystore/docs/redis/reference/rest/'
 <%=
-  # Cloud Redis takes a fair bit of time to provision, try six minutes.
-  indent(compile_file({timeouts: { insert_sec: 6 * 60 }},
+  # Cloud Redis takes a fair bit of time to provision/delete, try six minutes.
+  indent(compile_file({timeouts: {
+                        insert_sec: 6 * 60,
+                        update_sec: 6 * 60,
+                        delete_sec: 6 * 60 }},
                       'templates/regional_async.yaml.erb'), 4)
 %>
     parameters:
@@ -90,17 +97,15 @@ objects:
           Hostname or IP address of the exposed Redis endpoint used by clients
           to connect to the service.
         output: true
-      - !ruby/object:Api::Type::NameValues
+      - !ruby/object:Api::Type::KeyValuePairs
         name: 'labels'
         description: Resource labels to represent user provided metadata.
-        value_type: Api::Type::String
-      - !ruby/object:Api::Type::NameValues
+      - !ruby/object:Api::Type::KeyValuePairs
         name: 'redisConfigs'
         description: |
           Redis configuration parameters, according to http://redis.io/topics/config.
           Check Memorystore documentation for the list of supported parameters:
           https://cloud.google.com/memorystore/docs/redis/reference/rest/v1/projects.locations.instances#Instance.FIELDS.redis_configs
-        value_type: Api::Type::String
       - !ruby/object:Api::Type::String
         name: locationId
         description: |

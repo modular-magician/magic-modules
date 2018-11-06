@@ -23,7 +23,6 @@ require 'google/golang_utils'
 module Provider
   # Code generator for Terraform Resources that manage Google Cloud Platform
   # resources.
-  # rubocop:disable Metrics/ClassLength
   class Terraform < Provider::AbstractCore
     include Provider::Terraform::Import
     include Provider::Terraform::SubTemplate
@@ -38,7 +37,6 @@ module Provider
     end
 
     def tf_type(property)
-      return 'schema.TypeSet' if string_to_object_map?(property)
       tf_types[property.class]
     end
 
@@ -57,7 +55,8 @@ module Provider
         Api::Type::ResourceRef => 'schema.TypeString',
         Api::Type::NestedObject => 'schema.TypeList',
         Api::Type::Array => 'schema.TypeList',
-        Api::Type::NameValues => 'schema.TypeMap',
+        Api::Type::KeyValuePairs => 'schema.TypeMap',
+        Api::Type::Map => 'schema.TypeSet',
         Api::Type::Fingerprint => 'schema.TypeString'
       }
     end
@@ -104,7 +103,7 @@ module Provider
       elsif property.is_a?(Api::Type::Array) &&
             property.item_type.is_a?(Api::Type::NestedObject)
         property.item_type.properties
-      elsif string_to_object_map?(property)
+      elsif property.is_a?(Api::Type::Map)
         property.value_type.properties
       else
         []
@@ -117,7 +116,8 @@ module Provider
     # per resource. The resource.erb template forms the basis of a single
     # GCP Resource on Terraform.
     def generate_resource(data)
-      target_folder = File.join(data[:output_folder], 'google')
+      dir = data[:version] == 'beta' ? 'google-beta' : 'google'
+      target_folder = File.join(data[:output_folder], dir)
       FileUtils.mkpath target_folder
       name = data[:object].name.underscore
       product_name = data[:product_name].underscore
@@ -128,7 +128,6 @@ module Provider
       )
       # TODO: error check goimports
       %x(goimports -w #{filepath})
-
       generate_documentation(data)
     end
 
@@ -138,6 +137,7 @@ module Provider
       FileUtils.mkpath target_folder
       name = data[:object].name.underscore
       product_name = data[:product_name].underscore
+
       filepath =
         File.join(target_folder, "#{product_name}_#{name}.html.markdown")
       generate_resource_file data.clone.merge(
@@ -146,11 +146,11 @@ module Provider
       )
     end
 
-    # rubocop:disable Metrics/AbcSize
     def generate_resource_tests(data)
-      return if data[:object].example.nil?
+      return if data[:object].example.reject(&:skip_test).empty?
 
-      target_folder = File.join(data[:output_folder], 'google')
+      dir = data[:version] == 'beta' ? 'google-beta' : 'google'
+      target_folder = File.join(data[:output_folder], dir)
       FileUtils.mkpath target_folder
       name = data[:object].name.underscore
       product_name = data[:product_name].underscore
@@ -165,8 +165,9 @@ module Provider
         default_template: 'templates/terraform/examples/base_configs/test_file.go.erb',
         out_file: filepath
       )
+
+      # TODO: error check goimports
+      %x(goimports -w #{filepath})
     end
-    # rubocop:enable Metrics/AbcSize
   end
-  # rubocop:enable Metrics/ClassLength
 end

@@ -3,33 +3,45 @@
 package google
 
 import (
-	"fmt"
-	"testing"
+  "fmt"
+  "testing"
 
-	"github.com/hashicorp/terraform/helper/acctest"
-	"github.com/hashicorp/terraform/helper/resource"
+  "github.com/hashicorp/terraform/helper/acctest"
+  "github.com/hashicorp/terraform/helper/resource"
 )
-<% object.example.each do |example| -%>
+<%
+  api_name = @config.name || product_ns
+	resource_name = api_name + object.name
+  terraform_name = "google_" + resource_name.underscore
+%>
+<% object.example.reject(&:skip_test).each do |example| -%>
 <%
 	# {Compute}{Address}_{addressBasic}
-	test_slug = "#{product}#{resource_name}_#{example.name.camelize}Example"
+	test_slug = "#{resource_name}_#{example.name.camelize}Example"
+	  ignore_read = data[:object].all_user_properties
+                 .select(&:ignore_read)
+                 .map { |p| p.name.underscore }
+                 .concat(example.ignore_read_extra)
 -%>
 
 func TestAcc<%= test_slug -%>(t *testing.T) {
-	t.Parallel()
+  t.Parallel()
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheck<%= "#{product}#{resource_name}" -%>Destroy,
+		CheckDestroy: testAccCheck<%= "#{resource_name}" -%>Destroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAcc<%= test_slug -%>(acctest.RandString(10)),
 			},
 			{
-				ResourceName:      "<%= "google_#{product.downcase}_#{resource_name.underscore}" -%>.<%= example.primary_resource_id -%>",
+				ResourceName:      "<%= terraform_name -%>.<%= example.primary_resource_id -%>",
 				ImportState:       true,
 				ImportStateVerify: true,
+        <%- unless ignore_read.empty? -%>
+        ImportStateVerifyIgnore: <%= go_literal(ignore_read) %>,
+        <%- end -%>
 			},
 		},
 	})
@@ -39,3 +51,25 @@ func testAcc<%= test_slug -%>(val string) string {
 <%= example.config_test -%>
 }
 <%- end %>
+
+func testAccCheck<%= resource_name -%>Destroy(s *terraform.State) error {
+	for _, rs := range s.RootModule().Resources {
+		if rs.Type != "<%= terraform_name -%>" {
+			continue
+		}
+
+	config := testAccProvider.Meta().(*Config)
+
+	url, err := replaceVarsForTest(rs, "<%= build_url(object.self_link_url) -%>")
+	if err != nil {
+		return err
+	}
+
+	_, err = sendRequest(config, "GET", url, nil)
+	if err == nil {
+			return fmt.Errorf("<%= resource_name -%> still exists at %s", url)
+		}
+	}
+
+	return nil
+}

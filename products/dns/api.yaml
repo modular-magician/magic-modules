@@ -38,6 +38,8 @@ objects:
       hosted by the Cloud DNS service.
     exports:
       - name
+    collection_url_response: !ruby/object:Api::Resource::ResponseList
+      items: 'managedZones'
     properties:
       - !ruby/object:Api::Type::String
         name: 'description'
@@ -144,12 +146,13 @@ objects:
       CAA, MX, CNAME, NS, etc)
     base_url: |
       projects/{{project}}/managedZones/{{managed_zone}}/changes
-      <|extra|>
     self_link: |
       projects/{{project}}/managedZones/{{managed_zone}}/rrsets
       ?name={{name}}&type={{type}}
     self_link_query: !ruby/object:Api::Resource::ResponseList
       kind: 'dns#resourceRecordSetsListResponse'
+      items: 'rrsets'
+    collection_url_response: !ruby/object:Api::Resource::ResponseList
       items: 'rrsets'
     identity:
       - name

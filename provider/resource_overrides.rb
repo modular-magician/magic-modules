@@ -35,7 +35,6 @@ module Provider
   #         !ruby/object:Provider::MyProvider::PropertyOverride
   #         description: 'baz'
   #   ...
-  # rubocop:disable Metrics/ClassLength
   class ResourceOverrides < Api::Object
     def consume_config(api, config)
       @__api = api
@@ -112,7 +111,7 @@ module Provider
       # before we have applied the overrides to its child properties (and
       # therefore can no longer find the child property, since the
       # parent name has changed)
-      sorted_props = override.properties.sort_by { |path, _| -path.count('.') }
+      sorted_props = override.properties.sort_by { |path, p| p.override_order || -path.count('.') }
       sorted_props.each do |property_path, property_override|
         check_property_value "properties['#{property_path}']",
                              property_override, Provider::PropertyOverride
@@ -149,7 +148,7 @@ module Provider
       elsif api_entity.is_a?(Api::Type::Array) &&
             api_entity.item_type.is_a?(Api::Type::NestedObject)
         api_entity.item_type.all_properties
-      elsif ObjectUtils.string_to_object_map?(api_entity)
+      elsif api_entity.is_a?(Api::Type::Map)
         api_entity.value_type.all_properties
       end
     end
@@ -182,5 +181,4 @@ module Provider
       end
     end
   end
-  # rubocop:enable Metrics/ClassLength
 end

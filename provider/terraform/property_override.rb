@@ -121,7 +121,6 @@ module Provider
         raise "'default_value' and 'default_from_api' cannot be both set"  \
           if default_from_api && !default_value.nil?
       end
-      # rubocop:enable Metrics/MethodLength
 
       def apply(api_property)
         unless description.nil?
@@ -130,10 +129,10 @@ module Provider
         end
 
         unless api_property.is_a?(Api::Type::Array) ||
-               ObjectUtils.string_to_object_map?(api_property)
+               api_property.is_a?(Api::Type::Map)
           if @is_set
             raise 'Set can only be specified for Api::Type::Array ' \
-                  'or Api::Type::NameValues<String, NestedObject>. ' \
+                  'or Api::Type:Map. ' \
                   "Type is #{api_property.class} for property "\
                   "'#{api_property.name}'"
           end

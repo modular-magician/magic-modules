@@ -16,7 +16,6 @@ require 'google/string_utils'
 
 module Api
   # An object available in the product
-  # rubocop:disable Metrics/ClassLength
   class Resource < Api::Object::Named
     # The list of properties (attr_reader) that can be overridden in
     # <provider>.yaml.
@@ -42,6 +41,10 @@ module Api
       # GET/DELETE requests only.  In particular, this is often used
       # to add query parameters.
       attr_reader :self_link_query
+      # This is the type of response from the collection URL. It contains
+      # the name of the list of items within the json, as well as the
+      # type that this list should be. This is of type Api::Resource::ResponseList
+      attr_reader :collection_url_response
       # This is an array with items that uniquely identify the resource.
       # This is useful in case an API returns a list result and we need
       # to fetch the particular resource we're interested in from that
@@ -100,7 +103,9 @@ module Api
 
       def validate
         super
-        check_property :kind, String
+        default_value_property :items, 'items'
+
+        check_optional_property :kind, String
         check_property :items, String
       end
 
@@ -227,8 +232,6 @@ module Api
     # the number of properties, it is okay to ignore Rubocop warnings about
     # method size and complexity.
     #
-    # rubocop:disable Metrics/AbcSize
-    # rubocop:disable Metrics/MethodLength
     def validate
       super
       check_optional_property :async, Api::Async
@@ -247,7 +250,11 @@ module Api
       check_optional_property :transport, Transport
       check_optional_property :references, ReferenceLinks
 
-      check_property :properties, Array unless @exclude
+      default_value_property :collection_url_response,
+                             Api::Resource::ResponseList.new
+      check_property :collection_url_response, Api::Resource::ResponseList
+      default_value_property :collection_url_response,
+                             Api::Resource::ResponseList.new
 
       check_property_oneof_default :create_verb, %i[POST PUT], :POST, Symbol
       check_property_oneof_default \
@@ -261,12 +268,12 @@ module Api
       set_variables(@properties, :__resource)
 
       check_property_list :parameters, Api::Type
+
+      check_property :properties, Array unless @exclude
       check_property_list :properties, Api::Type
 
       check_identity unless @identity.nil?
     end
-    # rubocop:enable Metrics/AbcSize
-    # rubocop:enable Metrics/MethodLength
 
     def properties
       (@properties || []).reject(&:exclude)
@@ -322,6 +329,7 @@ module Api
 
     def check_identity
       check_property :identity, Array
+      check_property_list :identity, String
 
       # Ensures we have all properties defined
       @identity.each do |i|
@@ -434,9 +442,6 @@ module Api
     #   props- a list of props
     #   original_object - the original object containing props. This is to
     #                     avoid self-referencing objects.
-    # rubocop:disable Metrics/AbcSize
-    # rubocop:disable Metrics/CyclomaticComplexity
-    # rubocop:disable Metrics/PerceivedComplexity
     def resourcerefs_for_properties(props, original_obj)
       rrefs = []
       props.each do |p|
@@ -469,10 +474,5 @@ module Api
       end
       rrefs.uniq
     end
-
-    # rubocop:enable Metrics/AbcSize
-    # rubocop:enable Metrics/CyclomaticComplexity
-    # rubocop:enable Metrics/PerceivedComplexity
   end
-  # rubocop:enable Metrics/ClassLength
 end

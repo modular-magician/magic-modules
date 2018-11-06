@@ -12,19 +12,11 @@
 # limitations under the License.
 
 require 'compile/core'
-require 'dependencies/dependency_graph'
 require 'fileutils'
 require 'google/extensions'
 require 'google/logger'
+require 'google/hash_utils'
 require 'pathname'
-require 'provider/properties'
-require 'provider/end2end/core'
-require 'provider/test_matrix'
-require 'provider/test_data/spec_formatter'
-require 'provider/test_data/constants'
-require 'provider/test_data/property'
-require 'provider/test_data/create_data'
-require 'provider/test_data/expectations'
 
 module Provider
   DEFAULT_FORMAT_OPTIONS = {
@@ -38,20 +30,12 @@ module Provider
   # such as compiling and including files, formatting data, etc.
   class Core
     include Compile::Core
-    include Provider::Properties
-    include Provider::End2End::Core
-    include Api::Object::ObjectUtils
 
     attr_reader :test_data
 
     def initialize(config, api)
       @config = config
       @api = api
-      @property = Provider::TestData::Property.new(self)
-      @constants = Provider::TestData::Constants.new(self)
-      @data_gen = Provider::TestData::Generator.new
-      @create_data = Provider::TestData::CreateData.new(self, @data_gen)
-      @prop_data = Provider::TestData::Expectations.new(self, @data_gen)
       @generated = []
       @sourced = []
       @max_columns = DEFAULT_FORMAT_OPTIONS[:max_columns]
@@ -61,38 +45,51 @@ module Provider
     # generators, it is okay to ignore Rubocop warnings about method size and
     # complexity.
     #
-    # rubocop:disable Metrics/AbcSize
-    # rubocop:disable Metrics/CyclomaticComplexity
-    # rubocop:disable Metrics/PerceivedComplexity
     def generate(output_folder, types, version_name)
-      version = @api.version_obj_or_default(version_name)
-      generate_objects(output_folder, types, version)
-      generate_client_functions(output_folder) unless @config.functions.nil?
+      generate_objects(output_folder, types, version_name)
       copy_files(output_folder) \
         unless @config.files.nil? || @config.files.copy.nil?
       compile_examples(output_folder) unless @config.examples.nil?
-      compile_end2end_tests(output_folder) unless @config.examples.nil?
-      compile_network_data(output_folder) \
-        unless @config.test_data.nil? || @config.test_data.network.nil?
       compile_changelog(output_folder) unless @config.changelog.nil?
       # Compilation has to be the last step, as some files (e.g.
       # CONTRIBUTING.md) may depend on the list of all files previously copied
       # or compiled.
-      compile_files(output_folder) \
+      # common-compile.yaml is a special file that will get compiled by the last product
+      # used in a single invocation of the compiled. It should not contain product-specific
+      # information; instead, it should be run-specific such as the version to compile at.
+      compile_files(output_folder, version_name) \
         unless @config.files.nil? || @config.files.compile.nil?
 
-      generate_datasources(output_folder, types, version) \
+      generate_datasources(output_folder, types, version_name) \
         unless @config.datasources.nil?
       apply_file_acls(output_folder) \
         unless @config.files.nil? || @config.files.permissions.nil?
-      verify_test_matrixes
     end
-    # rubocop:enable Metrics/AbcSize
-    # rubocop:enable Metrics/CyclomaticComplexity
-    # rubocop:enable Metrics/PerceivedComplexity
 
     def copy_files(output_folder)
-      @config.files.copy.each do |target, source|
+      copy_file_list(output_folder, @config.files.copy)
+    end
+
+    def copy_common_files(output_folder, _version_name = nil)
+      provider_name = self.class.name.split('::').last.downcase
+      return unless File.exist?("provider/#{provider_name}/common~copy.yaml")
+
+      Google::LOGGER.info "Copying common files for #{provider_name}"
+      files = YAML.safe_load(compile("provider/#{provider_name}/common~copy.yaml"))
+      copy_file_list(output_folder, files)
+    end
+
+    def compile_common_files(output_folder, version_name = nil)
+      provider_name = self.class.name.split('::').last.downcase
+      return unless File.exist?("provider/#{provider_name}/common~compile.yaml")
+
+      Google::LOGGER.info "Compiling common files for #{provider_name}"
+      files = YAML.safe_load(compile("provider/#{provider_name}/common~compile.yaml"))
+      compile_file_list(output_folder, files, version: version_name)
+    end
+
+    def copy_file_list(output_folder, files)
+      files.each do |target, source|
         target_file = File.join(output_folder, target)
         target_dir = File.dirname(target_file)
         @sourced << relative_path(target_file, output_folder)
@@ -102,8 +99,8 @@ module Provider
       end
     end
 
-    def compile_files(output_folder)
-      compile_file_list(output_folder, @config.files.compile)
+    def compile_files(output_folder, version_name)
+      compile_file_list(output_folder, @config.files.compile, version: version_name)
     end
 
     def compile_examples(output_folder)
@@ -113,18 +110,6 @@ module Provider
         lambda do |_object, file|
           ["examples/#{file}",
            "products/#{@api.prefix[1..-1]}/files/examples~#{file}"]
-        end
-      )
-    end
-
-    def compile_network_data(output_folder)
-      compile_file_map(
-        output_folder,
-        @config.test_data.network,
-        lambda do |object, file|
-          type = object.name.underscore
-          ["spec/data/network/#{object.out_name}/#{file}.yaml",
-           "products/#{@api.prefix[1..-1]}/files/spec~#{type}~#{file}.yaml"]
         end
       )
     end
@@ -167,20 +152,6 @@ module Provider
           end
     end
 
-    def list_manual_network_data
-      test_data = @config&.test_data&.network || {}
-      create_object_list(
-        test_data,
-        lambda do |object, file|
-          type = object.name.underscore
-          ["spec/data/network/#{object.out_name}/#{file}.yaml",
-           "products/#{@api.prefix[1..-1]}/files/spec~#{type}~#{file}.yaml"]
-        end
-      )
-    end
-
-    # rubocop:disable Metrics/MethodLength
-    # rubocop:disable Metrics/AbcSize
     def compile_file_list(output_folder, files, data = {})
       files.each do |target, source|
         Google::LOGGER.debug "Compiling #{source} => #{target}"
@@ -211,13 +182,9 @@ module Provider
         %x(goimports -w #{target_file}) if File.extname(target_file) == '.go'
       end
     end
-    # rubocop:enable Metrics/MethodLength
-    # rubocop:enable Metrics/AbcSize
 
-    # rubocop:disable Metrics/CyclomaticComplexity
-    # rubocop:disable Metrics/PerceivedComplexity
-    # rubocop:disable Metrics/AbcSize
-    def generate_objects(output_folder, types, version)
+    def generate_objects(output_folder, types, version_name)
+      version = @api.version_obj_or_default(version_name)
       @api.set_properties_based_on_version(version)
       (@api.objects || []).each do |object|
         if !types.empty? && !types.include?(object.name)
@@ -227,30 +194,27 @@ module Provider
         elsif types.empty? && object.exclude_if_not_in_version(version)
           Google::LOGGER.info "Excluding #{object.name} per API version"
         else
-          generate_object object, output_folder, version
+          # version_name will differ from version.name if the resource is being
+          # generated at its default version instead of the one that was passed
+          # in to the compiler. Terraform needs to know which version was passed
+          # in so it can name its output directories correctly.
+          generate_object object, output_folder, version_name
         end
       end
     end
-    # rubocop:enable Metrics/CyclomaticComplexity
-    # rubocop:enable Metrics/PerceivedComplexity
-    # rubocop:enable Metrics/AbcSize
 
-    def generate_object(object, output_folder, version)
-      data = build_object_data(object, output_folder, version)
+    def generate_object(object, output_folder, version_name)
+      data = build_object_data(object, output_folder, version_name)
 
       generate_resource data
       generate_resource_tests data
-      generate_properties data, object.all_user_properties
-      generate_network_datas data, object
     end
 
-    # rubocop:disable Metrics/AbcSize
-    # rubocop:disable Metrics/CyclomaticComplexity
-    # rubocop:disable Metrics/PerceivedComplexity
-    def generate_datasources(output_folder, types, version)
+    def generate_datasources(output_folder, types, version_name)
       # We need to apply overrides for datasources
       @config.datasources.validate
 
+      version = @api.version_obj_or_default(version_name)
       @api.set_properties_based_on_version(version)
       @api.objects.each do |object|
         if !types.empty? && !types.include?(object.name)
@@ -266,80 +230,21 @@ module Provider
             "Excluding #{object.name} datasource per API version"
           )
         else
-          generate_datasource object, output_folder, version
+          generate_datasource object, output_folder, version_name
         end
       end
     end
-    # rubocop:enable Metrics/CyclomaticComplexity
-    # rubocop:enable Metrics/PerceivedComplexity
-    # rubocop:enable Metrics/AbcSize
 
-    def generate_datasource(object, output_folder, version)
-      data = build_object_data(object, output_folder, version)
+    def generate_datasource(object, output_folder, version_name)
+      data = build_object_data(object, output_folder, version_name)
 
       compile_datasource data
-    end
-
-    # Generates all 6 network data files for a object.
-    # This includes all combinations of seeds [0-2] and title == / != name
-    # Each data file is a YAML file with all properties possible on an object.
-    #
-    # @config.test_data lists all files that are written by hand and will not
-    # be generated.
-    #
-    # Requires:
-    #  object: The Api::Resource used as basis for the network data.
-    #  data: A hash with values:
-    #    output_folder: root folder for generated module
-    def generate_network_datas(data, object)
-      target_folder = File.join(data[:output_folder],
-                                'spec', 'data', 'network', object.out_name)
-      FileUtils.mkpath target_folder
-
-      # Create list of compiled network data
-      manual = list_manual_network_data
-      3.times.each do |id|
-        %w[name title].each do |name|
-          out_file = File.join(target_folder, "success#{id + 1}~#{name}.yaml")
-          next if manual.include? out_file
-          next if true?(data[:object].manual)
-
-          generate_network_data data.clone.merge(
-            out_file: File.join(target_folder, "success#{id + 1}~#{name}.yaml"),
-            id: id,
-            title: name,
-            object: object
-          )
-        end
-      end
-    end
-    # rubocop:enable Metrics/MethodLength
-
-    # Generates a single network data file for unit testing.
-    # Required values in data:
-    #   out_file: path of data file to create
-    #   id: a seed value
-    #   title: The name of object who is unit tested with this spec file
-    #   object: The Api::Resource used as basis for the network data
-    def generate_network_data(data)
-      formatter = Provider::TestData::SpecFormatter.new(self)
-
-      name = "title#{data[:id]}" if data[:title] == 'title'
-      name = "test name##{data[:id]} data" if data[:title] == 'name'
-      generate_file data.clone.merge(
-        template: 'templates/network_spec.yaml.erb',
-        test_data: formatter.generate(data[:object], '', data[:object].kind,
-                                      data[:id],
-                                      name: name)
-      )
     end
 
     def build_object_data(object, output_folder, version)
       {
         name: object.out_name,
         object: object,
-        config: (@config.objects || {}).select { |o, _v| o == object.name }
-                                       .fetch(object.name, {}),
         tests: (@config.tests || {}).select { |o, _v| o == object.name }
                                     .fetch(object.name, {}),
         output_folder: output_folder,
@@ -356,48 +261,15 @@ module Provider
                    end
       generate_file(data.clone.merge(
         # Override with provider specific template for this object, if needed
-        template: Google::HashUtils.navigate(data[:config], ['template',
-                                                             data[:type]],
-                                             data[:default_template]),
+        template: data[:default_template],
         product_ns: product_ns
       ))
     end
 
-    def generate_client_functions(output_folder)
-      @config.functions.each do |fn|
-        info = generate_client_function(output_folder, fn)
-        FileUtils.mkpath info[:target_folder]
-        generate_file info.clone
-      end
-    end
-
-    # rubocop:disable Metrics/AbcSize
-    def format_expand_variables(obj_url)
-      obj_url = obj_url.split("\n") unless obj_url.is_a?(Array)
-      if obj_url.size > 1
-        ['[',
-         indent_list(obj_url.map { |u| quote_string(u) }, 2),
-         '].join,']
-      else
-        vars = quote_string(obj_url[0])
-        vars_parts = obj_url[0].split('/')
-        format([
-                 [[vars, ','].join],
-                 # vars is too big to fit, split in half
-                 vars_parts.each_slice((vars_parts.size / 2.0).round).to_a
-                 .map.with_index do |p, i|
-                   # Use implicit string joining for the first line.
-                   quote_string(p.join('/')) + (i.zero? ? ' \\' : ',')
-                 end
-               ], 0, 8)
-      end
-    end
-    # rubocop:enable Metrics/AbcSize
-
     def build_url(url_parts, extra = false)
       (product_url, obj_url) = url_parts
       extra_arg = ''
-      extra_arg = ', extra_data' if obj_url.to_s.include?('<|extra|>') || extra
+      extra_arg = ', extra_data' if extra
       ['URI.join(',
        indent([quote_string(product_url) + ',',
                'expand_variables(',
@@ -449,51 +321,6 @@ module Provider
       obj.to_s.casecmp('false').zero?
     end
 
-    def emit_method(name, args, code, file_name, opts = {})
-      (rubo_off, rubo_on) = emit_rubo_pair(file_name, name, opts)
-      [
-        (rubo_off unless rubo_off.empty?),
-        method_decl(name, args),
-        indent(code, 2),
-        'end',
-        (rubo_on unless rubo_on.empty?)
-      ].compact.join("\n")
-    end
-
-    def emit_rubo_pair(file_name, name, opts = {})
-      [
-        emit_rubo_item(file_name, name, :disabled, opts),
-        emit_rubo_item(file_name, name, :enabled, opts)
-      ]
-    end
-
-    def emit_rubo_item(file_name, name, state, opts = {})
-      [
-        (if opts.key?(:class_name)
-           get_rubocop_exceptions(file_name, :function,
-                                  [opts[:class_name], name].join('.'), state)
-         end),
-        get_rubocop_exceptions(file_name, :function, name, state)
-      ].compact.flatten
-    end
-
-    def emit_rubocop(ctx, pinpoint, name, state)
-      get_rubocop_exceptions(ctx.local_variable_get(:file_relative), pinpoint,
-                             name, state).join("\n")
-    end
-
-    # TODO(nelsonjr): Track usage of exceptions and fail if some are
-    # left unused. E.g. we change the function/class name and the setting
-    # in the YAML file is now useless.
-    def get_rubocop_exceptions(file_name, pinpoint, name, state)
-      name = name.flatten.join(' > ') if pinpoint == :test
-      flags = get_style_exceptions(file_name, pinpoint, name)
-      flags = flags.reverse if state == :enabled
-      flags.map do |e|
-        "# rubocop:#{state == :enabled ? 'enable' : 'disable'} #{e}"
-      end
-    end
-
     def get_style_exceptions(file_name, type, name)
       styles = @config.style
       return [] if styles.nil?
@@ -509,7 +336,7 @@ module Provider
     def emit_link(name, url, emit_self, extra_data = false)
       (params, fn_args) = emit_link_var_args(url, extra_data)
       code = ["def #{emit_self ? 'self.' : ''}#{name}(#{fn_args})",
-              indent(url, 2).gsub("'<|extra|>'", 'extra'),
+              indent(url, 2),
               'end']
 
       if emit_self
@@ -593,16 +420,6 @@ module Provider
       requires.flatten.sort.uniq.map { |r| "require '#{r}'" }.join("\n")
     end
 
-    def check_requires(object, *requires)
-      return if object.requires.nil?
-      requires_list = object.requires
-      missing = requires.flatten.reject { |r| requires_list.any?(r) }
-      raise <<~ERROR unless missing.empty?
-        Including #{__FILE__} needs the following requires: #{missing}
-        Please add them to 'object > requires' section of <provider>.yaml
-      ERROR
-    end
-
     def emit_link_var_args(url, extra_data)
       params = emit_link_var_args_list(url, extra_data,
                                        %w[data extra extra_data])
@@ -614,10 +431,9 @@ module Provider
                              .join(', ')]
     end
 
-    def emit_link_var_args_list(url, extra_data, args_list)
+    def emit_link_var_args_list(_url, extra_data, args_list)
       [args_list[0],
-       (args_list[1] if url.include?('<|extra|>')),
-       (args_list[2] if url.include?('<|extra|>') || extra_data)]
+       (args_list[2] if extra_data)]
     end
 
     def generate_file(data)
@@ -656,10 +472,6 @@ module Provider
       indent(field.scan(/\S.{0,#{avail_columns}}\S(?=\s|$)|\S+/), 2)
     end
 
-    def verify_test_matrixes
-      Provider::TestMatrix::Registry.instance.verify_all
-    end
-
     def format_section_ruler(size)
       size_pad = (size - size.to_s.length - 4) # < + > + 2 spaces around number.
       return unless size_pad.positive?
@@ -691,67 +503,9 @@ module Provider
       end
     end
 
-    def emit_user_agent(product, extra, notes, file_name)
-      prov_text = self.class.name.split('::').last.camelize(:upper)
-      prod_text = product.camelize(:upper)
-      ua_generator = notes.map { |n| "# #{n}" }.concat(
-        [
-          "version = '1.0.0'",
-          '[',
-          indent_list([
-            "\"Google#{prov_text}#{prod_text}/\#{version}\"",
-            extra
-          ].compact, 2),
-          "].join(' ')"
-        ]
-      )
-      emit_method('generate_user_agent', [], ua_generator.compact, file_name)
-    end
-
     def provider_name
       self.class.name.split('::').last.downcase
     end
-
-    # Generates the documentation for the client side function to be
-    # included in the module. Call this function immediately before the function
-    # definition and the code generator will use data from api.yaml to build the
-    # documentation comment block.
-    #
-    # rubocop: Method returns a big array. Easier to read a single block
-    # rubocop:disable Metrics/AbcSize
-    # rubocop:disable Metrics/MethodLength
-    def emit_function_doc(function)
-      [
-        function.description.strip,
-        '',
-        'Arguments:',
-        indent(function.arguments.map do |arg|
-                 [
-                   "- #{arg.name}: #{arg.type.split('::').last.downcase}",
-                   indent(arg.description.strip.split("\n"), 2)
-                 ]
-               end, 2),
-        (
-          unless function.examples.nil?
-            [
-              '',
-              'Examples:',
-              indent(function.examples.map { |eg| "- #{eg}" }, 2)
-            ]
-          end
-        ),
-        (
-          unless function.notes.nil?
-            [
-              '',
-              function.notes.strip
-            ]
-          end
-        )
-      ].compact.flatten.join("\n").split("\n").map { |l| "# #{l}".strip }
-    end
-    # rubocop:enable Metrics/MethodLength
-    # rubocop:enable Metrics/AbcSize
 
     # Determines the copyright year. If the file already exists we'll attempt to
     # recognize the copyright year, and if it finds it will keep it.
