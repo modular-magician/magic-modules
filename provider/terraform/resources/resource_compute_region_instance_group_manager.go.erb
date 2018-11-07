@@ -246,9 +246,9 @@ func resourceComputeRegionInstanceGroupManager() *schema.Resource {
 <% if version.nil? || version == 'ga' -%>
 			"rolling_update_policy": &schema.Schema{
 				Removed:    "This field is in beta. Use it in the the google-beta provider instead. See https://terraform.io/docs/providers/google/provider_versions.html for more details.",
+				Computed:   true,
 <% else -%>
 			"update_policy": &schema.Schema{
-				Computed:   true,
 <% end -%>
 				Type:       schema.TypeList,
 				Optional:   true,
