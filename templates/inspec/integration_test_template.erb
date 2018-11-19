@@ -17,15 +17,15 @@
 
 require 'vcr_config'
 
-title 'Test GCP `<%= resource_name(object, product_ns) -%>` resource.'
+title 'Test GCP <%= name -%> resource.'
 
-control '<%= resource_name(object, product_ns) -%>-1.0' do
+control '<%= name -%>-1.0' do
   impact 1.0
-  title 'GCP <%= object.name -%> test'
+  title '<%= name -%> resource test'
 
-  VCR.use_cassette('<%= resource_name(object, product_ns) -%>') do
+  VCR.use_cassette('<%= name -%>') do
 
-<%= indent(compile('templates/inspec/examples/ssl_policy_example.rb'), 4) -%>
+<%= indent(compile("templates/inspec/examples/#{name}.rb"), 4) -%>
 
   end
 end
