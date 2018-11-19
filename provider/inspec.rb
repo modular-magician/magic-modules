@@ -132,7 +132,18 @@ module Provider
     def generate_resource_tests(data)
       target_folder = File.join(data[:output_folder], 'test')
       FileUtils.mkpath target_folder
+
       FileUtils.cp_r 'templates/inspec/tests/.', target_folder
+
+      name = data[:object].name.underscore
+      generate_resource_file data.clone.merge(
+        default_template: 'templates/inspec/integration_test_template.erb',
+        out_file: File.join(
+            target_folder,
+            'integration/verify-mm/controls',
+            "google_#{data[:product_name]}_#{name}.rb"
+         )
+      )
     end
 
     def emit_nested_object(data)

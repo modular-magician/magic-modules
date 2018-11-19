@@ -10,25 +10,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+<%= compile 'templates/license.erb' -%>
+
+<%= lines(autogen_notice :ruby) -%>
+
 
 require 'vcr_config'
 
-title 'Test GCP SSL policies plural resource.'
+title 'Test GCP `<%= resource_name(object, product_ns) -%>` resource.'
 
-project_name = attribute('project_name', default: '')
-ssl_policy = attribute('ssl_policy', default: {})
-
-control 'gcp-ssl-policies-1.0' do
+control '<%= resource_name(object, product_ns) -%>-1.0' do
   impact 1.0
-  title 'GCP SSL policies plural test'
+  title 'GCP <%= object.name -%> test'
 
-  VCR.use_cassette('gcp-ssl-policies') do
-    resource = google_compute_ssl_policies(project: project_name)
+  VCR.use_cassette('<%= resource_name(object, product_ns) -%>') do
 
-    describe resource do
-      it { should exist }
-      its('names') { should include ssl_policy['name'] }
-      its('profiles') { should include ssl_policy['profile'] }
-    end
+<%= indent(compile('templates/inspec/examples/ssl_policy_example.rb'), 4) -%>
+
   end
 end
