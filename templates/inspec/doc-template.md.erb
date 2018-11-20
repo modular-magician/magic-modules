@@ -17,7 +17,7 @@
 
 ---
 title: About the <%= object.name -%> resource
-platform: gcp2
+platform: gcp
 ---
 
 <% resource_underscored_name = resource_name(object, product_ns) %>
@@ -31,7 +31,7 @@ A `<%= resource_underscored_name -%>` is used to test a Google <%= object.name -
 ```
 
 ## Properties
-Properties that can be accessed from the `<%= resource_name(object, product_ns) -%>` resource:
+Properties that can be accessed from the `<%= resource_underscored_name -%>` resource:
 
 <% object.properties.each do |prop| -%>
   * `<%= "#{prop.out_name}" -%>`: <%= "#{prop.description.split("\n").join(' ')}" -%>
