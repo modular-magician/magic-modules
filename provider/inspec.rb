@@ -117,6 +117,7 @@ module Provider
       name = data[:object].name.underscore
       docs_folder = File.join(data[:output_folder], 'docs', 'resources')
       generate_resource_file data.clone.merge(
+        doc_generation: true,
         default_template: 'templates/inspec/doc-template.md.erb',
         out_file: File.join(docs_folder, "google_#{data[:product_name]}_#{name}.md")
       )
@@ -139,6 +140,7 @@ module Provider
 
       generate_resource_file data.clone.merge(
         name: name,
+        doc_generation: false,
         default_template: 'templates/inspec/integration_test_template.erb',
         out_file: File.join(
             target_folder,
@@ -151,6 +153,7 @@ module Provider
       pluralized_name = name.pluralize
       generate_resource_file data.clone.merge(
         name: pluralized_name,
+        doc_generation: false,
         default_template: 'templates/inspec/integration_test_template.erb',
         out_file: File.join(
             target_folder,
@@ -222,7 +225,6 @@ module Provider
         { |type| typed_array?(type) && nested_object?(type.item_type) }
       nested_array_requires = nested_object_arrays.collect { |type| array_requires(type) }
       # Need to include requires statements for the requirements of a nested object
-      # TODO is this needed? Not sure how ruby works so well
       nested_prop_requires = nested_props.map\
         { |nested_prop| generate_requires(nested_prop.properties) }
       nested_object_requires = nested_props.map\

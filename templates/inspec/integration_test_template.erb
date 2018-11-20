@@ -25,7 +25,7 @@ control '<%= name -%>-1.0' do
 
   VCR.use_cassette('<%= name -%>') do
 
-<%= indent(compile("templates/inspec/examples/#{name}.rb"), 4) -%>
+<%= indent(compile("templates/inspec/examples/#{name}.erb"), 4) -%>
 
   end
 end

@@ -1,0 +1,17 @@
+<% project_name = 'inspec-gcp-project' -%>
+<% ssl_policy = {'name' => 'my_ssl_policy', 'min_tls_version' => 'TLS_1_2', 'profile' => 'CUSTOM', 'custom_feature' => 'TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384', 'custom_feature2' => 'TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384'} -%>
+<% if doc_generation -%>
+<% else # if doc_generation -%>
+project_name = attribute('project_name', default: '<%= project_name -%>')
+ssl_policy = attribute('ssl_policy', default: <%= ssl_policy -%>)
+
+<% end # if doc_generation -%>
+resource = google_compute_ssl_policy({project: <%= doc_generation ? "'#{project_name}'" : "project_name" -%>, name: <%= doc_generation ? "'#{ssl_policy['name']}'" : "ssl_policy['name']" -%>})
+
+describe resource do
+  it { should exist }
+  its('min_tls_version') { should cmp <%= doc_generation ? "'#{ssl_policy['min_tls_version']}'" : "ssl_policy['min_tls_version']" -%> }
+  its('profile') { should cmp <%= doc_generation ? "'#{ssl_policy['profile']}'" : "ssl_policy['profile']" -%> }
+  its('custom_features') { should include <%= doc_generation ? "'#{ssl_policy['custom_feature']}'" : "ssl_policy['custom_feature']" -%> }
+  its('custom_features') { should include <%= doc_generation ? "'#{ssl_policy['custom_feature2']}'" : "ssl_policy['custom_feature2']" -%> }
+end
