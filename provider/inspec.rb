@@ -265,5 +265,9 @@ module Provider
     def markdown_format(property)
       "    * `#{property.name}`: #{property.description.split("\n").join(' ')}"
     end
+
+    def grab_attributes
+      YAML.load_file('templates/inspec/tests/integration/attributes/attributes.yaml')
+    end
   end
 end
