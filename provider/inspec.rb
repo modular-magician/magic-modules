@@ -143,10 +143,10 @@ module Provider
         doc_generation: false,
         default_template: 'templates/inspec/integration_test_template.erb',
         out_file: File.join(
-            target_folder,
-            'integration/verify-mm/controls',
-            "#{name}.rb"
-         )
+          target_folder,
+          'integration/verify-mm/controls',
+          "#{name}.rb"
+        )
       )
 
       # Build test for plural resource
@@ -156,10 +156,10 @@ module Provider
         doc_generation: false,
         default_template: 'templates/inspec/integration_test_template.erb',
         out_file: File.join(
-            target_folder,
-            'integration/verify-mm/controls',
-            "#{pluralized_name}.rb"
-         )
+          target_folder,
+          'integration/verify-mm/controls',
+          "#{pluralized_name}.rb"
+        )
       )
     end
 
