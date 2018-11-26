@@ -89,6 +89,7 @@ func Provider() terraform.ResourceProvider {
 			"google_container_registry_repository":   dataSourceGoogleContainerRepo(),
 			"google_container_registry_image":        dataSourceGoogleContainerImage(),
 			"google_iam_policy":                      dataSourceGoogleIamPolicy(),
+			"google_iam_role":                        dataSourceGoogleIamRole(),
 			"google_kms_secret":                      dataSourceGoogleKmsSecret(),
 			"google_folder":                          dataSourceGoogleFolder(),
 			"google_netblock_ip_ranges":              dataSourceGoogleNetblockIpRanges(),
@@ -111,6 +112,7 @@ func Provider() terraform.ResourceProvider {
 			// end beta-only products
 			<% end -%>
 			GeneratedComputeResourcesMap,
+			GeneratedDnsResourcesMap,
 			GeneratedRedisResourcesMap,
 			GeneratedResourceManagerResourcesMap,
 			GeneratedStorageResourcesMap,
@@ -121,6 +123,9 @@ func Provider() terraform.ResourceProvider {
 				"google_bigquery_table":                        resourceBigQueryTable(),
 				"google_bigtable_instance":                     resourceBigtableInstance(),
 				"google_bigtable_table":                        resourceBigtableTable(),
+				"google_billing_account_iam_binding":           ResourceIamBindingWithImport(IamBillingAccountSchema, NewBillingAccountIamUpdater, BillingAccountIdParseFunc),
+				"google_billing_account_iam_member":            ResourceIamMemberWithImport(IamBillingAccountSchema, NewBillingAccountIamUpdater, BillingAccountIdParseFunc),
+				"google_billing_account_iam_policy":            ResourceIamPolicyWithImport(IamBillingAccountSchema, NewBillingAccountIamUpdater, BillingAccountIdParseFunc),
 				"google_cloudbuild_trigger":                    resourceCloudBuildTrigger(),
 				"google_cloudfunctions_function":               resourceCloudFunctionsFunction(),
 				"google_cloudiot_registry":                     resourceCloudIoTRegistry(),
@@ -174,7 +179,6 @@ func Provider() terraform.ResourceProvider {
 				"google_dataflow_job":                          resourceDataflowJob(),
 				"google_dataproc_cluster":                      resourceDataprocCluster(),
 				"google_dataproc_job":                          resourceDataprocJob(),
-				"google_dns_managed_zone":                      resourceDnsManagedZone(),
 				"google_dns_record_set":                        resourceDnsRecordSet(),
 				"google_endpoints_service":                     resourceEndpointsService(),
 				"google_folder":                                resourceGoogleFolder(),
