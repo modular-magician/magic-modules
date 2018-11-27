@@ -8,13 +8,12 @@ ssl_policy = attribute('ssl_policy', default: <%= ssl_policy -%>)
 
 <% end # if doc_generation -%>
 
-resource = google_compute_ssl_policy({project: <%= doc_generation ? "'#{project_name}'" : "project_name" -%>, name: <%= doc_generation ? "'#{ssl_policy['name']}'" : "ssl_policy['name']" -%>})
-
 control '<%= name -%>-1.0' do
   impact 1.0
   title '<%= name -%> resource test'
 
   VCR.use_cassette('<%= name -%>') do
+  	resource = google_compute_ssl_policy({project: <%= doc_generation ? "'#{project_name}'" : "project_name" -%>, name: <%= doc_generation ? "'#{ssl_policy['name']}'" : "ssl_policy['name']" -%>})
     describe resource do
       it { should exist }
       its('min_tls_version') { should cmp <%= doc_generation ? "'#{ssl_policy['min_tls_version']}'" : "ssl_policy['min_tls_version']" -%> }
