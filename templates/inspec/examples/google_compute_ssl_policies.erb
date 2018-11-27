@@ -1,0 +1,26 @@
+<%= compile 'templates/license.erb' -%>
+<%= lines(autogen_notice :ruby) -%>
+
+require 'vcr_config'
+
+title 'Test GCP <%= name -%> resource.'
+<% project_name = grab_attributes['project_name'] -%>
+<% ssl_policy = grab_attributes['ssl_policy'] -%>
+<% unless doc_generation -%>
+project_name = attribute('project_name', default: '<%= project_name -%>')
+ssl_policy = attribute('ssl_policy', default: <%= ssl_policy -%>)
+
+<% end # unless doc_generation -%>
+
+control '<%= name -%>-1.0' do
+  impact 1.0
+  title '<%= name -%> resource test'
+
+<% unless doc_generation -%>
+  VCR.use_cassette('<%= name -%>') do
+<% end # unless doc_generation -%>
+<%= indent(compile('templates/inspec/examples/ssl_policies.erb'), doc_generation ? 2 : 4) -%>	
+<% unless doc_generation -%>
+	end
+<% end # unless doc_generation -%>
+end
