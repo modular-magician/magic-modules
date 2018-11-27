@@ -1,25 +1,26 @@
-<% grab_attributes %>
+<%= compile 'templates/license.erb' -%>
+<%= lines(autogen_notice :ruby) -%>
+
+require 'vcr_config'
+
+title 'Test GCP <%= name -%> resource.'
 <% project_name = grab_attributes['project_name'] -%>
 <% ssl_policy = grab_attributes['ssl_policy'] -%>
-<% if doc_generation -%>
-<% else # if doc_generation -%>
+<% unless doc_generation -%>
 project_name = attribute('project_name', default: '<%= project_name -%>')
 ssl_policy = attribute('ssl_policy', default: <%= ssl_policy -%>)
 
-<% end # if doc_generation -%>
+<% end # unless doc_generation -%>
 
 control '<%= name -%>-1.0' do
   impact 1.0
   title '<%= name -%> resource test'
 
+<% unless doc_generation -%>
   VCR.use_cassette('<%= name -%>') do
-  	resource = google_compute_ssl_policy({project: <%= doc_generation ? "'#{project_name}'" : "project_name" -%>, name: <%= doc_generation ? "'#{ssl_policy['name']}'" : "ssl_policy['name']" -%>})
-    describe resource do
-      it { should exist }
-      its('min_tls_version') { should cmp <%= doc_generation ? "'#{ssl_policy['min_tls_version']}'" : "ssl_policy['min_tls_version']" -%> }
-      its('profile') { should cmp <%= doc_generation ? "'#{ssl_policy['profile']}'" : "ssl_policy['profile']" -%> }
-      its('custom_features') { should include <%= doc_generation ? "'#{ssl_policy['custom_feature']}'" : "ssl_policy['custom_feature']" -%> }
-      its('custom_features') { should include <%= doc_generation ? "'#{ssl_policy['custom_feature2']}'" : "ssl_policy['custom_feature2']" -%> }
-    end
-  end
+<% end # unless doc_generation -%>
+<%= indent(compile('templates/inspec/examples/ssl_policy.erb'), doc_generation ? 2 : 4) -%>	
+<% unless doc_generation -%>
+	end
+<% end # unless doc_generation -%>
 end

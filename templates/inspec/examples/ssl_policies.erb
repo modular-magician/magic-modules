@@ -1,0 +1,6 @@
+resource = google_compute_ssl_policies({project: <%= doc_generation ? "'#{project_name}'" : "project_name" -%>})
+describe resource do
+  it { should exist }
+  its('names') { should include <%= doc_generation ? "'#{ssl_policy['name']}'" : "ssl_policy['name']" -%> }
+  its('profiles') { should include <%= doc_generation ? "'#{ssl_policy['profile']}'" : "ssl_policy['profile']" -%> }
+end
