@@ -655,7 +655,6 @@ overrides: !ruby/object:Provider::ResourceOverrides
         sensitive: true
         ignore_read: true
   SslPolicy: !ruby/object:Provider::Terraform::ResourceOverride
-    exclude: false
     example:
       - !ruby/object:Provider::Terraform::Examples
         name: "ssl_policy_basic"
@@ -771,8 +770,6 @@ overrides: !ruby/object:Provider::ResourceOverrides
     properties:
       id: !ruby/object:Provider::Terraform::PropertyOverride
         name: proxyId
-      sslPolicy: !ruby/object:Provider::Terraform::PropertyOverride
-        exclude: false
   TargetPool: !ruby/object:Provider::Terraform::ResourceOverride
     exclude: true
     examples: |
@@ -824,8 +821,6 @@ overrides: !ruby/object:Provider::ResourceOverrides
         default_value: :NONE
       service: !ruby/object:Provider::Terraform::PropertyOverride
         name: backendService
-      sslPolicy: !ruby/object:Provider::Terraform::PropertyOverride
-        exclude: false
   TargetTcpProxy: !ruby/object:Provider::Terraform::ResourceOverride
     example:
       - !ruby/object:Provider::Terraform::Examples
@@ -845,7 +840,6 @@ overrides: !ruby/object:Provider::ResourceOverrides
         default_value: :NONE
   TargetVpnGateway: !ruby/object:Provider::Terraform::ResourceOverride
     name: 'VpnGateway'
-    exclude: false
     example:
       - !ruby/object:Provider::Terraform::Examples
         name: "target_vpn_gateway_basic"
