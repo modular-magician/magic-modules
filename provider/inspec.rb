@@ -138,6 +138,13 @@ module Provider
 
       name = "google_#{data[:product_name]}_#{data[:object].name.underscore}"
 
+      generate_inspec_test(data, name, target_folder)
+
+      # Build test for plural resource
+      generate_inspec_test(data, name.pluralize, target_folder)
+    end
+
+    def generate_inspec_test(data, name, target_folder)
       generate_resource_file data.clone.merge(
         name: name,
         doc_generation: false,
@@ -146,19 +153,6 @@ module Provider
           target_folder,
           'integration/verify-mm/controls',
           "#{name}.rb"
-        )
-      )
-
-      # Build test for plural resource
-      pluralized_name = name.pluralize
-      generate_resource_file data.clone.merge(
-        name: pluralized_name,
-        doc_generation: false,
-        default_template: 'templates/inspec/integration_test_template.erb',
-        out_file: File.join(
-          target_folder,
-          'integration/verify-mm/controls',
-          "#{pluralized_name}.rb"
         )
       )
     end
