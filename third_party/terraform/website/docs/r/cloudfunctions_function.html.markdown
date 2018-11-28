@@ -62,7 +62,7 @@ The following arguments are supported:
 
 * `timeout` - (Optional) Timeout (in seconds) for the function. Default value is 60 seconds. Cannot be more than 540 seconds.
 
-* `entry_point` - (Optional) Name of a JavaScript function that will be executed when the Google Cloud Function is triggered.
+* `entry_point` - (Optional) Name of the function that will be executed when the Google Cloud Function is triggered.
 
 * `event_trigger` - (Optional) A source that fires events in response to a condition in another service. Structure is documented below. Cannot be used with `trigger_http`.
 
@@ -78,9 +78,9 @@ The `event_trigger` block supports:
 
 * `event_type` - (Required) The type of event to observe. For example: `"google.storage.object.finalize"`.
 See the documentation on [calling Cloud Functions](https://cloud.google.com/functions/docs/calling/) for a full reference.
-Only Cloud Storage and Cloud Pub/Sub triggers are supported at this time.
-Legacy Cloud Storage and Cloud Pub/Sub triggers are also supported, such as `"providers/cloud.storage/eventTypes/object.change"`
-and `"providers/cloud.pubsub/eventTypes/topic.publish"`.
+Cloud Storage, Cloud Pub/Sub and Cloud Firestore triggers are supported at this time.
+Legacy triggers are supported, such as `"providers/cloud.storage/eventTypes/object.change"`, 
+`"providers/cloud.pubsub/eventTypes/topic.publish"` and `"providers/cloud.firestore/eventTypes/document.create"`.
 
 * `resource` - (Required) Required. The name of the resource from which to observe events, for example, `"myBucket"`   
 

@@ -11,17 +11,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'vcr_config'
+
 title 'Test plural GCP compute subnetwork'
 
 control 'gcp-compute-subnetworks-1.0' do
 
   impact 1.0
   title 'Plural GCP subnetwork resource test'
-
-  resource = google_compute_subnetworks(project: attribute('project_name'), region: attribute('region'))
-  describe resource do
-    it { should exist }
-    its('names') { should include attribute('subnetwork')['name'] }
-    its('ip_cidr_ranges') { should include "10.2.0.0/29" }
+  # TODO(slevenick): remove only_if once we generate this again
+  only_if { false }
+  VCR.use_cassette('gcp-compute-subnetworks') do
+    resource = google_compute_subnetworks(project: attribute('project_name'), region: attribute('region'))
+    describe resource do
+      it { should exist }
+      its('names') { should include attribute('subnetwork')['name'] }
+      its('ip_cidr_ranges') { should include "10.2.0.0/29" }
+    end
   end
 end
