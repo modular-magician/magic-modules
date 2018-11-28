@@ -118,7 +118,7 @@ module Provider
       docs_folder = File.join(data[:output_folder], 'docs', 'resources')
       generate_resource_file data.clone.merge(
         doc_generation: true,
-        default_template: 'templates/inspec/doc-template.md.erb',
+        default_template: 'templates/inspec/doc_template.md.erb',
         out_file: File.join(docs_folder, "google_#{data[:product_name]}_#{name}.md")
       )
     end
@@ -141,7 +141,7 @@ module Provider
       generate_resource_file data.clone.merge(
         name: name,
         doc_generation: false,
-        default_template: "templates/inspec/examples/#{name}.erb",
+        default_template: "templates/inspec/integration_test_template.erb",
         out_file: File.join(
           target_folder,
           'integration/verify-mm/controls',
@@ -154,7 +154,7 @@ module Provider
       generate_resource_file data.clone.merge(
         name: pluralized_name,
         doc_generation: false,
-        default_template: "templates/inspec/examples/#{pluralized_name}.erb",
+        default_template: "templates/inspec/integration_test_template.erb",
         out_file: File.join(
           target_folder,
           'integration/verify-mm/controls',
