@@ -141,7 +141,7 @@ module Provider
       generate_resource_file data.clone.merge(
         name: name,
         doc_generation: false,
-        default_template: "templates/inspec/integration_test_template.erb",
+        default_template: 'templates/inspec/integration_test_template.erb',
         out_file: File.join(
           target_folder,
           'integration/verify-mm/controls',
@@ -154,7 +154,7 @@ module Provider
       generate_resource_file data.clone.merge(
         name: pluralized_name,
         doc_generation: false,
-        default_template: "templates/inspec/integration_test_template.erb",
+        default_template: 'templates/inspec/integration_test_template.erb',
         out_file: File.join(
           target_folder,
           'integration/verify-mm/controls',
