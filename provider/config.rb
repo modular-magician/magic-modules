@@ -15,6 +15,7 @@ require 'api/object'
 require 'compile/core'
 require 'provider/resource_override'
 require 'provider/resource_overrides'
+require 'provider/overrides/runner'
 
 module Provider
   # Settings for the provider
@@ -84,16 +85,28 @@ module Provider
       raise "Config #{cfg_file}(#{config.class}) is not a Provider::Config" \
         unless config.class <= Provider::Config
 
-      # Config must be validated so items are properly setup for next compile
       config.validate
-      # Compile step #2: Now that we have the target class, compile with that
-      # class features
-      source = config.compile(cfg_file)
-      config = Google::YamlValidator.parse(source)
-      config.overrides
-      config.spread_api config, api, [], '' unless api.nil?
-      config.validate
-      config
+      # Use new override system
+      if config.overrides.is_a?(Provider::Overrides::ResourceOverrides)
+        runner = Provider::Overrides::Runner.new(api, config.overrides,
+                                                 config.new_resource_override,
+                                                 config.new_property_override)
+        api = runner.build
+        config.validate
+        config.spread_api config, api, [], '' unless api.nil?
+        [api, config]
+      # Use old overrides
+      # TODO(alexstephen): Remove when old overrides are no longer in use.
+      else
+        # Compile step #2: Now that we have the target class, compile with that
+        # class features
+        source = config.compile(cfg_file)
+        config = Google::YamlValidator.parse(source)
+        config.overrides
+        config.spread_api config, api, [], '' unless api.nil?
+        config.validate
+        config
+      end
     end
 
     def provider
@@ -110,7 +123,8 @@ module Provider
       overrides
 
       check_optional_property :files, Provider::Config::Files
-      check_property :overrides, Provider::ResourceOverrides
+      check_property :overrides, [Provider::ResourceOverrides,
+                                  Provider::Overrides::ResourceOverrides]
       check_property_list :changelog, Provider::Config::Changelog \
         unless @changelog.nil?
     end
