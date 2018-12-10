@@ -36,6 +36,7 @@ require 'compile/core'
 require 'google/yaml_validator'
 
 RSpec::Core::RakeTask.new(:spec)
+
 RuboCop::RakeTask.new
 
 # YAML Linting
