@@ -266,7 +266,13 @@ module Provider
     end
 
     def grab_attributes
-      YAML.load_file('templates/inspec/tests/integration/attributes/attributes.yaml')
+      YAML.load_file('templates/inspec/tests/integration/configuration/mm-attributes.yml')
+    end
+
+    def inspec_property_type(property)
+      # inspec-gcp repo already uses Google namespace, to prevent sweeping changes
+      # change module for generated nested objects
+      property.property_type.sub('Google::', 'GoogleInSpec::')
     end
   end
 end
