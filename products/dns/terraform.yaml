@@ -19,6 +19,15 @@ overrides: !ruby/object:Provider::ResourceOverrides
         name: "dns_managed_zone_basic"
         primary_resource_id: "example-zone"
         version: <%= version_name %>
+      - !ruby/object:Provider::Terraform::Examples
+        name: "dns_managed_zone_private"
+        primary_resource_id: "private-zone"
+        version: <%= version_name %>
+        skip_test: true
+        vars:
+          zone_name: "private-zone"
+          network_1_name: "network-1"
+          network_2_name: "network-2"
     properties:
       creationTime: !ruby/object:Provider::Terraform::PropertyOverride
         exclude: true
@@ -31,6 +40,10 @@ overrides: !ruby/object:Provider::ResourceOverrides
         exclude: true
       nameServerSet: !ruby/object:Provider::Terraform::PropertyOverride
         exclude: true
+      privateVisibilityConfig.networks: !ruby/object:Provider::Terraform::PropertyOverride
+        is_set: true
+      privateVisibilityConfig.networks.networkUrl: !ruby/object:Provider::Terraform::PropertyOverride
+        diff_suppress_func: 'compareSelfLinkOrResourceName'
   ResourceRecordSet: !ruby/object:Provider::Terraform::ResourceOverride
     exclude: true
   Project: !ruby/object:Provider::Terraform::ResourceOverride
