@@ -98,10 +98,9 @@ objects:
       - !ruby/object:Api::Type::Enum
         name: 'visibility'
         description: |
-          Visibility of the zone. Public zones are visible to the public
-          internet. Private zones are only visible in your internal networks
-          denoted by the `networks` argument. Must be one of: `public`,
-          `private`.
+          The zone's visibility: public zones are exposed to the Internet,
+          while private zones are visible only to Virtual Private Cloud resources.
+          Must be one of: `public`, `private`.
         values:
         - :private
         - :public
@@ -109,20 +108,25 @@ objects:
         min_version: beta
       - !ruby/object:Api::Type::NestedObject
         name: 'privateVisibilityConfig'
-        description: 'Visibility config for private zones.'
+        description: |
+          For privately visible zones, the set of Virtual Private Cloud
+          resources that the zone is visible from.
         update_verb: :PATCH
         update_url: 'projects/{{project}}/managedZones/{{name}}'
         properties:
           - !ruby/object:Api::Type::Array
             name: 'networks'
-            description: 'List of networks.'
+            description: 'The list of VPC networks that can see this zone.'
             item_type: !ruby/object:Api::Type::NestedObject
               properties:
                 # TODO(drebes): Make 'networkUrl' a ResourceRef once cross-module references
                 # are possible.
                 - !ruby/object:Api::Type::String
                   name: 'networkUrl'
-                  description: 'URL of the network resource.'
+                  description: |
+                    The fully qualified URL of the VPC network to bind to.
+                    This should be formatted like
+                    https://www.googleapis.com/compute/v1/projects/{project}/global/networks/{network}
         min_version: beta
     references: !ruby/object:Api::Resource::ReferenceLinks
       guides:
