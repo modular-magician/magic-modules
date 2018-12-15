@@ -128,6 +128,27 @@ objects:
                     This should be formatted like
                     https://www.googleapis.com/compute/v1/projects/{project}/global/networks/{network}
         min_version: beta
+      - !ruby/object:Api::Type::NestedObject
+        name: 'forwardingConfig'
+        description: |
+          The presence for this field indicates that outbound forwarding is enabled
+          for this zone. The value of this field contains the set of destinations
+          to forward to.
+        update_verb: :PATCH
+        update_url: 'projects/{{project}}/managedZones/{{name}}'
+        properties:
+          - !ruby/object:Api::Type::Array
+            name: 'targetNameServers'
+            description: |
+              List of target name servers to forward to. Cloud DNS will
+              select the best available name server if more than
+              one target is given.
+            item_type: !ruby/object:Api::Type::NestedObject
+              properties:
+                - !ruby/object:Api::Type::String
+                  name: 'ipv4Address'
+                  description: 'IPv4 address of a target name server.'
+        min_version: beta
     references: !ruby/object:Api::Resource::ReferenceLinks
       guides:
         'Managing Zones':
