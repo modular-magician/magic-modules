@@ -377,8 +377,7 @@ func resourceStorageTransferJobRead(d *schema.ResourceData, meta interface{}) er
 	}
 
 	log.Printf("[DEBUG] Patched transfer job: %v\n\n", jobId)
-	d.SetId(jobId)
-	return nil
+	return resourceStorageTransferJobRead(d, meta)
 }
 
 func resourceStorageTransferJobUpdate(d *schema.ResourceData, meta interface{}) error {
