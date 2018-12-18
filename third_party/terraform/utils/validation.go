@@ -187,6 +187,23 @@ func validateProjectName() schema.SchemaValidateFunc {
 	}
 }
 
+func validateDuration() schema.SchemaValidateFunc {
+	return func(i interface{}, k string) (s []string, es []error) {
+		v, ok := i.(string)
+		if !ok {
+			es = append(es, fmt.Errorf("expected type of %s to be string", k))
+			return
+		}
+
+		if _, err := time.ParseDuration(v); err != nil {
+			es = append(es, fmt.Errorf("expected %s to be a duration, but parsing gave an error: %s", k, err.Error()))
+			return
+		}
+
+		return
+	}
+}
+
 // StringNotInSlice returns a SchemaValidateFunc which tests if the provided value
 // is of type string and that it matches none of the element in the invalid slice.
 // if ignorecase is true, case is ignored.
