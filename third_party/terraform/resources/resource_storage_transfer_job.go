@@ -45,20 +45,20 @@ func resourceStorageTransferJob() *schema.Resource {
 				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"object_conditions": objectConditions(),
-						"transfer_options":  transferOptions(),
+						"object_conditions": objectConditionsSchema(),
+						"transfer_options":  transferOptionsSchema(),
 						"gcs_data_sink": &schema.Schema{
 							Type:     schema.TypeList,
 							Optional: true,
 							MaxItems: 1,
-							Elem:     gcsData(),
+							Elem:     gcsDataSchema(),
 						},
 						"gcs_data_source": &schema.Schema{
 							Type:     schema.TypeList,
 							Optional: true,
 							MaxItems: 1,
 							Elem: &schema.Resource{
-								Schema: gcsData(),
+								Schema: gcsDataSchema(),
 							},
 							ConflictsWith: []string{"transfer_spec.aws_s3_data_source", "transfer_spec.http_data_source"},
 						},
@@ -67,7 +67,7 @@ func resourceStorageTransferJob() *schema.Resource {
 							Optional: true,
 							MaxItems: 1,
 							Elem: &schema.Resource{
-								Schema: awsS3Data(),
+								Schema: awsS3DataSchema(),
 							},
 							ConflictsWith: []string{"transfer_spec.gcs_data_source", "transfer_spec.http_data_source"},
 						},
@@ -76,7 +76,7 @@ func resourceStorageTransferJob() *schema.Resource {
 							Optional: true,
 							MaxItems: 1,
 							Elem: &schema.Resource{
-								Schema: httpData(),
+								Schema: httpDataSchema(),
 							},
 							ConflictsWith: []string{"transfer_spec.aws_s3_data_source", "transfer_spec.gcs_data_source"},
 						},
@@ -89,9 +89,9 @@ func resourceStorageTransferJob() *schema.Resource {
 				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"schedule_start_date": dateObject(true, false),
-						"schedule_end_date":   dateObject(false, true),
-						"start_time_of_day":   timeObject(),
+						"schedule_start_date": dateObjectSchema(true, false),
+						"schedule_end_date":   dateObjectSchema(false, true),
+						"start_time_of_day":   timeObjectSchema(),
 					},
 				},
 			},
@@ -117,7 +117,7 @@ func resourceStorageTransferJob() *schema.Resource {
 	}
 }
 
-func objectConditions() *schema.Schema {
+func objectConditionsSchema() *schema.Schema {
 	return &schema.Schema{
 		Type:     schema.TypeList,
 		Optional: true,
@@ -155,7 +155,7 @@ func objectConditions() *schema.Schema {
 	}
 }
 
-func transferOptions() *schema.Schema {
+func transferOptionsSchema() *schema.Schema {
 	return &schema.Schema{
 		Type:     schema.TypeList,
 		Optional: true,
@@ -181,7 +181,7 @@ func transferOptions() *schema.Schema {
 	}
 }
 
-func timeObject() *schema.Schema {
+func timeObjectSchema() *schema.Schema {
 	return &schema.Schema{
 		Type:     schema.TypeList,
 		Optional: true,
@@ -219,7 +219,7 @@ func timeObject() *schema.Schema {
 
 }
 
-func dateObject(required bool, optional bool) *schema.Schema {
+func dateObjectSchema(required bool, optional bool) *schema.Schema {
 	return &schema.Schema{
 		Type:     schema.TypeList,
 		Required: required,
@@ -253,7 +253,7 @@ func dateObject(required bool, optional bool) *schema.Schema {
 	}
 }
 
-func gcsData() map[string]*schema.Schema {
+func gcsDataSchema() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"bucket_name": &schema.Schema{
 			Required: true,
@@ -262,7 +262,7 @@ func gcsData() map[string]*schema.Schema {
 	}
 }
 
-func awsS3Data() map[string]*schema.Schema {
+func awsS3DataSchema() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"bucket_name": &schema.Schema{
 			Required: true,
@@ -290,7 +290,7 @@ func awsS3Data() map[string]*schema.Schema {
 	}
 }
 
-func httpData() map[string]*schema.Schema {
+func httpDataSchema() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"list_url": &schema.Schema{
 			Type:     schema.TypeString,
