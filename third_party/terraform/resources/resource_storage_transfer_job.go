@@ -344,6 +344,49 @@ func resourceStorageTransferJobCreate(d *schema.ResourceData, meta interface{}) 
 	return nil
 }
 
+func resourceStorageTransferJobRead(d *schema.ResourceData, meta interface{}) error {
+	config := meta.(*Config)
+
+	project, err := getProject(d, config)
+	if err != nil {
+		return err
+	}
+
+	name := d.Get("name").(string)
+	res, err := config.clientStorageTransfer.TransferJobs.Get(name).ProjectId(project).Do()
+	if err != nil {
+		return handleNotFoundError(err, d, fmt.Sprintf("Transfer Job %q", name))
+	}
+	log.Printf("[DEBUG] Read transfer job: %v in project: %v \n\n", res.Name, res.ProjectId)
+
+	d.Set("project", res.ProjectId)
+	d.Set("description", res.Description)
+	d.Set("status", res.Status)
+	d.Set("last_modification_time", res.LastModificationTime)
+	d.Set("creation_time", res.CreationTime)
+	d.Set("deletion_time", res.DeletionTime)
+
+	err = d.Set("schedule", flattenTransferSchedules([]*storagetransfer.Schedule{res.Schedule}))
+	if err != nil {
+		return err
+	}
+
+	d.Set("transfer_spec", flattenTransferSpecs([]*storagetransfer.TransferSpec{res.TransferSpec}))
+	if err != nil {
+		return err
+	}
+
+	jobId, err := extractTransferJobId(res.Name)
+	if err != nil {
+		fmt.Printf("Error extracting transfer job id %v: %v", name, err)
+		return err
+	}
+
+	log.Printf("[DEBUG] Patched transfer job: %v\n\n", jobId)
+	d.SetId(jobId)
+	return nil
+}
+
 func resourceStorageTransferJobUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
@@ -398,49 +441,6 @@ func resourceStorageTransferJobUpdate(d *schema.ResourceData, meta interface{}) 
 	jobId, err := extractTransferJobId(res.Name)
 	if err != nil {
 		fmt.Printf("Error extracting transfer job id %v: %v", transferJob, err)
-		return err
-	}
-
-	log.Printf("[DEBUG] Patched transfer job: %v\n\n", jobId)
-	d.SetId(jobId)
-	return nil
-}
-
-func resourceStorageTransferJobRead(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*Config)
-
-	project, err := getProject(d, config)
-	if err != nil {
-		return err
-	}
-
-	name := d.Get("name").(string)
-	res, err := config.clientStorageTransfer.TransferJobs.Get(name).ProjectId(project).Do()
-	if err != nil {
-		return handleNotFoundError(err, d, fmt.Sprintf("Transfer Job %q", name))
-	}
-	log.Printf("[DEBUG] Read transfer job: %v in project: %v \n\n", res.Name, res.ProjectId)
-
-	d.Set("project", res.ProjectId)
-	d.Set("description", res.Description)
-	d.Set("status", res.Status)
-	d.Set("last_modification_time", res.LastModificationTime)
-	d.Set("creation_time", res.CreationTime)
-	d.Set("deletion_time", res.DeletionTime)
-
-	err = d.Set("schedule", flattenTransferSchedules([]*storagetransfer.Schedule{res.Schedule}))
-	if err != nil {
-		return err
-	}
-
-	d.Set("transfer_spec", flattenTransferSpecs([]*storagetransfer.TransferSpec{res.TransferSpec}))
-	if err != nil {
-		return err
-	}
-
-	jobId, err := extractTransferJobId(res.Name)
-	if err != nil {
-		fmt.Printf("Error extracting transfer job id %v: %v", name, err)
 		return err
 	}
 
