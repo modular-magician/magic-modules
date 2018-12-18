@@ -31,7 +31,7 @@ func resourceStorageTransferJob() *schema.Resource {
 			"description": {
 				Type:     schema.TypeString,
 				Required: true,
-				ValidateFunc: StringLenBetween(0, 1024),
+				ValidateFunc: validation.StringLenBetween(0, 1024),
 			},
 			"project": {
 				Type:     schema.TypeString,
