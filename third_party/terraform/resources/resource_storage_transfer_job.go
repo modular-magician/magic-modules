@@ -199,7 +199,7 @@ func timeObjectSchema() *schema.Schema {
 					Type:         schema.TypeInt,
 					Required:     true,
 					ForceNew:     true,
-					ValidateFunc: validation.IntBetween(0, 59),
+					ValidateFunc: validation.IntBetween(0, 60),
 				},
 				"seconds": &schema.Schema{
 					Type:         schema.TypeInt,
