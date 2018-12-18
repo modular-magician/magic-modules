@@ -307,17 +307,12 @@ func resourceStorageTransferJobCreate(d *schema.ResourceData, meta interface{}) 
 		return err
 	}
 
-	description := d.Get("description").(string)
-	status := d.Get("status").(string)
-	schedules := d.Get("schedule").([]interface{})
-	transferSpecs := d.Get("transfer_spec").([]interface{})
-
 	transferJob := &storagetransfer.TransferJob{
-		Description:  description,
+		Description:  d.Get("description").(string),
 		ProjectId:    project,
-		Status:       status,
-		Schedule:     expandTransferSchedules(schedules)[0],
-		TransferSpec: expandTransferSpecs(transferSpecs)[0],
+		Status:       d.Get("status").(string),
+		Schedule:     expandTransferSchedules(d.Get("schedule").([]interface{}))[0],
+		TransferSpec: expandTransferSpecs(d.Get("transfer_spec").([]interface{}))[0],
 	}
 
 	var res *storagetransfer.TransferJob
