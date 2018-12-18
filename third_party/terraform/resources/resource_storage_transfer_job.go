@@ -335,8 +335,7 @@ func resourceStorageTransferJobCreate(d *schema.ResourceData, meta interface{}) 
 	}
 
 	log.Printf("[DEBUG] Created transfer job %v \n\n", jobId)
-	d.SetId(jobId)
-	return nil
+	return resourceStorageTransferJobRead(d, meta)
 }
 
 func resourceStorageTransferJobRead(d *schema.ResourceData, meta interface{}) error {
