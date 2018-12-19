@@ -8,7 +8,6 @@ import (
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/storagetransfer/v1"
 	"log"
-	"regexp"
 	"strings"
 	"time"
 )
@@ -328,13 +327,6 @@ func resourceStorageTransferJobCreate(d *schema.ResourceData, meta interface{}) 
 	}
 
 	d.Set("name", res.Name)
-	jobId, err := extractTransferJobId(res.Name)
-	if err != nil {
-		fmt.Printf("Error extracting transfer job id %v: %v", transferJob, err)
-		return err
-	}
-
-	log.Printf("[DEBUG] Created transfer job %v \n\n", jobId)
 	return resourceStorageTransferJobRead(d, meta)
 }
 
@@ -370,13 +362,6 @@ func resourceStorageTransferJobRead(d *schema.ResourceData, meta interface{}) er
 		return err
 	}
 
-	jobId, err := extractTransferJobId(res.Name)
-	if err != nil {
-		fmt.Printf("Error extracting transfer job id %v: %v", name, err)
-		return err
-	}
-
-	log.Printf("[DEBUG] Patched transfer job: %v\n\n", jobId)
 	return resourceStorageTransferJobRead(d, meta)
 }
 
@@ -431,14 +416,7 @@ func resourceStorageTransferJobUpdate(d *schema.ResourceData, meta interface{}) 
 		return err
 	}
 
-	jobId, err := extractTransferJobId(res.Name)
-	if err != nil {
-		fmt.Printf("Error extracting transfer job id %v: %v", transferJob, err)
-		return err
-	}
-
-	log.Printf("[DEBUG] Patched transfer job: %v\n\n", jobId)
-	d.SetId(jobId)
+	d.SetId(res.Name)
 	return nil
 }
 
@@ -498,14 +476,6 @@ func resourceStorageTransferJobStateImporter(d *schema.ResourceData, meta interf
 		return nil, fmt.Errorf("Invalid transfer job specifier. Expecting {projectId}/{transferJobName}")
 	}
 	return []*schema.ResourceData{d}, nil
-}
-
-func extractTransferJobId(id string) (string, error) {
-	if !regexp.MustCompile("^transferJobs/.+$").Match([]byte(id)) {
-		return "", fmt.Errorf("Invalid transferJob id format, expecting transferJob/{id}")
-	}
-	parts := strings.Split(id, "/")
-	return parts[1], nil
 }
 
 func expandDates(dates []interface{}) []*storagetransfer.Date {
