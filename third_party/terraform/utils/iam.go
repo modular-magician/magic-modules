@@ -174,7 +174,7 @@ func mergeAuditConfigs(auditConfigs []*cloudresourcemanager.AuditConfig) []*clou
 		for k, v := range auditLogConfigs {
 			var alc cloudresourcemanager.AuditLogConfig
 			alc.LogType = k
-			for member, _ := range v {
+			for member := range v {
 				alc.ExemptedMembers = append(alc.ExemptedMembers, member)
 			}
 			a.AuditLogConfigs = append(a.AuditLogConfigs, &alc)

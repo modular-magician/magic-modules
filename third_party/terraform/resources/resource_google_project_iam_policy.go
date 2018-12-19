@@ -213,6 +213,16 @@ func jsonPolicyDiffSuppress(k, old, new string, d *schema.ResourceData) bool {
 	return true
 }
 
+func derefBindings(b []*cloudresourcemanager.Binding) []cloudresourcemanager.Binding {
+	db := make([]cloudresourcemanager.Binding, len(b))
+
+	for i, v := range b {
+		db[i] = *v
+		sort.Strings(db[i].Members)
+	}
+	return db
+}
+
 func compareBindings(a, b []*cloudresourcemanager.Binding) bool {
 	a = mergeBindings(a)
 	b = mergeBindings(b)
