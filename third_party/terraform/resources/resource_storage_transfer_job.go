@@ -50,7 +50,9 @@ func resourceStorageTransferJob() *schema.Resource {
 							Type:     schema.TypeList,
 							Optional: true,
 							MaxItems: 1,
-							Elem:     gcsDataSchema(),
+							Elem: &schema.Resource{
+								Schema: gcsDataSchema(),
+							},
 						},
 						"gcs_data_source": &schema.Schema{
 							Type:     schema.TypeList,
