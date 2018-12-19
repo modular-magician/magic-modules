@@ -317,7 +317,7 @@ func resourceStorageTransferJobCreate(d *schema.ResourceData, meta interface{}) 
 		ProjectId:    project,
 		Status:       d.Get("status").(string),
 		Schedule:     expandTransferSchedules(d.Get("schedule").([]interface{})),
-		TransferSpec: expandTransferSpecs(d.Get("transfer_spec").([]interface{}))[0],
+		TransferSpec: expandTransferSpecs(d.Get("transfer_spec").([]interface{})),
 	}
 
 	var res *storagetransfer.TransferJob
@@ -406,7 +406,7 @@ func resourceStorageTransferJobUpdate(d *schema.ResourceData, meta interface{}) 
 	if d.HasChange("transfer_spec") {
 		if v, ok := d.GetOk("transfer_spec"); ok {
 			fieldMask = append(fieldMask, "transfer_spec")
-			transferJob.TransferSpec = expandTransferSpecs(v.([]interface{}))[0]
+			transferJob.TransferSpec = expandTransferSpecs(v.([]interface{}))
 		}
 	}
 
@@ -484,17 +484,17 @@ func resourceStorageTransferJobStateImporter(d *schema.ResourceData, meta interf
 	return []*schema.ResourceData{d}, nil
 }
 
-func expandDates(dates []interface{}) []*storagetransfer.Date {
-	expandedDates := make([]*storagetransfer.Date, 0, len(dates))
-	for _, raw := range dates {
-		date := raw.([]interface{})
-		expandedDates = append(expandedDates, &storagetransfer.Date{
-			Day:   int64(extractFirstMapConfig(date)["day"].(int)),
-			Month: int64(extractFirstMapConfig(date)["month"].(int)),
-			Year:  int64(extractFirstMapConfig(date)["year"].(int)),
-		})
+func expandDates(dates []interface{}) *storagetransfer.Date {
+	if len(dates) == 0 || dates[0] == nil {
+		return nil
 	}
-	return expandedDates
+
+	date := dates[0].([]interface{})
+	return &storagetransfer.Date{
+		Day:   int64(extractFirstMapConfig(date)["day"].(int)),
+		Month: int64(extractFirstMapConfig(date)["month"].(int)),
+		Year:  int64(extractFirstMapConfig(date)["year"].(int)),
+	}
 }
 
 func flattenDates(dates []*storagetransfer.Date) []map[string]interface{} {
@@ -509,18 +509,18 @@ func flattenDates(dates []*storagetransfer.Date) []map[string]interface{} {
 	return datesSchema
 }
 
-func expandTimeOfDays(times []interface{}) []*storagetransfer.TimeOfDay {
-	expandedTimes := make([]*storagetransfer.TimeOfDay, 0, len(times))
-	for _, raw := range times {
-		time := raw.([]interface{})
-		expandedTimes = append(expandedTimes, &storagetransfer.TimeOfDay{
-			Hours:   int64(extractFirstMapConfig(time)["hours"].(int)),
-			Minutes: int64(extractFirstMapConfig(time)["minutes"].(int)),
-			Seconds: int64(extractFirstMapConfig(time)["seconds"].(int)),
-			Nanos:   int64(extractFirstMapConfig(time)["nanos"].(int)),
-		})
+func expandTimeOfDays(times []interface{}) *storagetransfer.TimeOfDay {
+	if len(times) == 0 || times[0] == nil {
+		return nil
 	}
-	return expandedTimes
+
+	time := times[0].([]interface{})
+	return &storagetransfer.TimeOfDay{
+		Hours:   int64(extractFirstMapConfig(time)["hours"].(int)),
+		Minutes: int64(extractFirstMapConfig(time)["minutes"].(int)),
+		Seconds: int64(extractFirstMapConfig(time)["seconds"].(int)),
+		Nanos:   int64(extractFirstMapConfig(time)["nanos"].(int)),
+	}
 }
 
 func flattenTimeOfDays(timeOfDays []*storagetransfer.TimeOfDay) []map[string]interface{} {
@@ -543,9 +543,9 @@ func expandTransferSchedules(transferSchedules []interface{}) *storagetransfer.S
 
 	schedule := transferSchedules[0].(map[string]interface{})
 	return &storagetransfer.Schedule{
-		ScheduleStartDate: expandDates([]interface{}{schedule["schedule_start_date"]})[0],
-		ScheduleEndDate:   expandDates([]interface{}{schedule["schedule_end_date"]})[0],
-		StartTimeOfDay:    expandTimeOfDays([]interface{}{schedule["start_time_of_day"]})[0],
+		ScheduleStartDate: expandDates([]interface{}{schedule["schedule_start_date"]}),
+		ScheduleEndDate:   expandDates([]interface{}{schedule["schedule_end_date"]}),
+		StartTimeOfDay:    expandTimeOfDays([]interface{}{schedule["start_time_of_day"]}),
 	}
 }
 
@@ -569,15 +569,15 @@ func flattenTransferSchedules(transferSchedules []*storagetransfer.Schedule) []m
 	return transferSchedulesSchema
 }
 
-func expandGcsData(gcsDatas []interface{}) []*storagetransfer.GcsData {
-	datas := make([]*storagetransfer.GcsData, 0, len(gcsDatas))
-	for _, raw := range gcsDatas {
-		data := raw.(map[string]interface{})
-		datas = append(datas, &storagetransfer.GcsData{
-			BucketName: data["bucket_name"].(string),
-		})
+func expandGcsData(gcsDatas []interface{}) *storagetransfer.GcsData {
+	if len(gcsDatas) == 0 || gcsDatas[0] == nil {
+		return nil
 	}
-	return datas
+
+	gcsData := gcsDatas[0].(map[string]interface{})
+	return &storagetransfer.GcsData{
+		BucketName: gcsData["bucket_name"].(string),
+	}
 }
 
 func flattenGcsData(gcsDatas []*storagetransfer.GcsData) []map[string]interface{} {
@@ -590,16 +590,16 @@ func flattenGcsData(gcsDatas []*storagetransfer.GcsData) []map[string]interface{
 	return datasSchema
 }
 
-func expandAwsAccessKeys(awsAccessKeys []interface{}) []*storagetransfer.AwsAccessKey {
-	datas := make([]*storagetransfer.AwsAccessKey, 0, len(awsAccessKeys))
-	for _, raw := range awsAccessKeys {
-		data := raw.(map[string]interface{})
-		datas = append(datas, &storagetransfer.AwsAccessKey{
-			AccessKeyId:     data["access_key_id"].(string),
-			SecretAccessKey: data["secret_access_key"].(string),
-		})
+func expandAwsAccessKeys(awsAccessKeys []interface{}) *storagetransfer.AwsAccessKey {
+	if len(awsAccessKeys) == 0 || awsAccessKeys[0] == nil {
+		return nil
 	}
-	return datas
+
+	awsAccessKey := awsAccessKeys[0].(map[string]interface{})
+	return &storagetransfer.AwsAccessKey{
+		AccessKeyId:     awsAccessKey["access_key_id"].(string),
+		SecretAccessKey: awsAccessKey["secret_access_key"].(string),
+	}
 }
 
 func flattenAwsAccessKeys(awsAccessKeys []*storagetransfer.AwsAccessKey) []map[string]interface{} {
@@ -613,16 +613,16 @@ func flattenAwsAccessKeys(awsAccessKeys []*storagetransfer.AwsAccessKey) []map[s
 	return datasSchema
 }
 
-func expandAwsS3Data(awsS3Datas []interface{}) []*storagetransfer.AwsS3Data {
-	datas := make([]*storagetransfer.AwsS3Data, 0, len(awsS3Datas))
-	for _, raw := range awsS3Datas {
-		data := raw.(map[string]interface{})
-		datas = append(datas, &storagetransfer.AwsS3Data{
-			BucketName:   data["bucket_name"].(string),
-			AwsAccessKey: expandAwsAccessKeys(data["aws_access_key"].([]interface{}))[0],
-		})
+func expandAwsS3Data(awsS3Datas []interface{}) *storagetransfer.AwsS3Data {
+	if len(awsS3Datas) == 0 || awsS3Datas[0] == nil {
+		return nil
 	}
-	return datas
+
+	awsS3Data := awsS3Datas[0].(map[string]interface{})
+	return &storagetransfer.AwsS3Data{
+		BucketName:   awsS3Data["bucket_name"].(string),
+		AwsAccessKey: expandAwsAccessKeys(awsS3Data["aws_access_key"].([]interface{})),
+	}
 }
 
 func flattenAwsS3Data(awsS3Datas []*storagetransfer.AwsS3Data) []map[string]interface{} {
@@ -636,15 +636,15 @@ func flattenAwsS3Data(awsS3Datas []*storagetransfer.AwsS3Data) []map[string]inte
 	return datasSchema
 }
 
-func expandHttpData(httpDatas []interface{}) []*storagetransfer.HttpData {
-	datas := make([]*storagetransfer.HttpData, 0, len(httpDatas))
-	for _, raw := range httpDatas {
-		data := raw.(map[string]interface{})
-		datas = append(datas, &storagetransfer.HttpData{
-			ListUrl: data["list_url"].(string),
-		})
+func expandHttpData(httpDatas []interface{}) *storagetransfer.HttpData {
+	if len(httpDatas) == 0 || httpDatas[0] == nil {
+		return nil
 	}
-	return datas
+
+	httpData := httpDatas[0].(map[string]interface{})
+	return &storagetransfer.HttpData{
+		ListUrl: httpData["list_url"].(string),
+	}
 }
 
 func flattenHttpData(httpDatas []*storagetransfer.HttpData) []map[string]interface{} {
@@ -657,18 +657,18 @@ func flattenHttpData(httpDatas []*storagetransfer.HttpData) []map[string]interfa
 	return datasSchema
 }
 
-func expandObjectConditions(conditions []interface{}) []*storagetransfer.ObjectConditions {
-	datas := make([]*storagetransfer.ObjectConditions, 0, len(conditions))
-	for _, raw := range conditions {
-		data := raw.(map[string]interface{})
-		datas = append(datas, &storagetransfer.ObjectConditions{
-			ExcludePrefixes:                     convertStringArr(data["exclude_prefixes"].([]interface{})),
-			IncludePrefixes:                     convertStringArr(data["include_prefixes"].([]interface{})),
-			MaxTimeElapsedSinceLastModification: data["max_time_elapsed_since_last_modification"].(string),
-			MinTimeElapsedSinceLastModification: data["min_time_elapsed_since_last_modification"].(string),
-		})
+func expandObjectConditions(conditions []interface{}) *storagetransfer.ObjectConditions {
+	if len(conditions) == 0 || conditions[0] == nil {
+		return nil
 	}
-	return datas
+
+	condition := conditions[0].(map[string]interface{})
+	return &storagetransfer.ObjectConditions{
+		ExcludePrefixes:                     convertStringArr(condition["exclude_prefixes"].([]interface{})),
+		IncludePrefixes:                     convertStringArr(condition["include_prefixes"].([]interface{})),
+		MaxTimeElapsedSinceLastModification: condition["max_time_elapsed_since_last_modification"].(string),
+		MinTimeElapsedSinceLastModification: condition["min_time_elapsed_since_last_modification"].(string),
+	}
 }
 
 func flattenObjectConditions(conditions []*storagetransfer.ObjectConditions) []map[string]interface{} {
@@ -684,17 +684,17 @@ func flattenObjectConditions(conditions []*storagetransfer.ObjectConditions) []m
 	return datasSchema
 }
 
-func expandTransferOptions(options []interface{}) []*storagetransfer.TransferOptions {
-	datas := make([]*storagetransfer.TransferOptions, 0, len(options))
-	for _, raw := range options {
-		data := raw.(map[string]interface{})
-		datas = append(datas, &storagetransfer.TransferOptions{
-			DeleteObjectsFromSourceAfterTransfer:  data["delete_objects_from_source_after_transfer"].(bool),
-			DeleteObjectsUniqueInSink:             data["delete_objects_unique_in_sink"].(bool),
-			OverwriteObjectsAlreadyExistingInSink: data["overwrite_objects_already_existing_in_sink"].(bool),
-		})
+func expandTransferOptions(options []interface{}) *storagetransfer.TransferOptions {
+	if len(options) == 0 || options[0] == nil {
+		return nil
 	}
-	return datas
+
+	option := options[0].(map[string]interface{})
+	return &storagetransfer.TransferOptions{
+		DeleteObjectsFromSourceAfterTransfer:  option["delete_objects_from_source_after_transfer"].(bool),
+		DeleteObjectsUniqueInSink:             option["delete_objects_unique_in_sink"].(bool),
+		OverwriteObjectsAlreadyExistingInSink: option["overwrite_objects_already_existing_in_sink"].(bool),
+	}
 }
 
 func flattenTransferOptions(options []*storagetransfer.TransferOptions) []map[string]interface{} {
@@ -709,33 +709,20 @@ func flattenTransferOptions(options []*storagetransfer.TransferOptions) []map[st
 	return datasSchema
 }
 
-func expandTransferSpecs(transferSpecs []interface{}) []*storagetransfer.TransferSpec {
-	specs := make([]*storagetransfer.TransferSpec, 0, len(transferSpecs))
-	for _, raw := range transferSpecs {
-		spec := raw.(map[string]interface{})
-
-		transferSpec := &storagetransfer.TransferSpec{
-			GcsDataSink: expandGcsData(spec["gcs_data_sink"].([]interface{}))[0],
-		}
-
-		if v, ok := spec["object_conditions"]; ok && len(v.([]interface{})) > 0 {
-			transferSpec.ObjectConditions = expandObjectConditions(v.([]interface{}))[0]
-		}
-		if v, ok := spec["transfer_options"]; ok && len(v.([]interface{})) > 0 {
-			transferSpec.TransferOptions = expandTransferOptions(v.([]interface{}))[0]
-		}
-
-		if v, ok := spec["gcs_data_source"]; ok && len(v.([]interface{})) > 0 {
-			transferSpec.GcsDataSource = expandGcsData(v.([]interface{}))[0]
-		} else if v, ok := spec["aws_s3_data_source"]; ok && len(v.([]interface{})) > 0 {
-			transferSpec.AwsS3DataSource = expandAwsS3Data(v.([]interface{}))[0]
-		} else if v, ok := spec["http_data_source"]; ok && len(v.([]interface{})) > 0 {
-			transferSpec.HttpDataSource = expandHttpData(v.([]interface{}))[0]
-		}
-
-		specs = append(specs, transferSpec)
+func expandTransferSpecs(transferSpecs []interface{}) *storagetransfer.TransferSpec {
+	if len(transferSpecs) == 0 || transferSpecs[0] == nil {
+		return nil
 	}
-	return specs
+
+	transferSpec := transferSpecs[0].(map[string]interface{})
+	return &storagetransfer.TransferSpec{
+		GcsDataSink:      expandGcsData(transferSpec["gcs_data_sink"].([]interface{})),
+		ObjectConditions: expandObjectConditions(transferSpec["object_conditions"].([]interface{})),
+		TransferOptions:  expandTransferOptions(transferSpec["transfer_options"].([]interface{})),
+		GcsDataSource:    expandGcsData(transferSpec["gcs_data_source"].([]interface{})),
+		AwsS3DataSource:  expandAwsS3Data(transferSpec["aws_s3_data_source"].([]interface{})),
+		HttpDataSource:   expandHttpData(transferSpec["http_data_source"].([]interface{})),
+	}
 }
 
 func flattenTransferSpec(transferSpec *storagetransfer.TransferSpec) []map[string][]map[string]interface{} {
