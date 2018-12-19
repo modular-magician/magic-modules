@@ -28,8 +28,8 @@ func resourceStorageTransferJob() *schema.Resource {
 				Computed: true,
 			},
 			"description": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:         schema.TypeString,
+				Required:     true,
 				ValidateFunc: validation.StringLenBetween(0, 1024),
 			},
 			"project": {
