@@ -365,7 +365,7 @@ func resourceStorageTransferJobRead(d *schema.ResourceData, meta interface{}) er
 		return err
 	}
 
-	d.Set("transfer_spec", flattenTransferSpecs([]*storagetransfer.TransferSpec{res.TransferSpec}))
+	d.Set("transfer_spec", flattenTransferSpec(res.TransferSpec))
 	if err != nil {
 		return err
 	}
@@ -771,28 +771,25 @@ func expandTransferSpecs(transferSpecs []interface{}) []*storagetransfer.Transfe
 	return specs
 }
 
-func flattenTransferSpecs(transferSpecs []*storagetransfer.TransferSpec) []map[string][]map[string]interface{} {
-	transferSpecsSchema := make([]map[string][]map[string]interface{}, 0, len(transferSpecs))
-	for _, transferSpec := range transferSpecs {
-		schema := map[string][]map[string]interface{}{
-			"gcs_data_sink": flattenGcsData([]*storagetransfer.GcsData{transferSpec.GcsDataSink}),
-		}
+func flattenTransferSpec(transferSpec *storagetransfer.TransferSpec) []map[string][]map[string]interface{} {
 
-		if transferSpec.ObjectConditions != nil {
-			schema["object_conditions"] = flattenObjectConditions([]*storagetransfer.ObjectConditions{transferSpec.ObjectConditions})
-		}
-		if transferSpec.TransferOptions != nil {
-			schema["transfer_options"] = flattenTransferOptions([]*storagetransfer.TransferOptions{transferSpec.TransferOptions})
-		}
-		if transferSpec.GcsDataSource != nil {
-			schema["gcs_data_source"] = flattenGcsData([]*storagetransfer.GcsData{transferSpec.GcsDataSource})
-		} else if transferSpec.AwsS3DataSource != nil {
-			schema["aws_s3_data_source"] = flattenAwsS3Data([]*storagetransfer.AwsS3Data{transferSpec.AwsS3DataSource})
-		} else if transferSpec.HttpDataSource != nil {
-			schema["http_data_source"] = flattenHttpData([]*storagetransfer.HttpData{transferSpec.HttpDataSource})
-		}
-
-		transferSpecsSchema = append(transferSpecsSchema, schema)
+	transferSpecSchema := map[string][]map[string]interface{}{
+		"gcs_data_sink": flattenGcsData([]*storagetransfer.GcsData{transferSpec.GcsDataSink}),
 	}
-	return transferSpecsSchema
+
+	if transferSpec.ObjectConditions != nil {
+		transferSpecSchema["object_conditions"] = flattenObjectConditions([]*storagetransfer.ObjectConditions{transferSpec.ObjectConditions})
+	}
+	if transferSpec.TransferOptions != nil {
+		transferSpecSchema["transfer_options"] = flattenTransferOptions([]*storagetransfer.TransferOptions{transferSpec.TransferOptions})
+	}
+	if transferSpec.GcsDataSource != nil {
+		transferSpecSchema["gcs_data_source"] = flattenGcsData([]*storagetransfer.GcsData{transferSpec.GcsDataSource})
+	} else if transferSpec.AwsS3DataSource != nil {
+		transferSpecSchema["aws_s3_data_source"] = flattenAwsS3Data([]*storagetransfer.AwsS3Data{transferSpec.AwsS3DataSource})
+	} else if transferSpec.HttpDataSource != nil {
+		transferSpecSchema["http_data_source"] = flattenHttpData([]*storagetransfer.HttpData{transferSpec.HttpDataSource})
+	}
+
+	return []map[string][]map[string]interface{}{transferSpecSchema}
 }
