@@ -535,21 +535,12 @@ func expandTransferSchedules(transferSchedules []interface{}) *storagetransfer.S
 		return nil
 	}
 
-	_schedule := transferSchedules[0].(map[string]interface{})
-
-	schedule := &storagetransfer.Schedule{
-		ScheduleStartDate: expandDates([]interface{}{_schedule["schedule_start_date"]})[0],
+	schedule := transferSchedules[0].(map[string]interface{})
+	return &storagetransfer.Schedule{
+		ScheduleStartDate: expandDates([]interface{}{schedule["schedule_start_date"]})[0],
+		ScheduleEndDate: expandDates([]interface{}{schedule["schedule_end_date"]})[0],
+		StartTimeOfDay: expandTimeOfDays([]interface{}{schedule["start_time_of_day"]})[0],
 	}
-
-	if v, ok := _schedule["schedule_end_date"]; ok && len(v.([]interface{})) > 0 {
-		schedule.ScheduleEndDate = expandDates([]interface{}{v})[0]
-	}
-
-	if v, ok := _schedule["start_time_of_day"]; ok && len(v.([]interface{})) > 0 {
-		schedule.StartTimeOfDay = expandTimeOfDays([]interface{}{v})[0]
-	}
-
-	return schedule
 }
 
 func flattenTransferSchedules(transferSchedules []*storagetransfer.Schedule) []map[string][]map[string]interface{} {
