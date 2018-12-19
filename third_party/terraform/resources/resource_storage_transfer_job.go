@@ -311,7 +311,7 @@ func resourceStorageTransferJobCreate(d *schema.ResourceData, meta interface{}) 
 		Description:  d.Get("description").(string),
 		ProjectId:    project,
 		Status:       d.Get("status").(string),
-		Schedule:     expandTransferSchedules(d.Get("schedule").([]interface{}))[0],
+		Schedule:     expandTransferSchedules(d.Get("schedule").([]interface{})),
 		TransferSpec: expandTransferSpecs(d.Get("transfer_spec").([]interface{}))[0],
 	}
 
@@ -408,7 +408,7 @@ func resourceStorageTransferJobUpdate(d *schema.ResourceData, meta interface{}) 
 	if d.HasChange("schedule") {
 		if v, ok := d.GetOk("schedule"); ok {
 			fieldMask = append(fieldMask, "schedule")
-			transferJob.Schedule = expandTransferSchedules(v.([]interface{}))[0]
+			transferJob.Schedule = expandTransferSchedules(v.([]interface{}))
 		}
 	}
 
@@ -560,24 +560,26 @@ func flattenTimeOfDays(timeOfDays []*storagetransfer.TimeOfDay) []map[string]int
 	return timeOfDaysSchema
 }
 
-func expandTransferSchedules(transferSchedules []interface{}) []*storagetransfer.Schedule {
-	schedules := make([]*storagetransfer.Schedule, 0, len(transferSchedules))
-	for _, raw := range transferSchedules {
-		schedule := raw.(map[string]interface{})
-		sched := &storagetransfer.Schedule{
-			ScheduleStartDate: expandDates([]interface{}{schedule["schedule_start_date"]})[0],
-		}
-
-		if v, ok := schedule["schedule_end_date"]; ok && len(v.([]interface{})) > 0 {
-			sched.ScheduleEndDate = expandDates([]interface{}{v})[0]
-		}
-		if v, ok := schedule["start_time_of_day"]; ok && len(v.([]interface{})) > 0 {
-			sched.StartTimeOfDay = expandTimeOfDays([]interface{}{v})[0]
-		}
-
-		schedules = append(schedules, sched)
+func expandTransferSchedules(transferSchedules []interface{}) *storagetransfer.Schedule {
+	if len(transferSchedules) == 0 || transferSchedules[0] == nil {
+		return nil
 	}
-	return schedules
+
+	_schedule := transferSchedules[0].(map[string]interface{})
+
+	schedule := &storagetransfer.Schedule{
+		ScheduleStartDate: expandDates([]interface{}{_schedule["schedule_start_date"]})[0],
+	}
+
+	if v, ok := _schedule["schedule_end_date"]; ok && len(v.([]interface{})) > 0 {
+		schedule.ScheduleEndDate = expandDates([]interface{}{v})[0]
+	}
+
+	if v, ok := _schedule["start_time_of_day"]; ok && len(v.([]interface{})) > 0 {
+		schedule.StartTimeOfDay = expandTimeOfDays([]interface{}{v})[0]
+	}
+
+	return schedule
 }
 
 func flattenTransferSchedules(transferSchedules []*storagetransfer.Schedule) []map[string][]map[string]interface{} {
