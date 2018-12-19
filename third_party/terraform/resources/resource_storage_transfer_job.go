@@ -50,35 +50,27 @@ func resourceStorageTransferJob() *schema.Resource {
 							Type:     schema.TypeList,
 							Optional: true,
 							MaxItems: 1,
-							Elem: &schema.Resource{
-								Schema: gcsDataSchema(),
-							},
+							Elem:     gcsDataSchema(),
 						},
 						"gcs_data_source": &schema.Schema{
-							Type:     schema.TypeList,
-							Optional: true,
-							MaxItems: 1,
-							Elem: &schema.Resource{
-								Schema: gcsDataSchema(),
-							},
+							Type:          schema.TypeList,
+							Optional:      true,
+							MaxItems:      1,
+							Elem:          gcsDataSchema(),
 							ConflictsWith: []string{"transfer_spec.aws_s3_data_source", "transfer_spec.http_data_source"},
 						},
 						"aws_s3_data_source": &schema.Schema{
-							Type:     schema.TypeList,
-							Optional: true,
-							MaxItems: 1,
-							Elem: &schema.Resource{
-								Schema: awsS3DataSchema(),
-							},
+							Type:          schema.TypeList,
+							Optional:      true,
+							MaxItems:      1,
+							Elem:          awsS3DataSchema(),
 							ConflictsWith: []string{"transfer_spec.gcs_data_source", "transfer_spec.http_data_source"},
 						},
 						"http_data_source": &schema.Schema{
-							Type:     schema.TypeList,
-							Optional: true,
-							MaxItems: 1,
-							Elem: &schema.Resource{
-								Schema: httpDataSchema(),
-							},
+							Type:          schema.TypeList,
+							Optional:      true,
+							MaxItems:      1,
+							Elem:          httpDataSchema(),
 							ConflictsWith: []string{"transfer_spec.aws_s3_data_source", "transfer_spec.gcs_data_source"},
 						},
 					},
@@ -96,9 +88,7 @@ func resourceStorageTransferJob() *schema.Resource {
 							Optional: false,
 							ForceNew: true,
 							MaxItems: 1,
-							Elem: &schema.Resource{
-								Schema: dateObjectSchema(),
-							},
+							Elem:     dateObjectSchema(),
 						},
 						"schedule_end_date": &schema.Schema{
 							Type:     schema.TypeList,
@@ -106,11 +96,15 @@ func resourceStorageTransferJob() *schema.Resource {
 							Optional: true,
 							ForceNew: true,
 							MaxItems: 1,
-							Elem: &schema.Resource{
-								Schema: dateObjectSchema(),
-							},
+							Elem:     dateObjectSchema(),
 						},
-						"start_time_of_day": timeObjectSchema(),
+						"start_time_of_day": &schema.Schema{
+							Type:     schema.TypeList,
+							Optional: true,
+							ForceNew: true,
+							MaxItems: 1,
+							Elem:     timeObjectSchema(),
+						},
 					},
 				},
 			},
@@ -200,111 +194,112 @@ func transferOptionsSchema() *schema.Schema {
 	}
 }
 
-func timeObjectSchema() *schema.Schema {
-	return &schema.Schema{
-		Type:     schema.TypeList,
-		Optional: true,
-		ForceNew: true,
-		MaxItems: 1,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
-				"hours": &schema.Schema{
-					Type:         schema.TypeInt,
-					Required:     true,
-					ForceNew:     true,
-					ValidateFunc: validation.IntBetween(0, 24),
-				},
-				"minutes": &schema.Schema{
-					Type:         schema.TypeInt,
-					Required:     true,
-					ForceNew:     true,
-					ValidateFunc: validation.IntBetween(0, 59),
-				},
-				"seconds": &schema.Schema{
-					Type:         schema.TypeInt,
-					Required:     true,
-					ForceNew:     true,
-					ValidateFunc: validation.IntBetween(0, 60),
-				},
-				"nanos": &schema.Schema{
-					Type:         schema.TypeInt,
-					Required:     true,
-					ForceNew:     true,
-					ValidateFunc: validation.IntBetween(0, 999999999),
-				},
+func timeObjectSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"hours": &schema.Schema{
+				Type:         schema.TypeInt,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.IntBetween(0, 24),
 			},
-		},
-	}
-
-}
-
-func dateObjectSchema() map[string]*schema.Schema {
-	return map[string]*schema.Schema{
-		"year": &schema.Schema{
-			Type:         schema.TypeInt,
-			Required:     true,
-			ForceNew:     true,
-			ValidateFunc: validation.IntBetween(0, 9999),
-		},
-
-		"month": &schema.Schema{
-			Type:         schema.TypeInt,
-			Required:     true,
-			ForceNew:     true,
-			ValidateFunc: validation.IntBetween(1, 12),
-		},
-
-		"day": &schema.Schema{
-			Type:         schema.TypeInt,
-			Required:     true,
-			ForceNew:     true,
-			ValidateFunc: validation.IntBetween(0, 31),
-		},
-	}
-}
-
-func gcsDataSchema() map[string]*schema.Schema {
-	return map[string]*schema.Schema{
-		"bucket_name": &schema.Schema{
-			Required: true,
-			Type:     schema.TypeString,
-		},
-	}
-}
-
-func awsS3DataSchema() map[string]*schema.Schema {
-	return map[string]*schema.Schema{
-		"bucket_name": &schema.Schema{
-			Required: true,
-			Type:     schema.TypeString,
-		},
-		"aws_access_key": &schema.Schema{
-			Type:     schema.TypeList,
-			Required: true,
-			MaxItems: 1,
-			Elem: &schema.Resource{
-				Schema: map[string]*schema.Schema{
-					"access_key_id": &schema.Schema{
-						Type:      schema.TypeString,
-						Required:  true,
-						Sensitive: true,
-					},
-					"secret_access_key": &schema.Schema{
-						Type:      schema.TypeString,
-						Required:  true,
-						Sensitive: true,
-					},
-				},
+			"minutes": &schema.Schema{
+				Type:         schema.TypeInt,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.IntBetween(0, 59),
+			},
+			"seconds": &schema.Schema{
+				Type:         schema.TypeInt,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.IntBetween(0, 60),
+			},
+			"nanos": &schema.Schema{
+				Type:         schema.TypeInt,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.IntBetween(0, 999999999),
 			},
 		},
 	}
 }
 
-func httpDataSchema() map[string]*schema.Schema {
-	return map[string]*schema.Schema{
-		"list_url": &schema.Schema{
-			Type:     schema.TypeString,
-			Required: true,
+func dateObjectSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"year": &schema.Schema{
+				Type:         schema.TypeInt,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.IntBetween(0, 9999),
+			},
+
+			"month": &schema.Schema{
+				Type:         schema.TypeInt,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.IntBetween(1, 12),
+			},
+
+			"day": &schema.Schema{
+				Type:         schema.TypeInt,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.IntBetween(0, 31),
+			},
+		},
+	}
+}
+
+func gcsDataSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"bucket_name": &schema.Schema{
+				Required: true,
+				Type:     schema.TypeString,
+			},
+		},
+	}
+}
+
+func awsS3DataSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"bucket_name": &schema.Schema{
+				Required: true,
+				Type:     schema.TypeString,
+			},
+			"aws_access_key": &schema.Schema{
+				Type:     schema.TypeList,
+				Required: true,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"access_key_id": &schema.Schema{
+							Type:      schema.TypeString,
+							Required:  true,
+							Sensitive: true,
+						},
+						"secret_access_key": &schema.Schema{
+							Type:      schema.TypeString,
+							Required:  true,
+							Sensitive: true,
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func httpDataSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"list_url": &schema.Schema{
+				Type:     schema.TypeString,
+				Required: true,
+			},
 		},
 	}
 }
