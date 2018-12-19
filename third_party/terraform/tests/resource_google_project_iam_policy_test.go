@@ -282,16 +282,6 @@ func TestIamMergeBindings(t *testing.T) {
 	}
 }
 
-func derefBindings(b []*cloudresourcemanager.Binding) []cloudresourcemanager.Binding {
-	db := make([]cloudresourcemanager.Binding, len(b))
-
-	for i, v := range b {
-		db[i] = *v
-		sort.Strings(db[i].Members)
-	}
-	return db
-}
-
 // Confirm that a project has an IAM policy with at least 1 binding
 func testAccProjectExistingPolicy(pid string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
