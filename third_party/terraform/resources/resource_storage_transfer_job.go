@@ -88,9 +88,27 @@ func resourceStorageTransferJob() *schema.Resource {
 				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"schedule_start_date": dateObjectSchema(true, false),
-						"schedule_end_date":   dateObjectSchema(false, true),
-						"start_time_of_day":   timeObjectSchema(),
+						"schedule_start_date": &schema.Schema{
+							Type:     schema.TypeList,
+							Required: true,
+							Optional: false,
+							ForceNew: true,
+							MaxItems: 1,
+							Elem: &schema.Resource{
+								Schema: dateObjectSchema(),
+							},
+						},
+						"schedule_end_date": &schema.Schema{
+							Type:     schema.TypeList,
+							Required: false,
+							Optional: true,
+							ForceNew: true,
+							MaxItems: 1,
+							Elem: &schema.Resource{
+								Schema: dateObjectSchema(),
+							},
+						},
+						"start_time_of_day": timeObjectSchema(),
 					},
 				},
 			},
@@ -218,36 +236,27 @@ func timeObjectSchema() *schema.Schema {
 
 }
 
-func dateObjectSchema(required bool, optional bool) *schema.Schema {
-	return &schema.Schema{
-		Type:     schema.TypeList,
-		Required: required,
-		Optional: optional,
-		ForceNew: true,
-		MaxItems: 1,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
-				"year": &schema.Schema{
-					Type:         schema.TypeInt,
-					Required:     true,
-					ForceNew:     true,
-					ValidateFunc: validation.IntBetween(0, 9999),
-				},
+func dateObjectSchema() map[string]*schema.Schema {
+	return map[string]*schema.Schema{
+		"year": &schema.Schema{
+			Type:         schema.TypeInt,
+			Required:     true,
+			ForceNew:     true,
+			ValidateFunc: validation.IntBetween(0, 9999),
+		},
 
-				"month": &schema.Schema{
-					Type:         schema.TypeInt,
-					Required:     true,
-					ForceNew:     true,
-					ValidateFunc: validation.IntBetween(1, 12),
-				},
+		"month": &schema.Schema{
+			Type:         schema.TypeInt,
+			Required:     true,
+			ForceNew:     true,
+			ValidateFunc: validation.IntBetween(1, 12),
+		},
 
-				"day": &schema.Schema{
-					Type:         schema.TypeInt,
-					Required:     true,
-					ForceNew:     true,
-					ValidateFunc: validation.IntBetween(0, 31),
-				},
-			},
+		"day": &schema.Schema{
+			Type:         schema.TypeInt,
+			Required:     true,
+			ForceNew:     true,
+			ValidateFunc: validation.IntBetween(0, 31),
 		},
 	}
 }
@@ -538,8 +547,8 @@ func expandTransferSchedules(transferSchedules []interface{}) *storagetransfer.S
 	schedule := transferSchedules[0].(map[string]interface{})
 	return &storagetransfer.Schedule{
 		ScheduleStartDate: expandDates([]interface{}{schedule["schedule_start_date"]})[0],
-		ScheduleEndDate: expandDates([]interface{}{schedule["schedule_end_date"]})[0],
-		StartTimeOfDay: expandTimeOfDays([]interface{}{schedule["start_time_of_day"]})[0],
+		ScheduleEndDate:   expandDates([]interface{}{schedule["schedule_end_date"]})[0],
+		StartTimeOfDay:    expandTimeOfDays([]interface{}{schedule["start_time_of_day"]})[0],
 	}
 }
 
