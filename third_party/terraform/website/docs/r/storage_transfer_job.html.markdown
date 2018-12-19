@@ -103,6 +103,13 @@ The following arguments are supported:
 
 * `schedule` - (Required) Schedule specification defining when the Transfer Job should be scheduled to start, end and and what time to run. Structure documented below.
 
+- - -
+
+* `project` - (Optional) The project in which the resource belongs. If it
+	is not provided, the provider project is used.
+
+* `status` - (Optional) Status of the job. Default: `ENABLED`. **NOTE: The effect of the new job status takes place during a subsequent job run. For example, if you change the job status from ENABLED to DISABLED, and an operation spawned by the transfer is running, the status change would not affect the current operation.**
+
 The `transfer_spec` block supports:
 
 * `gcs_data_sink` - (Required) A Google Cloud Storage data sink. Structure documented below.
@@ -186,13 +193,6 @@ The `schedule_start_date` blocks support:
 * `seconds` - (Optional) Seconds of minutes of the time. Must normally be from 0 to 59.
 
 * `nanos` - (Required) Fractions of seconds in nanoseconds. Must be from 0 to 999,999,999.
-
-- - -
-
-* `project` - (Optional) The project in which the resource belongs. If it
-	is not provided, the provider project is used.
-
-* `status` - (Optional) Status of the job. Default: `ENABLED`. **NOTE: The effect of the new job status takes place during a subsequent job run. For example, if you change the job status from ENABLED to DISABLED, and an operation spawned by the transfer is running, the status change would not affect the current operation.**
 
 ## Attributes Reference
 
