@@ -331,7 +331,9 @@ func resourceStorageTransferJobCreate(d *schema.ResourceData, meta interface{}) 
 	}
 
 	d.Set("name", res.Name)
-	d.SetId(fmt.Sprintf("%s/%s", project, res.Name))
+
+	name := GetResourceNameFromSelfLink(res.Name)
+	d.SetId(fmt.Sprintf("%s/%s", project, name))
 
 	return resourceStorageTransferJobRead(d, meta)
 }
@@ -477,7 +479,7 @@ func resourceStorageTransferJobStateImporter(d *schema.ResourceData, meta interf
 	switch len(parts) {
 	case 2:
 		d.Set("project", parts[0])
-		d.Set("name", parts[1])
+		d.Set("name", fmt.Sprintf("transferJobs/%s", parts[1]))
 	default:
 		return nil, fmt.Errorf("Invalid transfer job specifier. Expecting {projectId}/{transferJobName}")
 	}
