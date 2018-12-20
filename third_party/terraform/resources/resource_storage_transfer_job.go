@@ -368,7 +368,6 @@ func resourceStorageTransferJobRead(d *schema.ResourceData, meta interface{}) er
 		return err
 	}
 
-	d.SetId(fmt.Sprintf("%s/%s", res.ProjectId, res.Name))
 	return nil
 }
 
