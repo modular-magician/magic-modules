@@ -423,7 +423,6 @@ func resourceStorageTransferJobUpdate(d *schema.ResourceData, meta interface{}) 
 	}
 
 	log.Printf("[DEBUG] Patched transfer job: %v\n\n", res.Name)
-	d.SetId(fmt.Sprintf("%s/%s", res.ProjectId, res.Name))
 	return nil
 }
 
