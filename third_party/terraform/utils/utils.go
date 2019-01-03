@@ -335,12 +335,19 @@ func retryTimeDuration(retryFunc func() error, duration time.Duration) error {
 			return nil
 		}
 		for _, e := range errwrap.GetAllType(err, &googleapi.Error{}) {
-			if gerr, ok := e.(*googleapi.Error); ok && (gerr.Code == 429 || gerr.Code == 500 || gerr.Code == 502 || gerr.Code == 503) {
-				return resource.RetryableError(gerr)
+			if isRetryableError(e) {
+				return resource.RetryableError(e)
 			}
 		}
 		return resource.NonRetryableError(err)
 	})
+}
+
+func isRetryableError(err error) bool {
+	if gerr, ok := err.(*googleapi.Error); ok && (gerr.Code == 429 || gerr.Code == 500 || gerr.Code == 502 || gerr.Code == 503) {
+		return true
+	}
+	return false
 }
 
 func extractFirstMapConfig(m []interface{}) map[string]interface{} {
@@ -356,6 +363,17 @@ func lockedCall(lockKey string, f func() error) error {
 	defer mutexKV.Unlock(lockKey)
 
 	return f()
+}
+
+// This is a Printf sibling (Nprintf; Named Printf), which handles strings like
+// Nprintf("Hello %{target}!", map[string]interface{}{"target":"world"}) == "Hello world!".
+// This is particularly useful for generated tests, where we don't want to use Printf,
+// since that would require us to generate a very particular ordering of arguments.
+func Nprintf(format string, params map[string]interface{}) string {
+	for key, val := range params {
+		format = strings.Replace(format, "%{"+key+"}", fmt.Sprintf("%v", val), -1)
+	}
+	return format
 }
 
 // serviceAccountFQN will attempt to generate the fully qualified name in the format of:

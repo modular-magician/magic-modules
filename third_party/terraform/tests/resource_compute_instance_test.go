@@ -1539,16 +1539,13 @@ resource "google_compute_instance" "foobar" {
 		network = "default"
 	}
 
-	metadata {
+	metadata = {
 		foo = "bar"
 		baz = "qux"
-	}
-
-	metadata {
 		startup-script = "echo Hello"
 	}
 
-	labels {
+	labels = {
 		my_key       = "my_value"
 		my_other_key = "my_other_value"
 	}
@@ -1580,7 +1577,7 @@ resource "google_compute_instance" "foobar" {
 		network = "default"
 	}
 
-	metadata {
+	metadata = {
 		foo = "bar"
 	}
 }
@@ -1611,7 +1608,7 @@ resource "google_compute_instance" "foobar" {
 		network = "default"
 	}
 
-	metadata {
+	metadata = {
 		foo = "bar"
 	}
 }
@@ -1643,7 +1640,7 @@ resource "google_compute_instance" "foobar" {
 	}
 
 
-	metadata {
+	metadata = {
 		foo = "bar"
 	}
 }
@@ -1674,7 +1671,7 @@ resource "google_compute_instance" "foobar" {
 		network = "default"
 	}
 
-	metadata {
+	metadata = {
 		foo = "bar"
 	}
 }
@@ -1763,7 +1760,7 @@ resource "google_compute_instance" "foobar" {
 		access_config { }
 	}
 
-	metadata {
+	metadata = {
 		qux = "true"
 	}
 }
@@ -1796,12 +1793,12 @@ resource "google_compute_instance" "foobar" {
 		access_config { }
 	}
 
-	metadata {
+	metadata = {
 		bar            = "baz"
 		startup-script = "echo Hello"
 	}
 
-	labels {
+	labels = {
 		only_me = "nothing_else"
 	}
 }
@@ -1838,7 +1835,7 @@ resource "google_compute_instance" "foobar" {
 		}
 	}
 
-	metadata {
+	metadata = {
 		foo = "bar"
 	}
 }
@@ -1871,7 +1868,7 @@ resource "google_compute_instance" "foobar" {
 		}
 	}
 
-	metadata {
+	metadata = {
 		foo = "bar"
 	}
 }
@@ -1992,7 +1989,7 @@ resource "google_compute_instance" "foobar" {
 		network = "default"
 	}
 
-	metadata {
+	metadata = {
 		foo = "bar"
 	}
 }
@@ -2681,7 +2678,7 @@ resource "google_compute_instance" "foobar" {
 		network = "default"
 	}
 
-	metadata {
+	metadata = {
 		foo = "bar"
 	}
 }
@@ -2854,12 +2851,12 @@ resource "google_compute_instance" "foobar" {
 	network_interface {
 		subnetwork = "${google_compute_subnetwork.inst-test-subnetwork.self_link}"
 
-		alias_ip_range = [
-		{
+		alias_ip_range {
 			subnetwork_range_name = "${google_compute_subnetwork.inst-test-subnetwork.secondary_ip_range.0.range_name}"
 			ip_cidr_range         = "172.16.0.0/24"
-		},
-		{
+		}
+
+		alias_ip_range {
 			subnetwork_range_name = "${google_compute_subnetwork.inst-test-subnetwork.secondary_ip_range.1.range_name}"
 			ip_cidr_range         = "10.1.0.0/20"
 		}
