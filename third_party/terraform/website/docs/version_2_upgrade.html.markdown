@@ -24,6 +24,7 @@ Upgrade topics:
 - [Resource: `google_bigtable_instance`](#resource-google_bigtable_instance)
 - [Resource: `google_binary_authorizaton_attestor`](#resource-google_binary_authorization_attestor)
 - [Resource: `google_binary_authorizaton_policy`](#resource-google_binary_authorization_policy)
+- [Resource: `google_cloudbuild_trigger`](#resource-google_cloudbuild_trigger)
 - [Resource: `google_cloudfunctions_function`](#resource-google_cloudfunctions_function)
 - [Resource: `google_compute_backend_service`](#resource-google_compute_backend_service)
 - [Resource: `google_compute_disk`](#resource-google_compute_disk)
@@ -53,6 +54,7 @@ Upgrade topics:
 - [Resource: `google_sql_database_instance`](#resource-google_sql_database_instance)
 - [Resource: `google_storage_default_object_acl`](#resource-google_storage_default_object_acl)
 - [Resource: `google_storage_object_acl`](#resource-google_storage_object_acl)
+- [Resource: `google_*_iam_binding`](#google_*_iam_binding)
 
 <!-- /TOC -->
 
@@ -200,6 +202,45 @@ Use the [`google-beta` provider](#google-beta-provider) to use these resources.
 ### binary authorization resources have been removed from the GA provider
 
 Use the [`google-beta` provider](#google-beta-provider) to use these resources.
+
+## Resource: `google_cloudbuild_trigger`
+
+### `build.step.args` is now a list instead of space separated strings.
+
+Example updated configuration:
+
+```hcl
+resource "google_cloudbuild_trigger" "build_trigger" {
+  trigger_template {
+    branch_name = "master-updated"
+    repo_name   = "some-repo-updated"
+  }
+  
+  build {
+    images = ["gcr.io/$PROJECT_ID/$REPO_NAME:$SHORT_SHA"]
+    tags = ["team-a", "service-b", "updated"]
+    
+    step {
+      name = "gcr.io/cloud-builders/gsutil"
+      args = ["cp", "gs://mybucket/remotefile.zip", "localfile-updated.zip"]
+    }
+    
+    step {
+      name = "gcr.io/cloud-builders/go"
+      args = ["build", "my_package_updated"]
+    }
+    
+    step {
+      name = "gcr.io/cloud-builders/docker"
+      args = ["build", "-t", "gcr.io/$PROJECT_ID/$REPO_NAME:$SHORT_SHA", "-f", "Dockerfile", "."]
+    }
+    step {
+      name = "gcr.io/$PROJECT_ID/$REPO_NAME:$SHORT_SHA"
+      args = ["test"]
+    }
+  }
+}
+```
 
 ## Resource: `google_cloudfunctions_function`
 
@@ -623,3 +664,31 @@ values that were added outside of Terraform should be added to the config.
 Terraform will remove values not explicitly set in this field. Any `role_entity`
 values that were added outside of Terraform should be added to the config.
 For fine-grained management, use `google_storage_object_access_control`.
+
+## Resource: `google_*_iam_binding`
+
+### Create is now authoritative
+
+Every `iam_binding` resource will overwrite the existing member list for a given
+role on Create. Running `terraform plan` for the first time will not show members
+that have been added via other tools. *To ensure existing `members` are preserved
+use `terraform import` instead of creating the resource.*
+
+Previous versions of `google_*_iam_binding` resources would merge the existing
+members of a role with the members defined in the terraform config. If there was
+a difference between the members defined in the config and the existing members
+defined for an existing role it would show a diff if `terraform plan` was run
+immediately after create had succeeded.
+
+Affected resources:
+* `google_billing_account_iam_binding`
+* `google_folder_iam_binding`
+* `google_kms_key_ring_iam_binding`
+* `google_kms_crypto_key_iam_binding`
+* `google_spanner_instance_iam_binding`
+* `google_spanner_database_iam_binding`
+* `google_organization_iam_binding`
+* `google_project_iam_binding`
+* `google_pubsub_topic_iam_binding`
+* `google_pubsub_subscription_iam_binding`
+* `google_service_account_iam_binding`

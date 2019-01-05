@@ -212,19 +212,6 @@ func expandEnvironmentVariables(d *schema.ResourceData) map[string]string {
 	return expandStringMap(d, "environment_variables")
 }
 
-// expandStringSlice pulls the value of key out of schema.ResourceData as a []string
-func expandStringSlice(d *schema.ResourceData, key string) []string {
-	var strings []string
-
-	if interfaceStrings, ok := d.GetOk(key); ok {
-		for _, str := range interfaceStrings.([]interface{}) {
-			strings = append(strings, str.(string))
-		}
-	}
-
-	return strings
-}
-
 // expandStringMap pulls the value of key out of a schema.ResourceData as a map[string]string.
 func expandStringMap(d *schema.ResourceData, key string) map[string]string {
 	v, ok := d.GetOk(key)
@@ -363,6 +350,17 @@ func lockedCall(lockKey string, f func() error) error {
 	defer mutexKV.Unlock(lockKey)
 
 	return f()
+}
+
+// This is a Printf sibling (Nprintf; Named Printf), which handles strings like
+// Nprintf("Hello %{target}!", map[string]interface{}{"target":"world"}) == "Hello world!".
+// This is particularly useful for generated tests, where we don't want to use Printf,
+// since that would require us to generate a very particular ordering of arguments.
+func Nprintf(format string, params map[string]interface{}) string {
+	for key, val := range params {
+		format = strings.Replace(format, "%{"+key+"}", fmt.Sprintf("%v", val), -1)
+	}
+	return format
 }
 
 // serviceAccountFQN will attempt to generate the fully qualified name in the format of:

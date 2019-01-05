@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/terraform-providers/terraform-provider-google-beta/google-beta"
+	google2 "github.com/terraform-providers/terraform-provider-google/google"
 	"os"
 
 	"github.com/hashicorp/terraform/helper/mutexkv"
@@ -125,10 +126,13 @@ func ResourceMapWithErrors() (map[string]*schema.Resource, error) {
 			GeneratedAccessContextManagerResourcesMap,
 			// end beta-only products
 			<% end -%>
+			GeneratedAppengineResourcesMap,
 			GeneratedComputeResourcesMap,
+			GeneratedCloudbuildResourcesMap,
 			GeneratedDnsResourcesMap,
 			GeneratedRedisResourcesMap,
 			GeneratedResourceManagerResourcesMap,
+			GeneratedSourcerepoResourcesMap,
 			GeneratedStorageResourcesMap,
 			GeneratedMonitoringResourcesMap,
 			map[string]*schema.Resource{
@@ -140,14 +144,12 @@ func ResourceMapWithErrors() (map[string]*schema.Resource, error) {
 				"google_billing_account_iam_binding":           ResourceIamBindingWithImport(IamBillingAccountSchema, NewBillingAccountIamUpdater, BillingAccountIdParseFunc),
 				"google_billing_account_iam_member":            ResourceIamMemberWithImport(IamBillingAccountSchema, NewBillingAccountIamUpdater, BillingAccountIdParseFunc),
 				"google_billing_account_iam_policy":            ResourceIamPolicyWithImport(IamBillingAccountSchema, NewBillingAccountIamUpdater, BillingAccountIdParseFunc),
-				"google_cloudbuild_trigger":                    resourceCloudBuildTrigger(),
 				"google_cloudfunctions_function":               resourceCloudFunctionsFunction(),
 				"google_cloudiot_registry":                     resourceCloudIoTRegistry(),
 				"google_composer_environment":                  resourceComposerEnvironment(),
 				"google_compute_attached_disk":                 resourceComputeAttachedDisk(),
 				"google_compute_backend_service":               resourceComputeBackendService(),
 				"google_compute_global_forwarding_rule":        resourceComputeGlobalForwardingRule(),
-				"google_compute_image":                         resourceComputeImage(),
 				"google_compute_instance":                      resourceComputeInstance(),
 				"google_compute_instance_from_template":        resourceComputeInstanceFromTemplate(),
 				"google_compute_instance_group":                resourceComputeInstanceGroup(),
@@ -201,7 +203,6 @@ func ResourceMapWithErrors() (map[string]*schema.Resource, error) {
 <% unless version == 'ga' -%>
 				"google_service_networking_connection":         resourceServiceNetworkingConnection(),
 <% end -%>
-				"google_sourcerepo_repository":                 resourceSourceRepoRepository(),
 				"google_spanner_instance":                      resourceSpannerInstance(),
 				"google_spanner_instance_iam_binding":          ResourceIamBindingWithImport(IamSpannerInstanceSchema, NewSpannerInstanceIamUpdater, SpannerInstanceIdParseFunc),
 				"google_spanner_instance_iam_member":           ResourceIamMemberWithImport(IamSpannerInstanceSchema, NewSpannerInstanceIamUpdater, SpannerInstanceIdParseFunc),
