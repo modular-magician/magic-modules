@@ -36,7 +36,7 @@ module Api
     # The prefix to uniquely identify the types. This is mostly a legacy thing.
     # It will output the name in all lowercase and no spaces, prefix with a g
     def prefix
-      "g" + name.delete(' ').downcase
+      'g' + name.delete(' ').downcase
     end
 
     attr_reader :objects
