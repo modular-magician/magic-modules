@@ -19,9 +19,10 @@ module Api
   # Repesents a product to be managed
   class Product < Api::Object::Named
     # Inherited:
-    # The name of the product's API, space separated & capitalised.
-    # This isn't just the API name because it doesn't encode spacing
-    # For Example: "Compute", "Access Context Manager"
+    # The name of the product's API capitalised in the appropriate places.
+    # This isn't just the API name because it doesn't meaningfully separate
+    # words in the api name - "accesscontextmanager" vs "AccessContextManager"
+    # Example inputs: "Compute", "AccessContextManager"
     # attr_reader :name
 
     # The full name of the GCP product; eg "Google Cloud Bigtable"
