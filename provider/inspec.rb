@@ -108,7 +108,6 @@ module Provider
           { prop[:target] => prop[:source] },
           {
             product_ns: data[:product_name].camelize(:upper),
-            prop_ns_dir: data[:product_name].downcase
           }.merge((prop[:overrides] || {}))
         )
       end
