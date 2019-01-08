@@ -42,7 +42,7 @@ module Api
     # The product full name is the "display name" in string form intended for
     # users to read in documentation; "Google Compute Engine", "Cloud Bigtable"
     def product_full_name
-      unless display_name.nil?
+      if !display_name.nil?
         display_name
       else
         name.underscore.humanize
