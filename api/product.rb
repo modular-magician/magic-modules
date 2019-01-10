@@ -19,13 +19,31 @@ module Api
   # Repesents a product to be managed
   class Product < Api::Object::Named
     # Inherited:
-    # The full name of the product: `Google Compute Engine`
+    # The name of the product's API capitalised in the appropriate places.
+    # This isn't just the API name because it doesn't meaningfully separate
+    # words in the api name - "accesscontextmanager" vs "AccessContextManager"
+    # Example inputs: "Compute", "AccessContextManager"
     # attr_reader :name
 
-    attr_reader :objects
+    # The full name of the GCP product; eg "Google Cloud Bigtable"
+    attr_reader :display_name
 
-    # The prefix to uniquely identify the types
-    attr_reader :prefix
+    # The name of the product's API; "compute", "accesscontextmanager"
+    def api_name
+      name.delete(' ').downcase
+    end
+
+    # The product full name is the "display name" in string form intended for
+    # users to read in documentation; "Google Compute Engine", "Cloud Bigtable"
+    def product_full_name
+      if !display_name.nil?
+        display_name
+      else
+        name.underscore.humanize
+      end
+    end
+
+    attr_reader :objects
 
     # The list of permission scopes available for the service
     # For example: `https://www.googleapis.com/auth/compute`
@@ -43,9 +61,9 @@ module Api
     def validate
       super
       set_variables @objects, :__product
+      check_optional_property :display_name, String
       check_property :objects, Array
       check_property_list :objects, Api::Resource
-      check_property :prefix, String
       check_property :scopes, ::Array
       check_property_list :scopes, String
 

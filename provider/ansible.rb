@@ -24,6 +24,8 @@ require 'provider/ansible/resourceref'
 require 'provider/ansible/resource_override'
 require 'provider/ansible/property_override'
 require 'provider/ansible/facts_override'
+require 'provider/overrides/ansible/resource_override'
+require 'provider/overrides/ansible/property_override'
 
 module Provider
   module Ansible
@@ -45,8 +47,8 @@ module Provider
       include Provider::Ansible::Module
       include Provider::Ansible::Request
 
-      def initialize(config, api)
-        super(config, api)
+      def initialize(config, api, start_time)
+        super(config, api, start_time)
         @max_columns = 160
       end
 
@@ -82,7 +84,7 @@ module Provider
       # Returns the name of the module according to Ansible naming standards.
       # Example: gcp_dns_managed_zone
       def module_name(object)
-        ["gcp_#{object.__product.prefix[1..-1]}",
+        ["gcp_#{object.__product.api_name}",
          object.name.underscore].join('_')
       end
 

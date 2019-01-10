@@ -7,21 +7,24 @@
 
 ## Overview
 
-Magic Modules is a tool we use to autogenerate infrastructure-as-code tools for
-Google Cloud Platform. GCP ["resources"](https://cloud.google.com/docs/overview/#gcp_resources)
-are encoded in a shared data file, and that data is used to fill in
-"Mad Libs"-style templates across each of the tools Magic Modules generates.
+Magic Modules is a tool used to autogenerate support in a variety of open source DevOps
+tools for Google Cloud Platform. [GCP "resource"](https://cloud.google.com/docs/overview/#gcp_resources)
+definitions are encoded in a shared data file, and that data is used to fill in
+tool-specific templates across each of the tools Magic Modules
+generates.
 
-They include:
+Magic Modules generates GCP support for:
 
 * Terraform
 * Ansible
 * InSpec
 
-Not only is Magic Modules a force multiplier for our developers, Magic Modules
-allows us to preemptively solve issues by encoding field-tested learnings about
-the GCP API into each tool; issues solved for one tool will be fixed in each
-other tool.
+Importantly, Magic Modules *isn't* full code generation. Every change is made
+manually; more than a code generator, Magic Modules is a force multiplier for 
+development. While many Magic Modules resources are defined exactly based on the
+GCP API, we use Magic Modules to preemptively solve issues across each tool by
+encoding our field-tested learnings from other tools in those definitions. In
+effect, an issue solved in one tool will be solved for each other tool.
 
 ## Getting Started with Magic Modules
 
@@ -107,24 +110,68 @@ bundle exec compiler -a -v "beta" -e terraform -o "$GOPATH/src/github.com/terraf
 
 ### Making changes to resources
 
-TODO
+Once again, see the Open in Cloud Shell example above for an interactive example
+of making a Magic Modules change; this section will serve as a reference more
+than a specific example.
 
-You can modify resources in the `api.yaml` of the GCP product it is a part of as
-well as in the tool-specific yaml file such as `terraform.yaml`.
+Magic Modules mirrors the GCP REST API; there are [products](https://github.com/GoogleCloudPlatform/magic-modules/blob/master/api/product.rb)
+such as Compute or Container (GKE) that contains [resources](https://github.com/GoogleCloudPlatform/magic-modules/blob/master/api/resource.rb),
+[GCP resources](https://cloud.google.com/docs/overview/#gcp_resources) such as
+Compute VM Instances or GKE Clusters.
 
-Most fields in .yaml files are documented in the [`api` package](https://github.com/GoogleCloudPlatform/magic-modules/tree/master/api).
+Products are separate folders under [`products/`], and each folder contains a
+file named `api.yaml` that contains the resources that make up the API
+definition.
+
+Resources are made up of some metadata like their `"name"` in the API such as
+Address or Instance, some additional metadata (see the fields in [resource.rb](https://github.com/GoogleCloudPlatform/magic-modules/blob/master/api/resource.rb)),
+and the meat of a resource, its fields. They're represented by `properties` in
+Magic Modules, an array of [types](https://github.com/GoogleCloudPlatform/magic-modules/blob/master/api/type.rb).
+
+Adding a new field to a resource in Magic Modules is often as easy as adding a
+`type` to the `properties` array for the resource. See [this example](https://github.com/GoogleCloudPlatform/magic-modules/pull/1126/files#diff-fb4f76e7d870258668a3beac48bf164c)
+where a field was added to all the tools (currently only Terraform) that support
+beta fields.
+
+#### Tool-specific overrides
+
+While most small changes won't require fiddling with overrides, each tool has
+"overrides" when it needs to deviate from the definition in `api.yaml`. This is
+often minor differences- the naming of a field, or whether it's required or not.
+
+You can find them under the folder for a product, with the name `{{tool}}.yaml`.
+For example, Ansible's overrides for Cloud SQL are present at `products/sql/ansible.yaml`
+
+You can find a full reference for each tool under `provider/{{tool}}/resource_override.rb`
+and `provider/{{tool}}/property_override.rb`, as well as some other tool-specific
+functionality.
 
 #### Making changes to handwritten files
 
-TODO
+The Google providers for Terraform have a large number of handwritten files,
+written before Magic Modules was used with them. While conversion is ongoing,
+many resources are still managed by hand. You can modify handwritten files
+under the `third_party/terraform` directory.
+
+Features that are only present in certain versions need to be "guarded" by
+wrapping those lines of code in version guards;
+
+```erb
+<% unless version == 'ga' -%>
+  // beta-only code
+<% end -%>
+```
 
 ### Testing your changes
 
-Once you've generated your changes for the tool, you can test them by running the
-tool-specific tests as if you were submitting a PR against that tool.
+Once you've made changes to resource definition, you can run Magic Modules
+to generate changes to your tool; see "Generating downstream tools" above if
+you need a refresher. Once it's generated, you should run the tool-specific
+tests as if you were submitting a PR against that tool.
 
-You can run tests in the `{{output_folder}}` from above. See the following for
-more details;
+You can run tests in the `{{output_folder}}` you generated the tool in.
+See the following tool-specific documentation for more details on testing that
+tool;
 
 Tool             | Testing Guide
 -----------------|--------------
@@ -133,11 +180,21 @@ inspec           | TODO(slevenick): Add this
 terraform        | [`google` provider testing guide](https://github.com/terraform-providers/terraform-provider-google/blob/master/.github/CONTRIBUTING.md#tests)
 terraform (beta) | [`google-beta` provider testing guide](https://github.com/terraform-providers/terraform-provider-google-beta/blob/master/.github/CONTRIBUTING.md#tests)
 
+Don't worry about testing every tool, only the primary tool you're making
+changes against. The Magic Modules maintainers will ensure your changes work
+against each tool.
+
 ### Submitting a PR
 
 Before creating a commit, if you've modified any .rb files, make sure you run
 `rake test`! That will run rubocop to ensure that the code you've written will
 pass Travis.
+
+To run rubocop automatically before committing, add a Git pre-commit hook with:
+
+```bash
+cp .github/pre-commit .git/hooks
+```
 
 Once you've created your commit(s), you can submit the code normally as a PR in
 the GitHub UI. The PR template includes some instructions to make sure we
@@ -166,11 +223,9 @@ We have a few legal steps to accept most community changes. Please fill out
 either the individual or corporate Contributor License Agreement (CLA).
 
   * If you are an individual writing original source code and you're sure you
-    own the intellectual property, then you'll need to sign an [individual CLA]
-    (http://code.google.com/legal/individual-cla-v1.0.html).
+    own the intellectual property, then you'll need to sign an [individual CLA](http://code.google.com/legal/individual-cla-v1.0.html).
   * If you work for a company that wants to allow you to contribute your work,
-    then you'll need to sign a [corporate CLA]
-    (http://code.google.com/legal/corporate-cla-v1.0.html).
+    then you'll need to sign a [corporate CLA](http://code.google.com/legal/corporate-cla-v1.0.html).
 
 Follow either of the two links above to access the appropriate CLA and
 instructions for how to sign and return it. Once we receive it, we'll be able to
