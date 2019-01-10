@@ -17,6 +17,8 @@ require 'provider/core'
 require 'provider/inspec/manifest'
 require 'provider/inspec/resource_override'
 require 'provider/inspec/property_override'
+require 'provider/overrides/inspec/resource_override'
+require 'provider/overrides/inspec/property_override'
 require 'active_support/inflector'
 
 module Provider
@@ -37,6 +39,14 @@ module Provider
 
       def property_override
         Provider::Inspec::PropertyOverride
+      end
+
+      def new_resource_override
+        Provider::Overrides::Inspec::ResourceOverride
+      end
+
+      def new_property_override
+        Provider::Overrides::Inspec::PropertyOverride
       end
     end
 
@@ -107,8 +117,7 @@ module Provider
           data[:output_folder],
           { prop[:target] => prop[:source] },
           {
-            product_ns: data[:product_name].camelize(:upper),
-            prop_ns_dir: data[:product_name].downcase
+            product_ns: data[:product_name].camelize(:upper)
           }.merge((prop[:overrides] || {}))
         )
       end
@@ -236,7 +245,7 @@ module Provider
     def array_requires(type)
       File.join(
         'google',
-        type.__resource.__product.prefix[1..-1],
+        type.__resource.__product.api_name,
         'property',
         [type.__resource.name.downcase, type.item_type.name.underscore].join('_')
       )
@@ -245,7 +254,7 @@ module Provider
     def nested_object_requires(nested_object_type)
       File.join(
         'google',
-        nested_object_type.__resource.__product.prefix[1..-1],
+        nested_object_type.__resource.__product.api_name,
         'property',
         [nested_object_type.__resource.name, nested_object_type.name.underscore].join('_')
       ).downcase

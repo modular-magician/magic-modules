@@ -51,7 +51,7 @@ module Provider
         name = property.name.camelize + name
       end
 
-      "#{property.__resource.__product.prefix[1..-1].camelize(:lower)}#{object.name}#{name}"
+      "#{property.__resource.__product.api_name.camelize(:lower)}#{object.name}#{name}"
     end
 
     # Converts between the Magic Modules type of an object and its type in the
@@ -162,7 +162,7 @@ module Provider
     end
 
     def generate_resource_tests(data)
-      return if data[:object].example.reject(&:skip_test).empty?
+      return if data[:object].examples.reject(&:skip_test).empty?
 
       dir = data[:version] == 'beta' ? 'google-beta' : 'google'
       target_folder = File.join(data[:output_folder], dir)
