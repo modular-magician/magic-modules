@@ -17,6 +17,7 @@ require 'google/extensions'
 require 'google/logger'
 require 'google/hash_utils'
 require 'pathname'
+require 'provider/overrides/runner'
 
 module Provider
   DEFAULT_FORMAT_OPTIONS = {
@@ -50,7 +51,6 @@ module Provider
       generate_objects(output_folder, types, version_name)
       copy_files(output_folder) \
         unless @config.files.nil? || @config.files.copy.nil?
-      compile_changelog(output_folder) unless @config.changelog.nil?
       # Compilation has to be the last step, as some files (e.g.
       # CONTRIBUTING.md) may depend on the list of all files previously copied
       # or compiled.
@@ -124,19 +124,8 @@ module Provider
         @config.examples,
         lambda do |_object, file|
           ["examples/#{file}",
-           "products/#{@api.prefix[1..-1]}/files/examples~#{file}"]
+           "products/#{@api.api_name}/files/examples~#{file}"]
         end
-      )
-    end
-
-    # Generate the CHANGELOG.md file with the history of the module.
-    def compile_changelog(output_folder)
-      FileUtils.mkpath output_folder
-      generate_file(
-        changes: @config.changelog,
-        template: 'templates/CHANGELOG.md.erb',
-        output_folder: output_folder,
-        out_file: File.join(output_folder, 'CHANGELOG.md')
       )
     end
 
@@ -144,7 +133,7 @@ module Provider
       files.each do |target, source|
         Google::LOGGER.debug "Compiling #{source} => #{target}"
         target_file = File.join(output_folder, target)
-                          .gsub('{{product_name}}', @api.prefix[1..-1])
+                          .gsub('{{product_name}}', @api.api_name)
 
         manifest = @config.respond_to?(:manifest) ? @config.manifest : {}
         generate_file(
@@ -160,8 +149,7 @@ module Provider
             compiler: compiler,
             output_folder: output_folder,
             out_file: target_file,
-            prop_ns_dir: @api.prefix[1..-1].downcase,
-            product_ns: @api.prefix[1..-1].camelize(:upper)
+            product_ns: @api.name
           )
         )
 
@@ -199,7 +187,10 @@ module Provider
 
     def generate_datasources(output_folder, types, version_name)
       # We need to apply overrides for datasources
-      @config.datasources.validate
+      @api = Provider::Overrides::Runner.build(@api, @config.datasources,
+                                               @config.new_resource_override,
+                                               @config.new_property_override)
+      @api.validate
 
       version = @api.version_obj_or_default(version_name)
       @api.set_properties_based_on_version(version)
@@ -232,20 +223,14 @@ module Provider
       {
         name: object.out_name,
         object: object,
-        tests: (@config.tests || {}).select { |o, _v| o == object.name }
-                                    .fetch(object.name, {}),
         output_folder: output_folder,
-        product_name: object.__product.prefix[1..-1],
+        product_name: object.__product.api_name,
         version: version
       }
     end
 
     def generate_resource_file(data)
-      product_ns = if @config.name.nil?
-                     data[:object].__product.prefix[1..-1].camelize(:upper)
-                   else
-                     @config.name
-                   end
+      product_ns = data[:object].__product.name.delete(' ')
       generate_file(data.clone.merge(
         # Override with provider specific template for this object, if needed
         template: data[:default_template],

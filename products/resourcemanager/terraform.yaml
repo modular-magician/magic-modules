@@ -12,13 +12,12 @@
 # limitations under the License.
 
 --- !ruby/object:Provider::Terraform::Config
-name: ResourceManager
 overrides: !ruby/object:Provider::Overrides::ResourceOverrides
   Project: !ruby/object:Provider::Overrides::Terraform::ResourceOverride
     exclude: true
   Lien: !ruby/object:Provider::Overrides::Terraform::ResourceOverride
     import_format: ["{{parent}}/{{name}}"]
-    example:
+    examples:
       - !ruby/object:Provider::Terraform::Examples
         name: "resource_manager_lien"
         skip_test: true
