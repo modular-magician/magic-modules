@@ -9,3 +9,8 @@ topic:
 subscription:
   name: 'inspec-gcp-subscription'
   ack_deadline_seconds: 20
+instance_group_manager:
+  name: 'inspec-gcp-igm'
+  base_instance_name: 'igm'
+  named_port_name: 'port'
+  named_port_port: 80
