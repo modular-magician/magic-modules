@@ -32,7 +32,7 @@ module Google
       elsif value.is_a?(Hash) && (value.keys.length == 1)
         "{#{quote_string(value.keys.first)}: #{python_literal(value[value.keys.first])}}"
       elsif value.is_a?(Array)
-        values = value.map { |x| python_literal(x) }
+        values = value.map { |x| python_literal(x, 0) }
         array_format(values, spaces_to_use)
       elsif value == true
         'True'
@@ -58,13 +58,9 @@ module Google
     private
 
     def array_format(values, spaces_to_use)
-      format([
-               ["[#{values.join(', ')}]"],
-               # Place everything on separate lines
-               ["[#{values.first},",
-                values[1..-2].map { |x| "#{indent(x, spaces_to_use)}," },
-                "#{indent(values.last, spaces_to_use)}]"]
-             ], 0, spaces_to_use)
+      ['[',
+       values.map { |x| "#{indent(x, spaces_to_use + 4)}," },
+       indent(']', spaces_to_use)].join("\n")
     end
   end
 end
