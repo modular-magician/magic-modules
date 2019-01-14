@@ -244,7 +244,6 @@ module Provider
           default_template: data[:object].template || 'templates/ansible/resource.erb',
           out_file: path
         )
-        %x(python3 -m black --line-length 160 -S #{path} 2> /dev/null) if path.end_with?('.py')
       end
 
       def example_defaults(data)
@@ -277,7 +276,6 @@ module Provider
           default_template: 'templates/ansible/integration_test.erb',
           out_file: path
         )
-        %x(python3 -m black --line-length 160 -S #{path} 2> /dev/null) if path.end_with?('.py')
       end
 
       def compile_datasource(data)
