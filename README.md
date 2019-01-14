@@ -45,6 +45,16 @@ To get started, you'll need:
 
 ### Preparing Magic Modules / One-time setup
 
+To get started right away, use the bootstrap script with:
+
+```bash
+./tools/bootstrap
+```
+
+---
+
+Otherwise, follow the manual steps below:
+
 If you're developing Ansible or Inspec, we use submodules to manage the Magic
 Modules generated outputs:
 
@@ -68,6 +78,11 @@ finish getting Magic Modules set up by installing the Ruby gems it needs to run:
 bundle install
 ```
 
+Now, you can verify you're ready with:
+
+```bash
+./tools/doctor
+```
 
 ### Generating downstream tools
 
@@ -217,16 +232,15 @@ that maintainer with no changes needing to be made.
 Once you've gotten approvals from the primary reviewer and the reviewers for
 any affected tools, the primary reviewer will merge your changes.
 
-#### Contributor License Agreements
+## Glossary
+The maintainers of the repository will tend to use specific jargon to describe
+concepts related to Magic Modules; here's a quick reference of what some of
+those terms are.
 
-We have a few legal steps to accept most community changes. Please fill out
-either the individual or corporate Contributor License Agreement (CLA).
-
-  * If you are an individual writing original source code and you're sure you
-    own the intellectual property, then you'll need to sign an [individual CLA](http://code.google.com/legal/individual-cla-v1.0.html).
-  * If you work for a company that wants to allow you to contribute your work,
-    then you'll need to sign a [corporate CLA](http://code.google.com/legal/corporate-cla-v1.0.html).
-
-Follow either of the two links above to access the appropriate CLA and
-instructions for how to sign and return it. Once we receive it, we'll be able to
-review/accept your PR.
+Term          | Definition
+--------------|--------------
+tool          | One of the OSS DevOps projects Magic Modules generates GCP support in
+provider      | Synonym for tool as referred to inside the codebase
+downstream(s) | A PR created by the Magician against a tool
+upstream      | A PR created against Magic Modules or the Magic Modules repo
+The Magician  | The Magic Modules CI system that drives the GitHub robot `modular-magician`
