@@ -51,8 +51,6 @@ overrides: !ruby/object:Provider::Overrides::ResourceOverrides
     exclude: true
   InstanceGroup: !ruby/object:Provider::Overrides::Inspec::ResourceOverride
     exclude: true
-  InstanceGroupManager: !ruby/object:Provider::Overrides::Inspec::ResourceOverride
-    exclude: true
   InstanceTemplate: !ruby/object:Provider::Overrides::Inspec::ResourceOverride
     exclude: true
   InterconnectAttachment: !ruby/object:Provider::Overrides::Inspec::ResourceOverride
