@@ -21,8 +21,8 @@ require 'provider/ansible/module'
 require 'provider/ansible/request'
 require 'provider/ansible/resourceref'
 require 'provider/ansible/facts_override'
-require 'provider/overrides/ansible/resource_override'
-require 'provider/overrides/ansible/property_override'
+require 'overrides/ansible/resource_override'
+require 'overrides/ansible/property_override'
 
 module Provider
   module Ansible
@@ -235,10 +235,11 @@ module Provider
         target_folder = data[:output_folder]
         FileUtils.mkpath target_folder
         name = module_name(data[:object])
+        path = File.join(target_folder,
+                         "lib/ansible/modules/cloud/google/#{name}.py")
         generate_resource_file data.clone.merge(
           default_template: data[:object].template || 'templates/ansible/resource.erb',
-          out_file: File.join(target_folder,
-                              "lib/ansible/modules/cloud/google/#{name}.py")
+          out_file: path
         )
       end
 
@@ -266,10 +267,11 @@ module Provider
         FileUtils.mkpath target_folder
 
         name = module_name(data[:object])
+        path = File.join(target_folder,
+                         "test/integration/targets/#{name}/tasks/main.yml")
         generate_resource_file data.clone.merge(
           default_template: 'templates/ansible/integration_test.erb',
-          out_file: File.join(target_folder,
-                              "test/integration/targets/#{name}/tasks/main.yml")
+          out_file: path
         )
       end
 
