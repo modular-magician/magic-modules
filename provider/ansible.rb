@@ -18,12 +18,11 @@ require 'provider/ansible/documentation'
 require 'provider/ansible/example'
 require 'provider/ansible/manifest'
 require 'provider/ansible/module'
-require 'provider/ansible/property_override'
 require 'provider/ansible/request'
 require 'provider/ansible/resourceref'
-require 'provider/ansible/resource_override'
-require 'provider/ansible/property_override'
 require 'provider/ansible/facts_override'
+require 'overrides/ansible/resource_override'
+require 'overrides/ansible/property_override'
 
 module Provider
   module Ansible
@@ -45,8 +44,8 @@ module Provider
       include Provider::Ansible::Module
       include Provider::Ansible::Request
 
-      def initialize(config, api)
-        super(config, api)
+      def initialize(config, api, start_time)
+        super(config, api, start_time)
         @max_columns = 160
       end
 
@@ -58,7 +57,7 @@ module Provider
         if prop.is_a? Api::Type::ResourceRef
           return 'str' if prop.resource_ref.readonly
 
-          return 'dict'
+          return nil
         end
         PYTHON_TYPE_FROM_MM_TYPE.fetch(prop.class.to_s, 'str')
       end
@@ -82,7 +81,7 @@ module Provider
       # Returns the name of the module according to Ansible naming standards.
       # Example: gcp_dns_managed_zone
       def module_name(object)
-        ["gcp_#{object.__product.prefix[1..-1]}",
+        ["gcp_#{object.__product.api_name}",
          object.name.underscore].join('_')
       end
 
@@ -236,10 +235,11 @@ module Provider
         target_folder = data[:output_folder]
         FileUtils.mkpath target_folder
         name = module_name(data[:object])
+        path = File.join(target_folder,
+                         "lib/ansible/modules/cloud/google/#{name}.py")
         generate_resource_file data.clone.merge(
           default_template: data[:object].template || 'templates/ansible/resource.erb',
-          out_file: File.join(target_folder,
-                              "lib/ansible/modules/cloud/google/#{name}.py")
+          out_file: path
         )
       end
 
@@ -267,10 +267,11 @@ module Provider
         FileUtils.mkpath target_folder
 
         name = module_name(data[:object])
+        path = File.join(target_folder,
+                         "test/integration/targets/#{name}/tasks/main.yml")
         generate_resource_file data.clone.merge(
           default_template: 'templates/ansible/integration_test.erb',
-          out_file: File.join(target_folder,
-                              "test/integration/targets/#{name}/tasks/main.yml")
+          out_file: path
         )
       end
 

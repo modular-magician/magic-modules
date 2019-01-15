@@ -14,8 +14,8 @@
 # TODO(nelsonjr): Make all Zone and Region resource ref
 
 --- !ruby/object:Api::Product
-name: Google Compute Engine
-prefix: gcompute
+name: Compute
+display_name: Google Compute Engine
 versions:
   - !ruby/object:Api::Product::Version
     name: ga
@@ -910,7 +910,6 @@ objects:
           properties for the firewall to apply. sourceServiceAccounts cannot be
           used at the same time as sourceTags or targetTags.
         item_type: Api::Type::String
-        max_size: 1
         conflicts:
           - sourceTags
           - targetTags
@@ -937,7 +936,6 @@ objects:
           specified, the firewall rule applies to all instances on the specified
           network.
         item_type: Api::Type::String
-        max_size: 1
         conflicts:
           - sourceTags
           - targetTags
@@ -1010,6 +1008,15 @@ objects:
           internally during updates.
         update_url: 'projects/{{project}}/regions/{{region}}/forwardingRules/{{name}}/setLabels'
         update_verb: :POST
+        min_version: beta
+      # While this field doesn't appear in the resource definition in the docs,
+      # it's present in Get and Insert, and the resource has no Update/Patch call.
+      - !ruby/object:Api::Type::Boolean
+        name: 'allPorts'
+        description: |
+          When the load balancing scheme is INTERNAL and protocol is TCP/UDP, omit
+          `port`/`port_range` and specify this field as `true` to allow packets addressed
+          to any ports to be forwarded to the backends configured with this forwarding rule.
         min_version: beta
       - !ruby/object:Api::Type::Enum
         name: 'networkTier'
@@ -1130,7 +1137,7 @@ objects:
         description: |
           The prefix length of the IP range. If not present, it means the
           address field is a single IP address.
-          
+
           This field is not applicable to addresses with addressType=EXTERNAL.
         min_version: beta
       - !ruby/object:Api::Type::Enum
@@ -1148,7 +1155,7 @@ objects:
         name: 'purpose'
         description: |
           The purpose of the resource. For global internal addresses it can be
-          
+
           * VPC_PEERING - for peer networks
 
           This should only be set when using an Internal address.
@@ -1582,7 +1589,7 @@ objects:
           - !ruby/object:Api::Type::ResourceRef
             name: 'machineType'
             description: |
-              Reference to a gcompute_machine_type resource.
+              The machine type to use in the VM instance template.
             # InstanceTemplates take a name. Instances take a self-link
             required: true
             resource: 'MachineType'
@@ -1632,9 +1639,17 @@ objects:
     name: 'Image'
     kind: 'compute#image'
     base_url: projects/{{project}}/global/images
+    input: true
+    exports:
+      - !ruby/object:Api::Type::SelfLink
+        name: 'selfLink'
     collection_url_response: !ruby/object:Api::Resource::ResponseList
       kind: 'compute#imageList'
       items: 'items'
+    references: !ruby/object:Api::Resource::ReferenceLinks
+      guides:
+        'Official Documentation': 'https://cloud.google.com/compute/docs/images'
+      api: 'https://cloud.google.com/compute/docs/reference/latest/images'
     description: |
       Represents an Image resource.
 
@@ -1788,6 +1803,18 @@ objects:
             min_version: beta
             description: |
               The name of the encryption key that is stored in Google Cloud KMS.
+      - !ruby/object:Api::Type::KeyValuePairs
+        name: 'labels'
+        description: Labels to apply to this Image.
+        update_verb: :POST
+        update_url: 'projects/{{project}}/global/images/{{name}}/setLabels'
+      - !ruby/object:Api::Type::Fingerprint
+        name: 'labelFingerprint'
+        description: |
+          The fingerprint used for optimistic locking of this resource. Used
+          internally during updates.
+        update_url: 'projects/{{project}}/global/images/{{name}}/setLabels'
+        update_verb: :POST
         # TODO(alexstephen): Change to ResourceRef with array support
       - !ruby/object:Api::Type::Array
         name: 'licenses'
@@ -1825,6 +1852,7 @@ objects:
           # TODO(alexstephen): Figure out cross-module ResourceRefs
           - !ruby/object:Api::Type::String
             name: 'source'
+            required: true
             description: |
               The full Google Cloud Storage URL where disk storage is stored
               You must provide either this property or the sourceDisk property
@@ -1832,7 +1860,7 @@ objects:
       - !ruby/object:Api::Type::ResourceRef
         name: 'sourceDisk'
         description: |
-          Refers to a gcompute_disk object
+          The source disk to create this image based on.
           You must provide either this property or the
           rawDisk.source property but not both to create an image.
         resource: 'Disk'
@@ -2309,28 +2337,28 @@ objects:
         description: |
           Region where the regional interconnect attachment resides.
     properties:
-      - !ruby/object:Api::Type::String 
+      - !ruby/object:Api::Type::String
         name: 'cloudRouterIpAddress'
         description: |
           IPv4 address + prefix length to be configured on Cloud Router
           Interface for this interconnect attachment.
         output: true
-      - !ruby/object:Api::Type::String 
+      - !ruby/object:Api::Type::String
         name: 'customerRouterIpAddress'
         description: |
           IPv4 address + prefix length to be configured on the customer
           router subinterface for this interconnect attachment.
         output: true
-      - !ruby/object:Api::Type::String 
+      - !ruby/object:Api::Type::String
         name: 'interconnect'
         description: |
           URL of the underlying Interconnect object that this attachment's traffic will
           traverse through.
         required: true
-      - !ruby/object:Api::Type::String 
+      - !ruby/object:Api::Type::String
         name: 'description'
         description: |
-          An optional description of this resource. 
+          An optional description of this resource.
       - !ruby/object:Api::Type::NestedObject
         name: 'privateInterconnectInfo'
         description: |
@@ -2344,13 +2372,13 @@ objects:
               802.1q encapsulation tag to be used for traffic between
               Google and the customer, going to and from this network and region.
             output: true
-      - !ruby/object:Api::Type::String 
+      - !ruby/object:Api::Type::String
         name: 'googleReferenceId'
         description: |
           Google reference ID, to be used when raising support tickets with
           Google or otherwise to debug backend connectivity issues.
         output: true
-      - !ruby/object:Api::Type::String 
+      - !ruby/object:Api::Type::String
         name: 'operationalStatus'
         description: |
           The current status of whether or not this interconnect attachment
@@ -2367,18 +2395,18 @@ objects:
           automatically connect the Interconnect to the network & region within which the
           Cloud Router is configured.
         required: true
-      - !ruby/object:Api::Type::Time 
+      - !ruby/object:Api::Type::Time
         name: 'creationTimestamp'
         description: |
           Creation timestamp in RFC3339 text format.
         output: true
-      - !ruby/object:Api::Type::String 
+      - !ruby/object:Api::Type::String
         name: 'id'
         description: |
           The unique identifier for the resource. This identifier is
           defined by the server.
         output: true
-      - !ruby/object:Api::Type::String 
+      - !ruby/object:Api::Type::String
         name: 'name'
         description: |
           Name of the resource. Provided by the client when the resource is created. The
@@ -2810,7 +2838,7 @@ objects:
     properties:
 <%=
   indent(compile_file({location: 'region'}, 'products/compute/disks.yaml'), 6)
-%> 
+%>
       - !ruby/object:Api::Type::Array
         name: 'replicaZones'
         description: 'URLs of the zones where the disk should be replicated to.'
@@ -2915,9 +2943,9 @@ objects:
         description: 'A list of instance tags to which this route applies.'
         item_type: Api::Type::String
         input: true
-      # TODO(nelsonjr): Make this a ResourceRef when Gateway is submitted.
       - !ruby/object:Api::Type::String
         name: 'nextHopGateway'
+        input: true
         description: |
           URL to a gateway that should handle matching packets.
 
@@ -2928,10 +2956,11 @@ objects:
           global/gateways/default-internet-gateway
           * projects/project/global/gateways/default-internet-gateway
           * global/gateways/default-internet-gateway
-        input: true
-      # TODO(nelsonjr): Make this a ResourceRef when Instance is submitted.
-      - !ruby/object:Api::Type::String
+      - !ruby/object:Api::Type::ResourceRef
         name: 'nextHopInstance'
+        resource: 'Instance'
+        imports: 'selfLink'
+        input: true
         description: |
           URL to an instance that should handle matching packets.
           You can specify this as a full or partial URL. For example:
@@ -2940,18 +2969,18 @@ objects:
           instances/instance
           * projects/project/zones/zone/instances/instance
           * zones/zone/instances/instance
-        input: true
       - !ruby/object:Api::Type::String
         name: 'nextHopIp'
         description: |
           Network IP address of an instance that should handle matching packets.
         input: true
-      # TODO(nelsonjr): Make this a ResourceRef when VpnTunnel is submitted.
-      - !ruby/object:Api::Type::String
+      - !ruby/object:Api::Type::ResourceRef
         name: 'nextHopVpnTunnel'
+        resource: 'VpnTunnel'
+        imports: 'selfLink'
+        input: true
         description: |
           URL to a VpnTunnel that should handle matching packets.
-        input: true
       - !ruby/object:Api::Type::String
         name: 'nextHopNetwork'
         output: true
@@ -3158,7 +3187,6 @@ objects:
           - !ruby/object:Api::Type::String
             # TODO(chrisst) Change to ResourceRef once KMS is in Magic Modules
             name: 'kmsKeyName'
-            min_version: beta
             description: |
               The name of the encryption key that is stored in Google Cloud KMS.
       - !ruby/object:Api::Type::NestedObject
@@ -3185,7 +3213,6 @@ objects:
           - !ruby/object:Api::Type::String
             # TODO(chrisst) Change to ResourceRef once KMS is in Magic Modules
             name: 'kmsKeyName'
-            min_version: beta
             description: |
               The name of the encryption key that is stored in Google Cloud KMS.
     properties:
@@ -4058,21 +4085,25 @@ objects:
       - !ruby/object:Api::Type::Array
         name: 'tunnels'
         description: |
-          A list of references to VpnTunnel resources associated to this VPN gateway.
-        # TODO(nelsonjr): Make this a ResourceRef when VpnTunnel is submitted.
-        item_type: Api::Type::String
+          A list of references to VpnTunnel resources associated with this VPN gateway.
+        item_type: !ruby/object:Api::Type::ResourceRef
+          name: 'tunnel'
+          resource: 'VpnTunnel'
+          imports: 'selfLink'
+          description: |
+            A VpnTunnel resource associated with this VPN gateway.
         output: true
       - !ruby/object:Api::Type::Array
         name: 'forwardingRules'
         description: |
-          A list of references to the ForwardingRule resources associated to this VPN
+          A list of references to the ForwardingRule resources associated with this VPN
           gateway.
         item_type: !ruby/object:Api::Type::ResourceRef
           name: 'forwardingRule'
           resource: 'ForwardingRule'
           imports: 'selfLink'
           description: |
-            A ForwardingRule resource associated to this VPN gateway.
+            A ForwardingRule resource associated with this VPN gateway.
         output: true
         # status is not useful for state convergence
   - !ruby/object:Api::Resource

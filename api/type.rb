@@ -55,22 +55,20 @@ module Api
 
     def validate
       super
-      @exclude ||= false
-
-      check_property :description, ::String
-      check_property :exclude, :boolean
-      check_optional_property :min_version, ::String
-
-      check_optional_property :output, :boolean
-      check_optional_property :required, :boolean
-      check_optional_property :url_param_only, :boolean
+      check :description, type: ::String, required: true
+      check :exclude, type: :boolean, default: false, required: true
+      check :min_version, type: ::String
+      check :output, type: :boolean
+      check :required, type: :boolean
+      check :url_param_only, type: :boolean
 
       raise 'Property cannot be output and required at the same time.' \
         if @output && @required
 
-      check_optional_property_oneof_default \
-        :update_verb, %i[POST PUT PATCH NONE], @__resource&.update_verb, Symbol
-      check_optional_property :update_url, ::String
+      check :update_verb, type: Symbol, allowed: %i[POST PUT PATCH NONE],
+                          default: @__resource&.update_verb
+
+      check :update_url, type: ::String
 
       check_default_value_property
       check_conflicts
@@ -88,22 +86,24 @@ module Api
         clazz = ::Symbol
       when Api::Type::Boolean
         clazz = :boolean
+      when Api::Type::ResourceRef
+        clazz = [::String, ::Hash]
       else
         raise "Update 'check_default_value_property' method to support " \
               "default value for type #{self.class}"
       end
 
-      check_optional_property :default_value, clazz
+      check :default_value, type: clazz
     end
 
     # Checks that all conflicting properties actually exist.
     def check_conflicts
-      default_value_property :conflicts, []
-      check_property :conflicts, ::Array
+      check :conflicts, type: ::Array, default: [], item_type: ::String
 
       return if @conflicts.empty?
 
-      names = @__resource.all_user_properties.map(&:name)
+      names = @__resource.all_user_properties.map(&:api_name) +
+              @__resource.all_user_properties.map(&:name)
       @conflicts.each do |p|
         raise "#{p} does not exist" unless names.include?(p)
       end
@@ -138,7 +138,7 @@ module Api
     def requires
       File.join(
         'google',
-        @__resource.__product.prefix[1..-1],
+        @__resource.__product.api_name,
         'property',
         type
       ).downcase
@@ -156,11 +156,9 @@ module Api
       end
     end
 
-    # rubocop:disable Naming/MemoizedInstanceVariableName
     def exclude_if_not_in_version(version)
       @exclude ||= version < min_version
     end
-    # rubocop:enable Naming/MemoizedInstanceVariableName
 
     # Overriding is_a? to enable class overrides.
     # Ruby does not let you natively change types, so this is the next best
@@ -222,6 +220,10 @@ module Api
     class FetchedExternal < Type
       attr_writer :resource
 
+      def validate
+        @conflicts ||= []
+      end
+
       def api_name
         name
       end
@@ -242,7 +244,7 @@ module Api
       def requires
         File.join(
           'google',
-          @__resource.__product.prefix[1..-1],
+          @__resource.__product.api_name,
           'property',
           'string'
         ).downcase
@@ -251,7 +253,7 @@ module Api
       def property_type
         [
           'Google',
-          @__resource.__product.prefix[1..-1].camelize(:upper),
+          @__resource.__product.api_name.camelize(:upper),
           'Property',
           'String'
         ].join('::')
@@ -291,14 +293,15 @@ module Api
           @item_type.set_variable(@__resource, :__resource)
           @item_type.set_variable(self, :__parent)
         end
-        check_property :item_type, [::String, NestedObject, ResourceRef, Enum]
+        check :item_type, type: [::String, NestedObject, ResourceRef, Enum], required: true
+
         unless @item_type.is_a?(NestedObject) || @item_type.is_a?(ResourceRef) \
             || @item_type.is_a?(Enum) || type?(@item_type)
           raise "Invalid type #{@item_type}"
         end
 
-        check_optional_property :min_size, ::Integer
-        check_optional_property :max_size, ::Integer
+        check :min_size, type: ::Integer
+        check :max_size, type: ::Integer
       end
 
       def item_type_class
@@ -327,7 +330,7 @@ module Api
 
       def property_file
         File.join(
-          'google', @__resource.__product.prefix[1..-1], 'property',
+          'google', @__resource.__product.api_name, 'property',
           [get_type(@item_type).new(@name).type, 'array'].join('_')
         ).downcase
       end
@@ -381,7 +384,7 @@ module Api
           super
         else
           File.join(
-            'google', @__resource.__product.prefix[1..-1], 'property',
+            'google', @__resource.__product.api_name, 'property',
             "#{@__resource.name}_#{@name}".underscore
           ).downcase
         end
@@ -389,7 +392,7 @@ module Api
 
       def validate
         super
-        check_property :values, ::Array
+        check :values, type: ::Array, item_type: [Symbol, ::String, ::Integer], required: true
       end
     end
 
@@ -419,10 +422,6 @@ module Api
       end
       include Fields
 
-      def out_type
-        resource_ref.out_name
-      end
-
       def validate
         super
         @name = @resource if @name.nil?
@@ -431,8 +430,8 @@ module Api
 
         return if @__resource.nil? || @__resource.exclude || @exclude
 
-        check_property :resource, ::String
-        check_property :imports, ::String
+        check :resource, type: ::String, required: true
+        check :imports, type: ::String, required: true
         check_resource_ref_exists
         check_resource_ref_property_exists
       end
@@ -464,7 +463,7 @@ module Api
       end
 
       def property_file
-        File.join('google', @__resource.__product.prefix[1..-1], 'property',
+        File.join('google', @__resource.__product.api_name, 'property',
                   "#{resource}_#{@imports}").downcase
       end
 
@@ -477,8 +476,7 @@ module Api
       def check_resource_ref_exists
         product = @__resource.__product
         resources = product.objects.select { |obj| obj.name == @resource }
-        raise "Missing '#{@resource}'" \
-          if resources.empty? || resources[0].exclude
+        raise "Missing '#{@resource}'" if resources.empty?
       end
 
       def check_resource_ref_property_exists
@@ -503,7 +501,7 @@ module Api
           p.set_variable(@__resource, :__resource)
           p.set_variable(self, :__parent)
         end
-        check_property_list :properties, Api::Type
+        check :properties, type: ::Array, item_type: Api::Type, required: true
       end
 
       def property_class
@@ -519,7 +517,7 @@ module Api
 
       def property_file
         File.join(
-          'google', @__resource.__product.prefix[1..-1], 'property',
+          'google', @__resource.__product.api_name, 'property',
           [@__resource.name, @name.underscore].join('_')
         ).downcase
       end
@@ -573,13 +571,13 @@ module Api
 
       def validate
         super
-        check_property :key_name, ::String
-        check_optional_property :key_description, ::String
+        check :key_name, type: ::String, required: true
+        check :key_description, type: ::String
 
         @value_type.set_variable(@name, :__name)
         @value_type.set_variable(@__resource, :__resource)
         @value_type.set_variable(self, :__parent)
-        check_property :value_type, Api::Type::NestedObject
+        check :value_type, type: Api::Type::NestedObject, required: true
         raise "Invalid type #{@value_type}" unless type?(@value_type)
       end
     end
@@ -595,7 +593,7 @@ module Api
     def property_ns_prefix
       [
         'Google',
-        @__resource.__product.prefix[1..-1].camelize(:upper),
+        @__resource.__product.api_name.camelize(:upper),
         'Property'
       ]
     end

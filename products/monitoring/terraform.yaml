@@ -11,44 +11,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 --- !ruby/object:Provider::Terraform::Config
-overrides: !ruby/object:Provider::ResourceOverrides
-  AlertPolicy: !ruby/object:Provider::Terraform::ResourceOverride
+overrides: !ruby/object:Overrides::ResourceOverrides
+  AlertPolicy: !ruby/object:Overrides::Terraform::ResourceOverride
     id_format: "{{name}}"
     import_format: ["{{name}}"]
     mutex: alertPolicy/{{project}}
-    examples: |
-      ### Basic Usage
-      ```hcl
-      resource "google_monitoring_alert_policy" "basic" {
-        display_name = "Test Policy Basic"
-        combiner = "OR"
-        conditions = [
-          {
-            display_name = "test condition"
-            condition_threshold {
-              filter = "metric.type=\"compute.googleapis.com/instance/disk/write_bytes_count\" AND resource.type=\"gce_instance\""
-              duration = "60s"
-              comparison = "COMPARISON_GT"
-              aggregations = [
-                {
-                  alignment_period = "60s"
-                  per_series_aligner = "ALIGN_RATE"
-                }
-              ]
-            }
-          }
-        ]
-      }
-      ```
+    examples:
+      - !ruby/object:Provider::Terraform::Examples
+        name: "monitoring_alert_policy_basic"
+        primary_resource_id: "alert_policy"
+        version: <%= version_name %>
+        vars:
+          alert_policy_display_name: "My Alert Policy"
     custom_code: !ruby/object:Provider::Terraform::CustomCode
       custom_import: templates/terraform/custom_import/self_link_as_name.erb
       post_create: templates/terraform/post_create/set_computed_name.erb
-
-  Group: !ruby/object:Provider::Terraform::ResourceOverride
+  Group: !ruby/object:Overrides::Terraform::ResourceOverride
     id_format: "{{name}}"
     import_format: ["{{name}}"]
     mutex: stackdriver/groups/{{project}}
-    example:
+    examples:
       - !ruby/object:Provider::Terraform::Examples
         name: "monitoring_group_basic"
         primary_resource_id: "basic"
@@ -63,17 +45,17 @@ overrides: !ruby/object:Provider::ResourceOverrides
           display_name: "New Test SubGroup"
           display_name2: "New Test SubGroup"
     properties:
-      parentName: !ruby/object:Provider::Terraform::PropertyOverride
+      parentName: !ruby/object:Overrides::Terraform::PropertyOverride
         diff_suppress_func: 'compareSelfLinkRelativePaths'
     custom_code: !ruby/object:Provider::Terraform::CustomCode
       custom_import: templates/terraform/custom_import/self_link_as_name.erb
       post_create: templates/terraform/post_create/set_computed_name.erb
 
-  NotificationChannel: !ruby/object:Provider::Terraform::ResourceOverride
+  NotificationChannel: !ruby/object:Overrides::Terraform::ResourceOverride
     id_format: "{{name}}"
     import_format: ["{{name}}"]
     mutex: stackdriver/notifications/{{project}}
-    example:
+    examples:
       - !ruby/object:Provider::Terraform::Examples
         version: <%= version_name %>
         name: "notification_channel_basic"
@@ -84,10 +66,10 @@ overrides: !ruby/object:Provider::ResourceOverrides
       custom_import: templates/terraform/custom_import/self_link_as_name.erb
       post_create: templates/terraform/post_create/set_computed_name.erb
 
-  UptimeCheckConfig: !ruby/object:Provider::Terraform::ResourceOverride
+  UptimeCheckConfig: !ruby/object:Overrides::Terraform::ResourceOverride
     id_format: "{{name}}"
     import_format: ["{{name}}"]
-    example:
+    examples:
       - !ruby/object:Provider::Terraform::Examples
         version: <%= version_name %>
         name: "uptime_check_config_http"
@@ -104,11 +86,14 @@ overrides: !ruby/object:Provider::ResourceOverrides
     custom_code: !ruby/object:Provider::Terraform::CustomCode
       custom_import: templates/terraform/custom_import/self_link_as_name.erb
       post_create: templates/terraform/post_create/set_computed_name.erb
+      pre_update: "templates/terraform/pre_update/update_mask.erb"
     properties:
-      httpCheck.authInfo.password: !ruby/object:Provider::Terraform::PropertyOverride
+      httpCheck.authInfo.password: !ruby/object:Overrides::Terraform::PropertyOverride
         sensitive: true
         custom_flatten: "templates/terraform/custom_flatten/uptime_check_http_password.erb"
-      resourceGroup.groupId: !ruby/object:Provider::Terraform::PropertyOverride
+      httpCheck.port: !ruby/object:Overrides::Terraform::PropertyOverride
+        default_from_api: true
+      resourceGroup.groupId: !ruby/object:Overrides::Terraform::PropertyOverride
         custom_expand: "templates/terraform/custom_expand/resource_from_self_link.go.erb"
         custom_flatten: "templates/terraform/custom_flatten/group_id_to_name.erb"
 

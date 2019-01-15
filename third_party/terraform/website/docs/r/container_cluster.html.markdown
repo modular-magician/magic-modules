@@ -42,7 +42,7 @@ resource "google_container_cluster" "primary" {
       "https://www.googleapis.com/auth/monitoring",
     ]
 
-    labels {
+    labels = {
       foo = "bar"
     }
 
@@ -78,7 +78,7 @@ output "cluster_ca_certificate" {
 * `region` (Optional)
     The region to create the cluster in, for
     [Regional Clusters](https://cloud.google.com/kubernetes-engine/docs/concepts/multi-zone-and-regional-clusters#regional).
-    In a Regional Cluster, the number of nodes specified in `initial_node_count` is 
+    In a Regional Cluster, the number of nodes specified in `initial_node_count` is
     created in three zones of the region (this can be changed by setting `additional_zones`).
 
 * `additional_zones` - (Optional) The list of additional Google Compute Engine
@@ -145,7 +145,7 @@ output "cluster_ca_certificate" {
     describe the various acceptable formats for this field.
 
 -> If you are using the `google_container_engine_versions` datasource with a regional cluster, ensure that you have provided a `region`
-to the datasource. A `region` can have a different set of supported versions than its corresponding `zone`s, and not all `zone`s in a 
+to the datasource. A `region` can have a different set of supported versions than its corresponding `zone`s, and not all `zone`s in a
 `region` are guaranteed to support the same version.
 
 * `monitoring_service` - (Optional) The monitoring service that the cluster
@@ -213,6 +213,11 @@ The `addons_config` block supports:
     for the master.  This must be enabled in order to enable network policy for the nodes.
     It can only be disabled if the nodes already do not have network policies enabled.
     Set `disabled = true` to disable.
+* `istio_config` - (Optional, [Beta](https://terraform.io/docs/providers/google/provider_versions.html)).
+    Structure is documented below.
+* `cloudrun_config` - (Optional, [Beta](https://terraform.io/docs/providers/google/provider_versions.html)).
+    The status of the CloudRun addon. It requires `istio_config` enabled. It is disabled by default.
+    Set `disabled = false` to enable. This addon can only be enabled at cluster creation time.
 
 This example `addons_config` disables two addons:
 
@@ -226,6 +231,11 @@ addons_config {
   }
 }
 ```
+
+The `istio_config` block supports:
+* `disabled` - (Optional) The status of the Istio addon, which makes it easy to set up Istio for services in a
+    cluster. It is disabled by default. Set `disabled = false` to enable.
+* `auth` - (Optional) The authentication type between services in Istio. Available options include `AUTH_MUTUAL_TLS`.
 
 The `cluster_autoscaling` block supports:
 * `enabled` - (Required) Whether cluster autoscaling (also called autoprovisioning) is
@@ -460,6 +470,10 @@ exported:
 * `master_version` - The current version of the master in the cluster. This may
     be different than the `min_master_version` set in the config if the master
     has been updated by GKE.
+
+* `tpu_ipv4_cidr_block` - ([Beta](https://terraform.io/docs/providers/google/provider_versions.html)) The IP address range of the Cloud TPUs in this cluster, in
+    [CIDR](http://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing)
+    notation (e.g. `1.2.3.4/29`).
 
 <a id="timeouts"></a>
 ## Timeouts

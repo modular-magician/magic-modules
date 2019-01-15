@@ -14,12 +14,10 @@ import (
 	"github.com/hashicorp/terraform/helper/validation"
 
 	"google.golang.org/api/googleapi"
-	"google.golang.org/api/sqladmin/v1beta4"
+	sqladmin "google.golang.org/api/sqladmin/v1beta4"
 )
 
-<% unless version == 'ga' -%>
 const privateNetworkLinkRegex = "projects/(" + ProjectRegex + ")/global/networks/((?:[a-z](?:[-a-z0-9]*[a-z0-9])?))$"
-<% end -%>
 
 var sqlDatabaseAuthorizedNetWorkSchemaElem *schema.Resource = &schema.Resource{
 	Schema: map[string]*schema.Schema{
@@ -61,6 +59,7 @@ func resourceSqlDatabaseInstance() *schema.Resource {
 			"region": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
+				Computed: true,
 				ForceNew: true,
 			},
 
@@ -185,14 +184,12 @@ func resourceSqlDatabaseInstance() *schema.Resource {
 										Type:     schema.TypeBool,
 										Optional: true,
 									},
-<% unless version == 'ga' -%>
 									"private_network": &schema.Schema{
 										Type:             schema.TypeString,
 										Optional:         true,
 										ValidateFunc:     validateRegexp(privateNetworkLinkRegex),
 										DiffSuppressFunc: compareSelfLinkRelativePaths,
 									},
-<% end -%>
 								},
 							},
 						},
@@ -607,9 +604,10 @@ func expandMaintenanceWindow(configured []interface{}) *sqladmin.MaintenanceWind
 
 	window := configured[0].(map[string]interface{})
 	return &sqladmin.MaintenanceWindow{
-		Day:         int64(window["day"].(int)),
-		Hour:        int64(window["hour"].(int)),
-		UpdateTrack: window["update_track"].(string),
+		Day:             int64(window["day"].(int)),
+		Hour:            int64(window["hour"].(int)),
+		UpdateTrack:     window["update_track"].(string),
+		ForceSendFields: []string{"Hour"},
 	}
 }
 
@@ -635,11 +633,9 @@ func expandIpConfiguration(configured []interface{}) *sqladmin.IpConfiguration {
 	return &sqladmin.IpConfiguration{
 		Ipv4Enabled:        _ipConfiguration["ipv4_enabled"].(bool),
 		RequireSsl:         _ipConfiguration["require_ssl"].(bool),
-<% unless version == 'ga' -%>
 		PrivateNetwork:     _ipConfiguration["private_network"].(string),
-<% end -%>
 		AuthorizedNetworks: expandAuthorizedNetworks(_ipConfiguration["authorized_networks"].(*schema.Set).List()),
-		ForceSendFields:    []string{"Ipv4Enabled"},
+		ForceSendFields:    []string{"Ipv4Enabled", "RequireSsl"},
 	}
 }
 func expandAuthorizedNetworks(configured []interface{}) []*sqladmin.AclEntry {
@@ -787,7 +783,11 @@ func resourceSqlDatabaseInstanceDelete(d *schema.ResourceData, meta interface{})
 		defer mutexKV.Unlock(instanceMutexKey(project, v.(string)))
 	}
 
-	op, err := config.clientSqlAdmin.Instances.Delete(project, d.Get("name").(string)).Do()
+	var op *sqladmin.Operation
+	err = retryTimeDuration(func() error {
+		op, err = config.clientSqlAdmin.Instances.Delete(project, d.Get("name").(string)).Do()
+		return err
+	}, d.Timeout(schema.TimeoutDelete))
 
 	if err != nil {
 		return fmt.Errorf("Error, failed to delete instance %s: %s", d.Get("name").(string), err)
@@ -892,9 +892,7 @@ func flattenDatabaseFlags(databaseFlags []*sqladmin.DatabaseFlags) []map[string]
 func flattenIpConfiguration(ipConfiguration *sqladmin.IpConfiguration) interface{} {
 	data := map[string]interface{}{
 		"ipv4_enabled":    ipConfiguration.Ipv4Enabled,
-<% unless version == 'ga' -%>
 		"private_network": ipConfiguration.PrivateNetwork,
-<% end -%>
 		"require_ssl":     ipConfiguration.RequireSsl,
 	}
 

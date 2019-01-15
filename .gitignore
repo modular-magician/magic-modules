@@ -16,15 +16,11 @@
 *#
 *.swp
 
-coverage/*
 *.pyc
 
 # IDEA files
 .idea/*
 *.iml
-
-# Keep project coverage statistics under source control
-!coverage/.last_run.json
 
 # OS generated files
 .DS_Store
@@ -35,3 +31,4 @@ coverage/*
 ehthumbs.db
 Thumbs.db
 
+final_api.yaml

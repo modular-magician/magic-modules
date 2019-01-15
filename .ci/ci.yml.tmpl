@@ -5,22 +5,22 @@ resource_types:
     - name: merged-downstreams
       type: docker-image
       source:
-          # Note: resource types cannot use credhub substitution - "nmckinley" is hardcoded here.
-          repository: nmckinley/merged-prs-resource
-          tag: v0.0.7
+          # Note: resource types cannot use credhub substitution - "gcr.io/magic-modules" is hardcoded here.
+          repository: gcr.io/magic-modules/merged-prs-resource
+          tag: '1.1'
 
     - name: git-branch
       type: docker-image
       source:
-          # Note: resource types cannot use credhub substitution - "nmckinley" is hardcoded here.
-          repository: nmckinley/concourse-git-resource
-          tag: v0.1.20
+          # Note: resource types cannot use credhub substitution - "gcr.io/magic-modules" is hardcoded here.
+          repository: gcr.io/magic-modules/concourse-git-resource
+          tag: '1.0'
 
     - name: github-pull-request
       type: docker-image
       source:
-          repository: nmckinley/concourse-github-pr-resource
-          tag: v0.1.16
+          repository: gcr.io/magic-modules/concourse-github-pr-resource
+          tag: '1.1'
 
 resources:
     - name: magic-modules
@@ -50,6 +50,13 @@ resources:
           access_token: ((github-account.password))
           authorship_restriction: true
           no_label: automerged
+
+    - name: midnight-timer
+      type: time
+      source:
+        start: 12:00 AM
+        stop: 1:00 AM
+        location: America/Los_Angeles
 
 {% for v in vars.terraform_v.itervalues() %}
     - name: {{ v.short_name }}-intermediate
@@ -261,31 +268,6 @@ jobs:
                 get_params:
                   skip_clone: true
 
-    - name: inspec-test
-      plan:
-        - get: magic-modules
-          version: every
-          trigger: true
-          params:
-              submodules: [build/inspec]
-          passed: [mm-generate]
-        - task: test
-          file: magic-modules/.ci/unit-tests/inspec.yml
-          params:
-            TERRAFORM_KEY: ((terraform-key))
-          timeout: 30m
-          on_failure:
-              do:
-              - get: magic-modules-new-prs
-                passed: [mm-generate]
-              - put: magic-modules-new-prs
-                params:
-                  status: failure
-                  context: inspec-tests
-                  path: magic-modules-new-prs
-                get_params:
-                  skip_clone: true
-
     - name: create-prs
       plan:
           - get: magic-modules
@@ -297,7 +279,6 @@ jobs:
               - mm-generate
               - terraform-test
               - ansible-test
-              - inspec-test
           - get: mm-initial-pr
             attempts: 2
             resource: magic-modules-new-prs
@@ -384,8 +365,27 @@ jobs:
                 label: downstream-generated
                 path: mm-initial-pr
                 comment: magic-modules-with-comment/pr_comment
+                label_file: magic-modules-with-comment/label_file
             get_params:
                 skip_clone: true
+    - name: terraform-acceptance-tests
+      plan:
+        - get: magic-modules
+          version: every
+          trigger: true
+          params:
+              submodules: [{{','.join(vars.terraform_submodules)}}]
+          passed: [create-prs]
+        - aggregate:
+          {% for v in vars.terraform_v.itervalues() %}
+          - task: test-{{v.short_name}}
+            file: magic-modules/.ci/acceptance-tests/terraform-acceptance.yml
+            params:
+              PROVIDER_NAME: {{v.provider_name}}
+              SHORT_NAME: {{v.short_name}}
+              TEST_DIR: {{v.test_dir}}
+          {% endfor %}
+
 
     - name: merge-prs
       plan:
@@ -435,11 +435,15 @@ jobs:
     - name: inspec-integration-test
       serial: true
       plan:
-        - get: magic-modules-new-prs
+        - get: magic-modules-gcp
+        - get: midnight-timer
+          trigger: true
         - task: inspec-integration
-          file: magic-modules-new-prs/.ci/acceptance-tests/inspec-integration.yml
+          file: magic-modules-gcp/.ci/acceptance-tests/inspec-integration.yml
           params:
             TERRAFORM_KEY: ((terraform-key))
+            PROJECT_NAME: ((inspec-project-name))
+            PROJECT_NUMBER: ((inspec-project-number))
     - name: ansible-integration-test
       serial: true
       plan:
@@ -451,3 +455,16 @@ jobs:
             SERVICE_ACCOUNT_KEY: ((ansible-integration-key))
             ANSIBLE_TEMPLATE: ((ansible-integration-template))
             IMAGE_KEY: ((image-key))
+
+{% for v in vars.terraform_v.itervalues() %}
+    - name: {{v.short_name}}-integration-test
+      serial: true
+      plan:
+        - get: magic-modules-gcp
+        - task: {{v.short_name}}-integration
+          file: magic-modules-gcp/.ci/acceptance-tests/terraform-integration.yml
+          params:
+            PROVIDER_NAME: {{v.provider_name}}
+            SHORT_NAME: {{v.short_name}}
+            TEST_DIR: {{v.test_dir}}
+{% endfor %}

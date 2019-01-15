@@ -13,6 +13,7 @@
 
 require 'binding_of_caller'
 require 'erb'
+require 'ostruct'
 
 module Compile
   # Unique ID for the Google libraries to be compiled/used by modules
@@ -166,11 +167,6 @@ module Compile
       raise e
     end
 
-    def compile_if(config, node)
-      file = Google::HashUtils.navigate(config, node)
-      compile(file, 2) unless file.nil?
-    end
-
     def indent(text, spaces, filler = ' ')
       indent_array(text, spaces, filler).join("\n")
     end
@@ -198,23 +194,6 @@ module Compile
           ' ' * spaces + line.gsub(/\n/, "\n" + ' ' * spaces)
         end
       end
-    end
-
-    # Includes a require clause and schedules library to be copied, potentially
-    # with its dependencies & tests.
-    def emit_google_lib(ctx, lib, file)
-      product_ns = ctx.local_variable_get(:object).__product.prefix[1..-1]
-
-      files = case lib
-              when Libraries::NETWORK
-                google_lib_network file, product_ns
-              else
-                google_lib_basic lib, file, product_ns
-              end
-
-      emit_libraries(ctx.local_variable_get(:output_folder), product_ns, files)
-
-      File.join(*%w[google].concat([product_ns, lib, file]))
     end
 
     def quote_string(value)
@@ -302,40 +281,6 @@ module Compile
       lines = lines.drop(1) while lines[0].start_with?(comment_marker)
       lines = lines.drop(1) while lines[0].strip.empty?
       lines.join("\n")
-    end
-
-    def emit_libraries(output_folder, product_name, files)
-      product_ns = product_name.downcase
-      compile_file_list(output_folder, files,
-                        product_ns: Google::StringUtils.camelize(product_name,
-                                                                 :upper),
-                        product_ns_dir: product_ns)
-    end
-
-    def google_lib_basic_files(file, product_ns, *google_root)
-      {
-        File.join(*google_root, product_ns, folder, "#{file}.rb") =>
-          File.join('templates', folder, "#{file}.rb.erb"),
-        File.join('spec', "#{folder}_#{file}_spec.rb") =>
-          File.join('templates', folder, "#{file}_spec.rb.erb")
-      }
-    end
-
-    def google_lib_network_files(file, product_ns, *google_root)
-      files = {}
-      folder = Libraries::NETWORK
-      ['base', file].each do |f|
-        files[File.join(*google_root, product_ns, folder, "#{f}.rb")] =
-          File.join('templates', folder, "#{f}.rb.erb")
-        base_spec = File.join('templates', folder, "#{f}_spec.rb.erb")
-        files[File.join('spec', "#{folder}_#{f}_spec.rb")] = base_spec \
-          if f != 'base' || File.exist?(base_spec)
-      end
-      %w[network_blocker network_blocker_spec].each do |f|
-        files[File.join('spec', "#{f}.rb")] = File.join('templates', folder,
-                                                        "#{f}.rb.erb")
-      end
-      files
     end
   end
 end

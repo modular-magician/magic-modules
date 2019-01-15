@@ -7,7 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform/helper/schema"
 
-	"google.golang.org/api/sqladmin/v1beta4"
+	sqladmin "google.golang.org/api/sqladmin/v1beta4"
 )
 
 func resourceSqlDatabase() *schema.Resource {
@@ -21,37 +21,37 @@ func resourceSqlDatabase() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
 
-			"instance": &schema.Schema{
+			"instance": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
 
-			"project": &schema.Schema{
+			"project": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 				ForceNew: true,
 			},
 
-			"self_link": &schema.Schema{
+			"self_link": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
 
-			"charset": &schema.Schema{
+			"charset": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 			},
 
-			"collation": &schema.Schema{
+			"collation": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
@@ -206,10 +206,10 @@ func resourceSqlDatabaseDelete(d *schema.ResourceData, meta interface{}) error {
 	defer mutexKV.Unlock(instanceMutexKey(project, instance_name))
 
 	var op *sqladmin.Operation
-	err = retryTime(func() error {
+	err = retryTimeDuration(func() error {
 		op, err = config.clientSqlAdmin.Databases.Delete(project, instance_name, database_name).Do()
 		return err
-	}, 5 /* minutes */)
+	}, d.Timeout(schema.TimeoutDelete))
 
 	if err != nil {
 		return fmt.Errorf("Error, failed to delete"+

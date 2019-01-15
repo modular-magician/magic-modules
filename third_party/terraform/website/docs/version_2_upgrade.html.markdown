@@ -24,6 +24,7 @@ Upgrade topics:
 - [Resource: `google_bigtable_instance`](#resource-google_bigtable_instance)
 - [Resource: `google_binary_authorizaton_attestor`](#resource-google_binary_authorization_attestor)
 - [Resource: `google_binary_authorizaton_policy`](#resource-google_binary_authorization_policy)
+- [Resource: `google_cloudbuild_trigger`](#resource-google_cloudbuild_trigger)
 - [Resource: `google_cloudfunctions_function`](#resource-google_cloudfunctions_function)
 - [Resource: `google_compute_backend_service`](#resource-google_compute_backend_service)
 - [Resource: `google_compute_disk`](#resource-google_compute_disk)
@@ -32,8 +33,10 @@ Upgrade topics:
 - [Resource: `google_compute_instance`](#resource-google_compute_instance)
 - [Resource: `google_compute_instance_from_template`](#resource-google_compute_instance_from_template)
 - [Resource: `google_compute_instance_group_manager`](#resource-google_compute_instance_group_manager)
+- [Resource: `google_compute_instance_template`](#resource-google_compute_instance_template)
 - [Resource: `google_compute_project_metadata`](#resource-google_compute_project_metadata)
 - [Resource: `google_compute_region_instance_group_manager`](#resource-google_compute_region_instance_group_manager)
+- [Resource: `google_compute_snapshot`](#resource-google_compute_snapshot)
 - [Resource: `google_compute_subnetwork_iam_*`](#resource-google_compute_subnetwork_iam_*)
 - [Resource: `google_compute_target_pool`](#resource-google_compute_target_pool)
 - [Resource: `google_compute_url_map`](#resource-google_compute_url_map)
@@ -45,11 +48,13 @@ Upgrade topics:
 - [Resource: `google_filestore_instance`](#resource-google_filestore_instance)
 - [Resource: `google_organization_custom_role`](#resource-google_organization_custom_role)
 - [Resource: `google_project`](#resource-google_project)
+- [Resource: `google_project_custom_role`](#resource-google_project_custom_role)
 - [Resource: `google_project_iam_policy`](#resource-google_project_iam_policy)
 - [Resource: `google_service_account`](#resource-google_service_account)
 - [Resource: `google_sql_database_instance`](#resource-google_sql_database_instance)
 - [Resource: `google_storage_default_object_acl`](#resource-google_storage_default_object_acl)
 - [Resource: `google_storage_object_acl`](#resource-google_storage_object_acl)
+- [Resource: `google_*_iam_binding`](#google_*_iam_binding)
 
 <!-- /TOC -->
 
@@ -198,6 +203,45 @@ Use the [`google-beta` provider](#google-beta-provider) to use these resources.
 
 Use the [`google-beta` provider](#google-beta-provider) to use these resources.
 
+## Resource: `google_cloudbuild_trigger`
+
+### `build.step.args` is now a list instead of space separated strings.
+
+Example updated configuration:
+
+```hcl
+resource "google_cloudbuild_trigger" "build_trigger" {
+  trigger_template {
+    branch_name = "master-updated"
+    repo_name   = "some-repo-updated"
+  }
+  
+  build {
+    images = ["gcr.io/$PROJECT_ID/$REPO_NAME:$SHORT_SHA"]
+    tags = ["team-a", "service-b", "updated"]
+    
+    step {
+      name = "gcr.io/cloud-builders/gsutil"
+      args = ["cp", "gs://mybucket/remotefile.zip", "localfile-updated.zip"]
+    }
+    
+    step {
+      name = "gcr.io/cloud-builders/go"
+      args = ["build", "my_package_updated"]
+    }
+    
+    step {
+      name = "gcr.io/cloud-builders/docker"
+      args = ["build", "-t", "gcr.io/$PROJECT_ID/$REPO_NAME:$SHORT_SHA", "-f", "Dockerfile", "."]
+    }
+    step {
+      name = "gcr.io/$PROJECT_ID/$REPO_NAME:$SHORT_SHA"
+      args = ["test"]
+    }
+  }
+}
+```
+
 ## Resource: `google_cloudfunctions_function`
 
 ### `trigger_bucket`, `trigger_topic`, and `retry_on_failure` have been removed
@@ -309,12 +353,22 @@ Use `network_interface.*.network_ip` instead.
 Terraform will remove values not explicitly set in this field. Any `metadata` values
 that were added outside of Terraform should be added to the config.
 
+### `network_interface.*.address` has been removed
+
+Use `network_interface.*.network_ip` instead.
+
 ## Resource: `google_compute_instance_group_manager`
 
 ### `version`, `auto_healing_policies`, `rolling_update_policy` have been removed from the GA provider
 
 Use the [`google-beta` provider](#google-beta-provider) to use these fields.
 `rolling_update_policy` has been renamed to `update_policy` in `google-beta`.
+
+## Resource: `google_compute_instance_template`
+
+### `network_interface.*.address` has been removed
+
+Use `network_interface.*.network_ip` instead.
 
 ## Resource: `google_compute_project_metadata`
 
@@ -330,10 +384,70 @@ that were added outside of Terraform should be added to the config.
 Use the [`google-beta` provider](#google-beta-provider) to use these fields.
 `rolling_update_policy` has been renamed to `update_policy` in `google-beta`.
 
-### `update_strategy` no longer has any effect and is deprecated
+### `update_strategy` no longer has any effect and is removed
 
 With `rolling_update_policy` removed, `update_strategy` has no effect anymore.
-Remove it from your config at your convenience.
+Before updating, remove it from your config.
+
+## Resource: `google_compute_snapshot`
+
+### `snapshot_encryption_key_raw` and `snapshot_encryption_key_sha256` have been removed.
+
+Use the `snapshot_encryption_key` block instead:
+
+```hcl
+data "google_compute_image" "my_image" {
+	family  = "debian-9"
+	project = "debian-cloud"
+}
+
+resource "google_compute_disk" "my_disk" {
+	name = "my-disk"
+	image = "${data.google_compute_image.my_image.self_link}"
+	size = 10
+	type = "pd-ssd"
+	zone = "us-central1-a"
+}
+
+resource "google_compute_snapshot" "my_snapshot" {
+	name = "my-snapshot"
+	source_disk = "${google_compute_disk.my_disk.name}"
+	zone = "us-central1-a"
+	snapshot_encryption_key {
+		raw_key = "SGVsbG8gZnJvbSBHb29nbGUgQ2xvdWQgUGxhdGZvcm0="
+	}
+}
+```
+
+### `source_disk_encryption_key_raw` and `source_disk_encryption_key_sha256` have been removed.
+
+Use the `source_disk_encryption_key` block instead:
+
+```hcl
+data "google_compute_image" "my_image" {
+	family  = "debian-9"
+	project = "debian-cloud"
+}
+resource "google_compute_disk" "my_disk" {
+	name = "my-disk"
+	image = "${data.google_compute_image.my_image.self_link}"
+	size = 10
+	type = "pd-ssd"
+	zone = "us-central1-a"
+	disk_encryption_key {
+		raw_key = "SGVsbG8gZnJvbSBHb29nbGUgQ2xvdWQgUGxhdGZvcm0="
+	}
+}
+resource "google_compute_snapshot" "my_snapshot" {
+	name = "my-snapshot"
+	source_disk = "${google_compute_disk.my_disk.name}"
+	zone = "us-central1-a"
+	source_disk_encryption_key {
+		raw_key = "SGVsbG8gZnJvbSBHb29nbGUgQ2xvdWQgUGxhdGZvcm0="
+	}
+}
+
+```
 
 ## Resource: `google_compute_subnetwork_iam_*`
 
@@ -468,6 +582,12 @@ Autogenerated buckets are shared by all clusters in the same region, so deleting
 this bucket could adversely harm other dataproc clusters. If you need a bucket
 that can be deleted, please create a new one and set the `staging_bucket` field.
 
+### `cluster_config.0.gce_cluster_config.0.tags` is now a Set
+
+The order of entries in `tags` no longer matters. Any configurations that
+interpolate based on an item at a specific index will need to be updated, as items
+may have been reordered.
+
 ## Resource: `google_filestore_instance`
 
 ### filestore resources have been removed from the GA provider
@@ -493,6 +613,13 @@ To avoid errors trying to recreate the resource, import it into your state first
 ```
 terraform import google_app_engine_application.app your-project-id
 ```
+
+
+## Resource: `google_project_custom_role`
+
+### `deleted` field is now an output-only attribute
+
+Use `terraform destroy`, or remove the resource from your config instead.
 
 ## Resource: `google_project_iam_policy`
 
@@ -537,3 +664,31 @@ values that were added outside of Terraform should be added to the config.
 Terraform will remove values not explicitly set in this field. Any `role_entity`
 values that were added outside of Terraform should be added to the config.
 For fine-grained management, use `google_storage_object_access_control`.
+
+## Resource: `google_*_iam_binding`
+
+### Create is now authoritative
+
+Every `iam_binding` resource will overwrite the existing member list for a given
+role on Create. Running `terraform plan` for the first time will not show members
+that have been added via other tools. *To ensure existing `members` are preserved
+use `terraform import` instead of creating the resource.*
+
+Previous versions of `google_*_iam_binding` resources would merge the existing
+members of a role with the members defined in the terraform config. If there was
+a difference between the members defined in the config and the existing members
+defined for an existing role it would show a diff if `terraform plan` was run
+immediately after create had succeeded.
+
+Affected resources:
+* `google_billing_account_iam_binding`
+* `google_folder_iam_binding`
+* `google_kms_key_ring_iam_binding`
+* `google_kms_crypto_key_iam_binding`
+* `google_spanner_instance_iam_binding`
+* `google_spanner_database_iam_binding`
+* `google_organization_iam_binding`
+* `google_project_iam_binding`
+* `google_pubsub_topic_iam_binding`
+* `google_pubsub_subscription_iam_binding`
+* `google_service_account_iam_binding`

@@ -11,8 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 --- !ruby/object:Api::Product
-name: Stackdriver Monitoring and Alerting
-prefix: gmonitoring
+name: Monitoring
+display_name: Stackdriver Monitoring and Alerting
 versions:
   - !ruby/object:Api::Product::Version
     name: ga
@@ -886,6 +886,7 @@ objects:
     - !ruby/object:Api::Type::String
       name: period
       default_value: "300s"
+      input: true
       description: How often, in seconds, the uptime check is performed. Currently,
         the only supported values are 60s (1 minute), 300s (5 minutes), 600s (10 minutes),
         and 900s (15 minutes). Optional, defaults to 300s.
@@ -969,7 +970,6 @@ objects:
           description: The username to authenticate.
       - !ruby/object:Api::Type::Integer
         name: port
-        default_value: 80
         description: The port to the page to run the check against. Will be combined
           with host (specified within the MonitoredResource) and path to construct the
           full URL. Optional (defaults to 80 without SSL, or 443 with SSL).

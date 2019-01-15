@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
-	"google.golang.org/api/sqladmin/v1beta4"
+	sqladmin "google.golang.org/api/sqladmin/v1beta4"
 )
 
 func resourceSqlUser() *schema.Resource {
@@ -23,31 +23,31 @@ func resourceSqlUser() *schema.Resource {
 		MigrateState:  resourceSqlUserMigrateState,
 
 		Schema: map[string]*schema.Schema{
-			"host": &schema.Schema{
+			"host": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
 			},
 
-			"instance": &schema.Schema{
+			"instance": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
 
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
 
-			"password": &schema.Schema{
+			"password": {
 				Type:      schema.TypeString,
 				Optional:  true,
 				Sensitive: true,
 			},
 
-			"project": &schema.Schema{
+			"project": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
@@ -206,7 +206,12 @@ func resourceSqlUserDelete(d *schema.ResourceData, meta interface{}) error {
 
 	mutexKV.Lock(instanceMutexKey(project, instance))
 	defer mutexKV.Unlock(instanceMutexKey(project, instance))
-	op, err := config.clientSqlAdmin.Users.Delete(project, instance, host, name).Do()
+
+	var op *sqladmin.Operation
+	err = retryTimeDuration(func() error {
+		op, err = config.clientSqlAdmin.Users.Delete(project, instance, host, name).Do()
+		return err
+	}, d.Timeout(schema.TimeoutDelete))
 
 	if err != nil {
 		return fmt.Errorf("Error, failed to delete"+
@@ -227,15 +232,17 @@ func resourceSqlUserDelete(d *schema.ResourceData, meta interface{}) error {
 func resourceSqlUserImporter(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	parts := strings.Split(d.Id(), "/")
 
-	if len(parts) == 2 {
-		d.Set("instance", parts[0])
-		d.Set("name", parts[1])
-	} else if len(parts) == 3 {
-		d.Set("instance", parts[0])
-		d.Set("host", parts[1])
+	if len(parts) == 3 {
+		d.Set("project", parts[0])
+		d.Set("instance", parts[1])
 		d.Set("name", parts[2])
+	} else if len(parts) == 4 {
+		d.Set("project", parts[0])
+		d.Set("instance", parts[1])
+		d.Set("host", parts[2])
+		d.Set("name", parts[3])
 	} else {
-		return nil, fmt.Errorf("Invalid specifier. Expecting {instance}/{name} for postgres instance and {instance}/{host}/{name} for MySQL instance")
+		return nil, fmt.Errorf("Invalid specifier. Expecting {project}/{instance}/{name} for postgres instance and {project}/{instance}/{host}/{name} for MySQL instance")
 	}
 
 	return []*schema.ResourceData{d}, nil

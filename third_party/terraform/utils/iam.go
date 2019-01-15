@@ -71,7 +71,11 @@ func iamPolicyReadModifyWrite(updater ResourceIamUpdater, modify iamPolicyModify
 		if err == nil {
 			fetchBackoff := 1 * time.Second
 			for successfulFetches := 0; successfulFetches < 3; {
+				if fetchBackoff > 30*time.Second {
+					return fmt.Errorf("Error applying IAM policy to %s: Waited too long for propagation.\n", updater.DescribeResource())
+				}
 				time.Sleep(fetchBackoff)
+				log.Printf("[DEBUG]: Retrieving policy for %s\n", updater.DescribeResource())
 				new_p, err := updater.GetResourceIamPolicy()
 				if err != nil {
 					// Quota for Read is pretty limited, so watch out for running out of quota.
@@ -80,6 +84,12 @@ func iamPolicyReadModifyWrite(updater ResourceIamUpdater, modify iamPolicyModify
 					} else {
 						return err
 					}
+				}
+				log.Printf("[DEBUG]: Retrieved policy for %s: %+v\n", updater.DescribeResource(), p)
+				if new_p == nil {
+					// https://github.com/terraform-providers/terraform-provider-google/issues/2625
+					fetchBackoff = fetchBackoff * 2
+					continue
 				}
 				modified_p := new_p
 				// This relies on the fact that `modify` is idempotent: since other changes might have
@@ -94,9 +104,6 @@ func iamPolicyReadModifyWrite(updater ResourceIamUpdater, modify iamPolicyModify
 					successfulFetches += 1
 				} else {
 					fetchBackoff = fetchBackoff * 2
-					if fetchBackoff > 30*time.Second {
-						return fmt.Errorf("Error applying IAM policy to %s: Waited too long for propagation.\n", updater.DescribeResource())
-					}
 				}
 			}
 			break
@@ -114,6 +121,25 @@ func iamPolicyReadModifyWrite(updater ResourceIamUpdater, modify iamPolicyModify
 	}
 	log.Printf("[DEBUG]: Set policy for %s", updater.DescribeResource())
 	return nil
+}
+
+// Takes a single binding and will either overwrite the same role in a list or append it to the end
+func overwriteBinding(bindings []*cloudresourcemanager.Binding, overwrite *cloudresourcemanager.Binding) []*cloudresourcemanager.Binding {
+	var found bool
+
+	for i, b := range bindings {
+		if b.Role == overwrite.Role {
+			bindings[i] = overwrite
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		bindings = append(bindings, overwrite)
+	}
+
+	return bindings
 }
 
 // Merge multiple Bindings such that Bindings with the same Role result in
@@ -153,4 +179,55 @@ func rolesToMembersMap(bindings []*cloudresourcemanager.Binding) map[string]map[
 		}
 	}
 	return bm
+}
+
+// Merge multiple Audit Configs such that configs with the same service result in
+// a single exemption list with combined members
+func mergeAuditConfigs(auditConfigs []*cloudresourcemanager.AuditConfig) []*cloudresourcemanager.AuditConfig {
+	am := auditConfigToServiceMap(auditConfigs)
+	var ac []*cloudresourcemanager.AuditConfig
+	for service, auditLogConfigs := range am {
+		var a cloudresourcemanager.AuditConfig
+		a.Service = service
+		a.AuditLogConfigs = make([]*cloudresourcemanager.AuditLogConfig, 0, len(auditLogConfigs))
+		for k, v := range auditLogConfigs {
+			var alc cloudresourcemanager.AuditLogConfig
+			alc.LogType = k
+			for member := range v {
+				alc.ExemptedMembers = append(alc.ExemptedMembers, member)
+			}
+			a.AuditLogConfigs = append(a.AuditLogConfigs, &alc)
+		}
+		if len(a.AuditLogConfigs) > 0 {
+			ac = append(ac, &a)
+		}
+	}
+	return ac
+}
+
+// Build a service map with the log_type and bindings below it
+func auditConfigToServiceMap(auditConfig []*cloudresourcemanager.AuditConfig) map[string]map[string]map[string]bool {
+	ac := make(map[string]map[string]map[string]bool)
+	// Get each config
+	for _, c := range auditConfig {
+		// Initialize service map
+		if _, ok := ac[c.Service]; !ok {
+			ac[c.Service] = map[string]map[string]bool{}
+		}
+		// loop through audit log configs
+		for _, lc := range c.AuditLogConfigs {
+			// Initialize service map
+			if _, ok := ac[c.Service][lc.LogType]; !ok {
+				ac[c.Service][lc.LogType] = map[string]bool{}
+			}
+			// Get each member (user/principal) for the binding
+			for _, m := range lc.ExemptedMembers {
+				// Add the member
+				if _, ok := ac[c.Service][lc.LogType][m]; !ok {
+					ac[c.Service][lc.LogType][m] = true
+				}
+			}
+		}
+	}
+	return ac
 }

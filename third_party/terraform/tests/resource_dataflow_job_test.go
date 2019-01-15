@@ -16,7 +16,7 @@ func TestAccDataflowJobCreate(t *testing.T) {
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckDataflowJobDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccDataflowJob,
 				Check: resource.ComposeTestCheckFunc(
 					testAccDataflowJobExists(
@@ -34,7 +34,7 @@ func TestAccDataflowJobRegionCreate(t *testing.T) {
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckDataflowJobRegionDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccDataflowJobRegion,
 				Check: resource.ComposeTestCheckFunc(
 					testAccDataflowJobRegionExists(
@@ -138,7 +138,7 @@ resource "google_dataflow_job" "big_data" {
 	template_gcs_path = "gs://dataflow-templates/wordcount/template_file"
 	temp_gcs_location = "${google_storage_bucket.temp.url}"
 
-	parameters {
+	parameters = {
 		inputFile = "gs://dataflow-samples/shakespeare/kinglear.txt"
 		output    = "${google_storage_bucket.temp.url}/output"
 	}
@@ -161,7 +161,7 @@ resource "google_dataflow_job" "big_data" {
 	template_gcs_path = "gs://dataflow-templates/wordcount/template_file"
 	temp_gcs_location = "${google_storage_bucket.temp.url}"
 
-	parameters {
+	parameters = {
 		inputFile = "gs://dataflow-samples/shakespeare/kinglear.txt"
 		output    = "${google_storage_bucket.temp.url}/output"
 	}

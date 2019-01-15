@@ -31,7 +31,7 @@ resource "google_dataproc_cluster" "simplecluster" {
 resource "google_dataproc_cluster" "mycluster" {
     name       = "mycluster"
     region     = "us-central1"
-    labels {
+    labels = {
         foo = "bar"
     }
 
@@ -139,6 +139,7 @@ The `cluster_config` block supports:
 
         # You can define multiple initialization_action blocks
         initialization_action     { ... }
+        encryption_config         { ... }
     }
 ```
 
@@ -168,6 +169,8 @@ The `cluster_config` block supports:
 * `initialization_action` (Optional) Commands to execute on each node after config is completed.
    You can specify multiple versions of these. Structure defined below.
 
+* `encryption_config` (Optional) The Customer managed encryption keys settings for the cluster.
+   Structure defined below.
 - - -
 
 The `cluster_config.gce_cluster_config` block supports:
@@ -343,7 +346,9 @@ The `cluster_config.preemptible_worker_config` block supports:
         preemptible_worker_config {
             num_instances     = 1
             disk_config {
+                boot_disk_type    = "pd-standard"
                 boot_disk_size_gb = 10
+                num_local_ssds    = 1
             }
         }
     }
@@ -357,10 +362,16 @@ will be set for you based on whatever was set for the `worker_config.machine_typ
 
 * `disk_config` (Optional) Disk Config
 
+    * `boot_disk_type` - (Optional) The disk type of the primary disk attached to each preemptible worker node.
+	One of `"pd-ssd"` or `"pd-standard"`. Defaults to `"pd-standard"`.
+
     * `boot_disk_size_gb` - (Optional, Computed) Size of the primary disk attached to each preemptible worker node, specified
     in GB. The smallest allowed disk size is 10GB. GCP will default to a predetermined
     computed value if not set (currently 500GB). Note: If SSDs are not
 	attached, it also contains the HDFS data blocks and Hadoop working directories.
+
+	* `num_local_ssds` - (Optional) The amount of local SSD disks that will be
+	attached to each preemptible worker node. Defaults to 0.
 
 - - -
 
@@ -409,6 +420,22 @@ The `initialization_action` block (Optional) can be specified multiple times and
 * `timeout_sec` - (Optional, Computed) The maximum duration (in seconds) which `script` is
    allowed to take to execute its action. GCP will default to a predetermined
    computed value if not set (currently 300).
+
+- - -
+
+The `encryption_config` block supports:
+
+```hcl
+    cluster_config {
+        encryption_config {
+            kms_key_name = "projects/projectId/locations/region/keyRings/keyRingName/cryptoKeys/keyName"
+        }
+    }
+}
+```
+
+* `kms_key_name` - (Required) The Cloud KMS key name to use for PD disk encryption for
+   all instances in the cluster.
 
 ## Attributes Reference
 

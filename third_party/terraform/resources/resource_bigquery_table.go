@@ -75,7 +75,7 @@ func resourceBigQueryTable() *schema.Resource {
 			// characters are allowed. Label values are optional. Label keys must
 			// start with a letter and each label in the list must have a different
 			// key.
-			"labels": &schema.Schema{
+			"labels": {
 				Type:     schema.TypeMap,
 				Optional: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
@@ -94,7 +94,7 @@ func resourceBigQueryTable() *schema.Resource {
 			},
 
 			// View: [Optional] If specified, configures this table as a view.
-			"view": &schema.Schema{
+			"view": {
 				Type:     schema.TypeList,
 				Optional: true,
 				MaxItems: 1,
@@ -121,7 +121,7 @@ func resourceBigQueryTable() *schema.Resource {
 
 			// TimePartitioning: [Experimental] If specified, configures time-based
 			// partitioning for this table.
-			"time_partitioning": &schema.Schema{
+			"time_partitioning": {
 				Type:     schema.TypeList,
 				Optional: true,
 				MaxItems: 1,
@@ -142,13 +142,21 @@ func resourceBigQueryTable() *schema.Resource {
 							ValidateFunc: validation.StringInSlice([]string{"DAY"}, false),
 						},
 
-						// Type: [Optional] The field used to determine how to create a time-based
+						// Field: [Optional] The field used to determine how to create a time-based
 						// partition. If time-based partitioning is enabled without this value, the
 						// table is partitioned based on the load time.
 						"field": {
 							Type:     schema.TypeString,
 							Optional: true,
 							ForceNew: true,
+						},
+
+						// RequirePartitionFilter: [Optional] If set to true, queries over this table
+						// require a partition filter that can be used for partition elimination to be
+						// specified.
+						"require_partition_filter": {
+							Type:     schema.TypeBool,
+							Optional: true,
 						},
 					},
 				},
@@ -436,6 +444,10 @@ func expandTimePartitioning(configured interface{}) *bigquery.TimePartitioning {
 		tp.ExpirationMs = int64(v.(int))
 	}
 
+	if v, ok := raw["require_partition_filter"]; ok {
+		tp.RequirePartitionFilter = v.(bool)
+	}
+
 	return tp
 }
 
@@ -448,6 +460,10 @@ func flattenTimePartitioning(tp *bigquery.TimePartitioning) []map[string]interfa
 
 	if tp.ExpirationMs != 0 {
 		result["expiration_ms"] = tp.ExpirationMs
+	}
+
+	if tp.RequirePartitionFilter == true {
+		result["require_partition_filter"] = tp.RequirePartitionFilter
 	}
 
 	return []map[string]interface{}{result}

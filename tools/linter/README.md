@@ -23,14 +23,15 @@ following:
 ## Getting Results as a CSV
 RSpec uses formatters to create the output.
 We have a custom formatter that works only with property tests to show which tests do/do not exist.
-The formatter is located at `tools/linter/formatter.rb`
+The formatter is located at `tools/linter/spreadsheet/csv_formatter.rb`
 
 To get the property tests as a CSV, do the following:
 
 ```
-  rspec tools/linter/run.rb --require ./tools/linter/formatter.rb -f
-  CsvFormatterForMM --tag property > <output_file>
+  rspec tools/linter/spreadsheet.rb
 ```
+
+The file will be outputted at `output.csv`
 
 NOTE: The first line of this CSV will be RSpec formatting info and should be deleted.
 
@@ -48,7 +49,7 @@ Each doc must contain a `url` key (URL of the discovery doc) and `filename` key
 
 ### Property not found
 ```
-gdns ManagedZone labels should exist
+dns ManagedZone labels should exist
 ```
 Each property is tested to see if it exists.
 If a property does not exist, RSpec will print the following message.

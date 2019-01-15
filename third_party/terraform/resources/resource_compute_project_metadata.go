@@ -21,13 +21,13 @@ func resourceComputeProjectMetadata() *schema.Resource {
 		SchemaVersion: 0,
 
 		Schema: map[string]*schema.Schema{
-			"metadata": &schema.Schema{
+			"metadata": {
 				Type:     schema.TypeMap,
 				Required: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 
-			"project": &schema.Schema{
+			"project": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
@@ -60,11 +60,13 @@ func resourceComputeProjectMetadataCreateOrUpdate(d *schema.ResourceData, meta i
 func resourceComputeProjectMetadataRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
-	if d.Id() == "" {
-		projectID, err := getProject(d, config)
-		if err != nil {
-			return err
-		}
+	projectID, err := getProject(d, config)
+	if err != nil {
+		return err
+	}
+
+	if d.Id() == "" || d.Id() != projectID {
+		log.Printf("[DEBUG] Setting ID to: %s", projectID)
 		d.SetId(projectID)
 	}
 

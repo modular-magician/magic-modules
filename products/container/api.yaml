@@ -12,12 +12,16 @@
 # limitations under the License.
 
 --- !ruby/object:Api::Product
-name: Google Container Engine
-prefix: gcontainer
+name: Container
+display_name: Google Kubernetes Engine
 versions:
   - !ruby/object:Api::Product::Version
     name: ga
+    default: true
     base_url: https://container.googleapis.com/v1/
+  - !ruby/object:Api::Product::Version
+    name: beta
+    base_url: https://container.googleapis.com/v1beta1/
 scopes:
   - https://www.googleapis.com/auth/cloud-platform
 objects:
@@ -145,23 +149,32 @@ objects:
         values:
           - 'monitoring.googleapis.com'
           - 'none'
-      # TODO(nelsonjr): This is a ResourceRef but on a resource on another
-      # product (Compute). Figure out how to represent/implement this. For now
-      # making it a string.
+      # This is an x-product resource reference.
       - !ruby/object:Api::Type::String
         name: 'network'
         description: |
           The name of the Google Compute Engine network to which the cluster is
           connected. If left unspecified, the default network will be used.
-
-          To ensure it exists and it is operations, configure the network
-          using 'gcompute_network' resource.
       - !ruby/object:Api::Type::String
         name: 'clusterIpv4Cidr'
         description: |
           The IP address range of the container pods in this cluster, in CIDR
           notation (e.g. 10.96.0.0/14). Leave blank to have one automatically
           chosen or specify a /14 block in 10.0.0.0/8.
+      - !ruby/object:Api::Type::String
+        name: 'enableTpu'
+        min_version: beta
+        description: |
+          (Optional) Whether to enable Cloud TPU resources in this cluster.
+          See the official documentation - https://cloud.google.com/tpu/docs/kubernetes-engine-setup
+      - !ruby/object:Api::Type::String
+        name: 'tpuIpv4CidrBlock'
+        output: true
+        min_version: beta
+        description: |
+          The IP address range of the Cloud TPUs in this cluster, in
+          [CIDR](http://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing)
+          notation (e.g. `1.2.3.4/29`).
       - !ruby/object:Api::Type::NestedObject
         name: 'addonsConfig'
         description: |

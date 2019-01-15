@@ -33,9 +33,17 @@ func isEmptyValue(v reflect.Value) bool {
 }
 
 func sendRequest(config *Config, method, rawurl string, body map[string]interface{}) (map[string]interface{}, error) {
+	return sendRequestWithTimeout(config, method, rawurl, body, 5*time.Minute)
+}
+
+func sendRequestWithTimeout(config *Config, method, rawurl string, body map[string]interface{}, timeout time.Duration) (map[string]interface{}, error) {
 	reqHeaders := make(http.Header)
 	reqHeaders.Set("User-Agent", config.userAgent)
 	reqHeaders.Set("Content-Type", "application/json")
+
+	if timeout == 0 {
+		timeout = time.Duration(1) * time.Hour
+	}
 
 	var res *http.Response
 	err := retryTimeDuration(
@@ -70,8 +78,7 @@ func sendRequest(config *Config, method, rawurl string, body map[string]interfac
 
 			return nil
 		},
-		// TODO chrisst - use the timeouts specified at the resource level so that a user can override this.
-		time.Duration(5)*time.Minute,
+		timeout,
 	)
 	if err != nil {
 		return nil, err
@@ -80,6 +87,7 @@ func sendRequest(config *Config, method, rawurl string, body map[string]interfac
 	if res == nil {
 		return nil, fmt.Errorf("Unable to parse server response. This is most likely a terraform problem, please file a bug at https://github.com/terraform-providers/terraform-provider-google/issues.")
 	}
+
 	// The defer call must be made outside of the retryFunc otherwise it's closed too soon.
 	defer googleapi.CloseBody(res)
 
@@ -148,7 +156,7 @@ func replaceVars(d TerraformResourceData, config *Config, linkTmpl string) (stri
 		}
 		v, ok := d.GetOk(m)
 		if ok {
-			return v.(string)
+			return fmt.Sprintf("%v", v)
 		}
 		return ""
 	}

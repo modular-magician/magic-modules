@@ -23,7 +23,7 @@ func resourceGoogleProjectServices() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"project": &schema.Schema{
+			"project": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
@@ -38,7 +38,7 @@ func resourceGoogleProjectServices() *schema.Resource {
 					ValidateFunc: StringNotInSlice(ignoredProjectServices, false),
 				},
 			},
-			"disable_on_destroy": &schema.Schema{
+			"disable_on_destroy": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Default:  true,
@@ -151,7 +151,7 @@ func reconcileServices(cfgServices, apiServices []string, config *Config, pid st
 	cfgMap := m(cfgServices)
 	apiMap := m(apiServices)
 
-	for k, _ := range apiMap {
+	for k := range apiMap {
 		if _, ok := cfgMap[k]; !ok {
 			// The service in the API is not in the config; disable it.
 			err := disableService(k, pid, config)
@@ -166,7 +166,7 @@ func reconcileServices(cfgServices, apiServices []string, config *Config, pid st
 	}
 
 	keys := make([]string, 0, len(cfgMap))
-	for k, _ := range cfgMap {
+	for k := range cfgMap {
 		keys = append(keys, k)
 	}
 	err := enableServices(keys, pid, config)
@@ -280,7 +280,7 @@ func enableServices(s []string, pid string, config *Config) error {
 
 			// Poll for the API to return
 			activity := fmt.Sprintf("apis %q to be enabled for %s", services, pid)
-			_, waitErr := serviceUsageOperationWait(config, sop, activity)
+			waitErr := serviceUsageOperationWait(config, sop, activity)
 			if waitErr != nil {
 				return waitErr
 			}
@@ -342,7 +342,7 @@ func disableService(s, pid string, config *Config) error {
 			return err
 		}
 		// Wait for the operation to complete
-		_, waitErr := serviceUsageOperationWait(config, sop, "api to disable")
+		waitErr := serviceUsageOperationWait(config, sop, "api to disable")
 		if waitErr != nil {
 			return waitErr
 		}

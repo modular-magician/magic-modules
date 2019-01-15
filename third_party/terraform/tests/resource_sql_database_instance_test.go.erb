@@ -596,6 +596,7 @@ func TestAccSqlDatabaseInstance_basic_with_user_labels(t *testing.T) {
 }
 
 <% unless version == 'ga' -%>
+<%# This test doesn't work in GA yet because service networking is still in beta -%>
 func TestAccSqlDatabaseInstance_withPrivateNetwork(t *testing.T) {
 	t.Parallel()
 
@@ -742,6 +743,7 @@ resource "google_sql_database_instance" "instance-failover" {
 }
 
 <% unless version == 'ga' -%>
+<%# This test doesn't work in GA yet because service networking is still in beta -%>
 func testAccSqlDatabaseInstance_withPrivateNetwork(databaseName, networkName, addressRangeName string) string {
 	return fmt.Sprintf(`
 resource "google_compute_network" "foobar" {
@@ -1010,7 +1012,7 @@ resource "google_sql_database_instance" "instance" {
 	region = "us-central1"
 	settings {
 		tier = "db-f1-micro"
-		user_labels {
+		user_labels = {
 		    track = "production"
 		    location = "western-division"
 		}
@@ -1023,7 +1025,7 @@ resource "google_sql_database_instance" "instance" {
 	region = "us-central1"
 	settings {
 		tier = "db-f1-micro"
-		user_labels {
+		user_labels = {
 		    track = "production"
 		}
 	}
