@@ -19,8 +19,6 @@ manifest: !ruby/object:Provider::Inspec::Manifest
 overrides: !ruby/object:Overrides::ResourceOverrides
   Address: !ruby/object:Overrides::Inspec::ResourceOverride
     exclude: true
-  Autoscaler: !ruby/object:Overrides::Inspec::ResourceOverride
-    exclude: true
   BackendBucket: !ruby/object:Overrides::Inspec::ResourceOverride
     exclude: true
   BackendService: !ruby/object:Overrides::Inspec::ResourceOverride
@@ -50,8 +48,6 @@ overrides: !ruby/object:Overrides::ResourceOverrides
   Instance: !ruby/object:Overrides::Inspec::ResourceOverride
     exclude: true
   InstanceGroup: !ruby/object:Overrides::Inspec::ResourceOverride
-    exclude: true
-  InstanceGroupManager: !ruby/object:Overrides::Inspec::ResourceOverride
     exclude: true
   InstanceTemplate: !ruby/object:Overrides::Inspec::ResourceOverride
     exclude: true

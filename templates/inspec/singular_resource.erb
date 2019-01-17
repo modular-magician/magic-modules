@@ -50,32 +50,31 @@ class <%= object.name -%> < GcpResourceBase
     parse unless @fetched.nil?
   end
 <% else # object.self_link_query.nil? -%>
-    # TODO(slevenick) for other products
-    def initialize(params)
-      raise 'Not implemented'
-    end
+  def initialize(params)
+    super(params.merge({ use_http_transport: true }))
+    fetched = @connection.fetch(base, url, params)
+    @fetched = unwrap(fetched, params)
+    parse unless @fetched.nil?
+  end
+
+<% identity_outs = object.identity.map { |id| id.out_name } -%>
+  def identity
+    %w{<%= identity_outs.join(' ') -%>}
+  end
+
+  def collection_item
+    '<%= object.collection_url_response.items -%>'
+  end
+
+  def unwrap(fetched, params)
+    fetched[collection_item].find { |result| identity.all? { |id| result[id.to_sym] == params[id] } }
+  end
 <% end # object.self_link_query.nil? -%>
 
   def parse
 <%
   parse_code = object.all_user_properties.map do |prop|
-    name = prop.out_name
-
-    if time?(prop)
-      init = "parse_time_string(@fetched['#{prop.api_name}'])"
-    elsif primitive?(prop)
-      if prop.name_from_self_link
-        init = "name_from_self_link(@fetched['#{prop.api_name}'])"
-      else
-        init = "@fetched['#{prop.api_name}']"
-      end
-    elsif typed_array?(prop)
-      init = "#{inspec_property_type(prop)}.parse(@fetched['#{prop.api_name}'])"
-    else
-      init = "#{inspec_property_type(prop)}.new(@fetched['#{prop.api_name}'])"    
-    end
-    
-    assignment = "@#{name} = #{init}"
+    assignment = "@#{prop.out_name} = #{parse_code(prop, '@fetched')}"
   end
 -%>
 <%= lines(indent(parse_code, 4)) -%>
