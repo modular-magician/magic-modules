@@ -52,25 +52,30 @@ objects:
     description: |
       An isolated set of Cloud Spanner resources on which databases can be
       hosted.
+    references: !ruby/object:Api::Resource::ReferenceLinks
+      guides:
+        'Official Documentation': 'https://cloud.google.com/spanner/'
+      api: 'https://cloud.google.com/spanner/docs/reference/rest/v1/projects.instances'
     exports:
       - name
     transport: !ruby/object:Api::Resource::Transport
       decoder: decode_response
     collection_url_response: !ruby/object:Api::Resource::ResponseList
       items: 'instances'
+<%= indent(compile_file({}, 'templates/global_async.yaml.erb'), 4) %>
     properties:
       - !ruby/object:Api::Type::String
         name: 'name'
         description: |
           A unique identifier for the instance, which cannot be changed after
-          the instance is created. Values are of the form
-          projects/<project>/instances/[a-z][-a-z0-9]*[a-z0-9]. The final
-          segment of the name must be between 6 and 30 characters in length.
+          the instance is created. The name must be between 6 and 30 characters
+          in length.
       - !ruby/object:Api::Type::ResourceRef
         name: 'config'
         resource: 'InstanceConfig'
         imports: 'name'
         description: 'A reference to the instance configuration.'
+        required: true
       - !ruby/object:Api::Type::String
         name: 'displayName'
         description: |
@@ -80,6 +85,7 @@ objects:
       - !ruby/object:Api::Type::Integer
         name: 'nodeCount'
         description: 'The number of nodes allocated to this instance.'
+        required: true
       - !ruby/object:Api::Type::KeyValuePairs
         name: 'labels'
         description: |
@@ -109,6 +115,17 @@ objects:
 
           An object containing a list of "key": value pairs.
           Example: { "name": "wrench", "mass": "1.3kg", "count": "3" }.
+      - !ruby/object:Api::Type::Enum
+        name: 'state'
+        description: |
+          Instance status: `CREATING` or `READY`.
+        output: true
+        # This attribute is not useful - we include it in Terraform for historical
+        # reasons, but you should most likely not use it.
+        exclude: true
+        values:
+          - :READY
+          - :CREATING
   - !ruby/object:Api::Resource
     name: 'Database'
     base_url: projects/{{project}}/instances/{{instance}}/databases
