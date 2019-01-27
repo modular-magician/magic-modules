@@ -21,8 +21,6 @@ overrides: !ruby/object:Overrides::ResourceOverrides
     exclude: true
   BackendBucket: !ruby/object:Overrides::Inspec::ResourceOverride
     exclude: true
-  BackendService: !ruby/object:Overrides::Inspec::ResourceOverride
-    exclude: true
   DiskType: !ruby/object:Overrides::Inspec::ResourceOverride
     exclude: true
   Firewall: !ruby/object:Overrides::Inspec::ResourceOverride
@@ -36,10 +34,6 @@ overrides: !ruby/object:Overrides::ResourceOverrides
   GlobalAddress: !ruby/object:Overrides::Inspec::ResourceOverride
     exclude: true
   GlobalForwardingRule: !ruby/object:Overrides::Inspec::ResourceOverride
-    exclude: true
-  HttpHealthCheck: !ruby/object:Overrides::Inspec::ResourceOverride
-    exclude: true
-  HttpsHealthCheck: !ruby/object:Overrides::Inspec::ResourceOverride
     exclude: true
   Image: !ruby/object:Overrides::Inspec::ResourceOverride
     exclude: true

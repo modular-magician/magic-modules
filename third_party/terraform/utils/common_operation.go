@@ -42,11 +42,15 @@ type CommonOperationWaiter struct {
 }
 
 func (w *CommonOperationWaiter) State() string {
+	if w == nil {
+		return fmt.Sprintf("Operation is nil!")
+	}
+
 	return fmt.Sprintf("done: %v", w.Op.Done)
 }
 
 func (w *CommonOperationWaiter) Error() error {
-	if w.Op.Error != nil {
+	if w != nil && w.Op.Error != nil {
 		return fmt.Errorf("Error code %v, message: %s", w.Op.Error.Code, w.Op.Error.Message)
 	}
 	return nil
@@ -60,6 +64,10 @@ func (w *CommonOperationWaiter) SetOp(op interface{}) error {
 }
 
 func (w *CommonOperationWaiter) OpName() string {
+	if w == nil {
+		return "<nil>"
+	}
+
 	return w.Op.Name
 }
 
@@ -86,14 +94,19 @@ func CommonRefreshFunc(w Waiter) resource.StateRefreshFunc {
 		op, err := w.QueryOp()
 
 		// If we got a non-retryable error, return it.
-		if err != nil && !isRetryableError(err) {
-			return nil, "", err
+		if err != nil {
+			if !isRetryableError(err) {
+				return nil, "", fmt.Errorf("Not retriable error: %s", err)
+			}
+			if op == nil {
+				return nil, "", fmt.Errorf("Cannot continue, Operation is nil. %s", err)
+			}
 		}
 
 		// Try to set the operation (so we can check it's Error/State),
 		// and fail if we can't.
 		if err = w.SetOp(op); err != nil {
-			return nil, "", err
+			return nil, "", fmt.Errorf("Cannot continue %s", err)
 		}
 
 		// Fail if the operation object contains an error.
