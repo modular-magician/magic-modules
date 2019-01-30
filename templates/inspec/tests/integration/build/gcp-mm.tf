@@ -50,6 +50,30 @@ variable "https_health_check" {
   type = "map"
 }
 
+variable "instance_template" {
+  type = "map"
+}
+
+variable "global_address" {
+  type = "map"
+}
+
+variable "url_map" {
+  type = "map"
+}
+
+variable "http_proxy" {
+  type = "map"
+}
+
+variable "global_forwarding_rule" {
+  type = "map"
+}
+
+variable "target_tcp_proxy" {
+  type = "map"
+}
+
 resource "google_compute_ssl_policy" "custom-ssl-policy" {
   name            = "${var.ssl_policy["name"]}"
   min_tls_version = "${var.ssl_policy["min_tls_version"]}"
@@ -187,4 +211,101 @@ resource "google_compute_https_health_check" "gcp-inspec-https-health-check" {
   timeout_sec         = "${var.https_health_check["timeout_sec"]}"
   check_interval_sec  = "${var.https_health_check["check_interval_sec"]}"
   unhealthy_threshold = "${var.https_health_check["unhealthy_threshold"]}"
+}
+
+resource "google_compute_instance_template" "gcp-inspec-instance-template" {
+  project     = "${var.gcp_project_id}"
+  name        = "${var.instance_template["name"]}"
+  description = "${var.instance_template["description"]}"
+
+  tags = ["${var.instance_template["tag"]}"]
+
+  instance_description = "${var.instance_template["instance_description"]}"
+  machine_type         = "${var.instance_template["machine_type"]}"
+  can_ip_forward       = "${var.instance_template["can_ip_forward"]}"
+
+  scheduling {
+    automatic_restart   = "${var.instance_template["scheduling_automatic_restart"]}"
+    on_host_maintenance = "${var.instance_template["scheduling_on_host_maintenance"]}"
+  }
+
+  // Create a new boot disk from an image
+  disk {
+    source_image = "${var.instance_template["disk_source_image"]}"
+    auto_delete  = "${var.instance_template["disk_auto_delete"]}"
+    boot         = "${var.instance_template["disk_boot"]}"
+  }
+
+  network_interface {
+    network = "${var.instance_template["network_interface_network"]}"
+  }
+
+  service_account {
+    scopes = ["${var.instance_template["service_account_scope"]}"]
+  }
+}
+
+resource "google_compute_global_address" "gcp-inspec-global-address" {
+  project = "${var.gcp_project_id}"
+  name = "${var.global_address["name"]}"
+  ip_version = "${var.global_address["ip_version"]}"
+}
+
+resource "google_compute_url_map" "gcp-inspec-url-map" {
+  project     = "${var.gcp_project_id}"
+  name        = "${var.url_map["name"]}"
+  description = "${var.url_map["description"]}"
+
+  default_service = "${google_compute_backend_service.gcp-inspec-backend-service.self_link}"
+
+  host_rule {
+    hosts        = ["${var.url_map["host_rule_host"]}"]
+    path_matcher = "${var.url_map["path_matcher_name"]}"
+  }
+
+  path_matcher {
+    name            = "${var.url_map["path_matcher_name"]}"
+    default_service = "${google_compute_backend_service.gcp-inspec-backend-service.self_link}"
+
+    path_rule {
+      paths   = ["${var.url_map["path_rule_path"]}"]
+      service = "${google_compute_backend_service.gcp-inspec-backend-service.self_link}"
+    }
+  }
+
+  test {
+    service = "${google_compute_backend_service.gcp-inspec-backend-service.self_link}"
+    host    = "${var.url_map["test_host"]}"
+    path    = "${var.url_map["test_path"]}"
+  }
+}
+
+resource "google_compute_target_http_proxy" "gcp-inspec-http-proxy" {
+  project     = "${var.gcp_project_id}"
+  name        = "${var.http_proxy["name"]}"
+  url_map     = "${google_compute_url_map.gcp-inspec-url-map.self_link}"
+  description = "${var.http_proxy["description"]}"
+}
+
+resource "google_compute_global_forwarding_rule" "gcp-inspec-global-forwarding-rule" {
+  project    = "${var.gcp_project_id}"
+  name       = "${var.global_forwarding_rule["name"]}"
+  target     = "${google_compute_target_http_proxy.gcp-inspec-http-proxy.self_link}"
+  port_range = "${var.global_forwarding_rule["port_range"]}"
+}
+
+resource "google_compute_backend_service" "gcp-inspec-tcp-backend-service" {
+  project       = "${var.gcp_project_id}"
+  name          = "${var.target_tcp_proxy["tcp_backend_service_name"]}"
+  protocol      = "TCP"
+  timeout_sec   = 10
+
+  health_checks = ["${google_compute_health_check.gcp-inspec-health-check.self_link}"]
+}
+
+resource "google_compute_target_tcp_proxy" "gcp-inspec-target-tcp-proxy" {
+  project         = "${var.gcp_project_id}"
+  name            = "${var.target_tcp_proxy["name"]}"
+  proxy_header    = "${var.target_tcp_proxy["proxy_header"]}"
+  backend_service = "${google_compute_backend_service.gcp-inspec-tcp-backend-service.self_link}"
 }

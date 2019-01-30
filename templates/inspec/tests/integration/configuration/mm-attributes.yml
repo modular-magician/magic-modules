@@ -74,3 +74,44 @@ https_health_check:
   timeout_sec: 15
   check_interval_sec: 15
   unhealthy_threshold: 3
+
+instance_template:
+  name: inspec-gcp-instance-template
+  description: A description of the instance template
+  instance_description: A description of the instance itself
+  machine_type: n1-standard-1
+  tag: foo
+  can_ip_forward: false
+  scheduling_automatic_restart: true
+  scheduling_on_host_maintenance: MIGRATE
+  disk_source_image: debian-cloud/debian-9
+  disk_auto_delete: true
+  disk_boot: true
+  network_interface_network: default
+  service_account_scope: storage-ro
+
+global_address:
+  name: inspec-gcp-global-address
+  ip_version: IPV6
+
+url_map:
+  name: inspec-gcp-url-map
+  description: URL map description
+  host_rule_host: site.com
+  path_matcher_name: allpaths
+  path_rule_path: /home
+  test_host: test.com
+  test_path: /home
+
+http_proxy:
+  name: inspec-gcp-http-proxy
+  description: A HTTP proxy
+
+global_forwarding_rule:
+  name: inspec-gcp-global-forwarding-rule
+  port_range: 80-80
+
+target_tcp_proxy:
+  name: inspec-gcp-target-tcp-proxy
+  proxy_header: NONE
+  tcp_backend_service_name: gcp-inspec-tcp-backend-service
