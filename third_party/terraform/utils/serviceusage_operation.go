@@ -1,15 +1,20 @@
 package google
 
 import (
-	"google.golang.org/api/serviceusage/v1beta1"
+	"fmt"
+
+	"google.golang.org/api/serviceusage/v1"
 )
 
 type ServiceUsageOperationWaiter struct {
-	Service *serviceusage.APIService
+	Service *serviceusage.Service
 	CommonOperationWaiter
 }
 
 func (w *ServiceUsageOperationWaiter) QueryOp() (interface{}, error) {
+	if w == nil {
+		return nil, fmt.Errorf("Cannot query operation, it's unset or nil.")
+	}
 	return w.Service.Operations.Get(w.Op.Name).Do()
 }
 

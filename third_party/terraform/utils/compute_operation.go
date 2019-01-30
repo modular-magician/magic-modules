@@ -2,6 +2,7 @@ package google
 
 import (
 	"bytes"
+	"fmt"
 
 	computeBeta "google.golang.org/api/compute/v0.beta"
 	"google.golang.org/api/compute/v1"
@@ -14,22 +15,33 @@ type ComputeOperationWaiter struct {
 }
 
 func (w *ComputeOperationWaiter) State() string {
+	if w == nil || w.Op == nil {
+		return "<nil>"
+	}
+
 	return w.Op.Status
 }
 
 func (w *ComputeOperationWaiter) Error() error {
-	if w.Op.Error != nil {
+	if w != nil && w.Op != nil && w.Op.Error != nil {
 		return ComputeOperationError(*w.Op.Error)
 	}
 	return nil
 }
 
 func (w *ComputeOperationWaiter) SetOp(op interface{}) error {
-	w.Op = op.(*compute.Operation)
+	var ok bool
+	w.Op, ok = op.(*compute.Operation)
+	if !ok {
+		return fmt.Errorf("Unable to set operation. Bad type!")
+	}
 	return nil
 }
 
 func (w *ComputeOperationWaiter) QueryOp() (interface{}, error) {
+	if w == nil || w.Op == nil {
+		return nil, fmt.Errorf("Cannot query operation, it's unset or nil.")
+	}
 	if w.Op.Zone != "" {
 		zone := GetResourceNameFromSelfLink(w.Op.Zone)
 		return w.Service.ZoneOperations.Get(w.Project, zone, w.Op.Name).Do()
@@ -41,6 +53,10 @@ func (w *ComputeOperationWaiter) QueryOp() (interface{}, error) {
 }
 
 func (w *ComputeOperationWaiter) OpName() string {
+	if w == nil || w.Op == nil {
+		return "<nil> Compute Op"
+	}
+
 	return w.Op.Name
 }
 
