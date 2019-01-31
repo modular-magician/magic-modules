@@ -618,21 +618,21 @@ func validateDataprocCluster_withConfigOverrides(n string, cluster *dataproc.Clu
 
 		clusterTests := []tfAndGCPTestField{
 			{"cluster_config.0.master_config.0.num_instances", "3", strconv.Itoa(int(cluster.Config.MasterConfig.NumInstances))},
-			{"cluster_config.0.master_config.0.disk_config.0.boot_disk_size_gb", "10", strconv.Itoa(int(cluster.Config.MasterConfig.DiskConfig.BootDiskSizeGb))},
+			{"cluster_config.0.master_config.0.disk_config.0.boot_disk_size_gb", "15", strconv.Itoa(int(cluster.Config.MasterConfig.DiskConfig.BootDiskSizeGb))},
 			{"cluster_config.0.master_config.0.disk_config.0.num_local_ssds", "0", strconv.Itoa(int(cluster.Config.MasterConfig.DiskConfig.NumLocalSsds))},
 			{"cluster_config.0.master_config.0.disk_config.0.boot_disk_type", "pd-ssd", cluster.Config.MasterConfig.DiskConfig.BootDiskType},
 			{"cluster_config.0.master_config.0.machine_type", "n1-standard-1", GetResourceNameFromSelfLink(cluster.Config.MasterConfig.MachineTypeUri)},
 			{"cluster_config.0.master_config.0.instance_names.#", "3", strconv.Itoa(len(cluster.Config.MasterConfig.InstanceNames))},
 
 			{"cluster_config.0.worker_config.0.num_instances", "3", strconv.Itoa(int(cluster.Config.WorkerConfig.NumInstances))},
-			{"cluster_config.0.worker_config.0.disk_config.0.boot_disk_size_gb", "11", strconv.Itoa(int(cluster.Config.WorkerConfig.DiskConfig.BootDiskSizeGb))},
+			{"cluster_config.0.worker_config.0.disk_config.0.boot_disk_size_gb", "16", strconv.Itoa(int(cluster.Config.WorkerConfig.DiskConfig.BootDiskSizeGb))},
 			{"cluster_config.0.worker_config.0.disk_config.0.num_local_ssds", "1", strconv.Itoa(int(cluster.Config.WorkerConfig.DiskConfig.NumLocalSsds))},
 			{"cluster_config.0.worker_config.0.disk_config.0.boot_disk_type", "pd-standard", cluster.Config.WorkerConfig.DiskConfig.BootDiskType},
 			{"cluster_config.0.worker_config.0.machine_type", "n1-standard-1", GetResourceNameFromSelfLink(cluster.Config.WorkerConfig.MachineTypeUri)},
 			{"cluster_config.0.worker_config.0.instance_names.#", "3", strconv.Itoa(len(cluster.Config.WorkerConfig.InstanceNames))},
 
 			{"cluster_config.0.preemptible_worker_config.0.num_instances", "1", strconv.Itoa(int(cluster.Config.SecondaryWorkerConfig.NumInstances))},
-			{"cluster_config.0.preemptible_worker_config.0.disk_config.0.boot_disk_size_gb", "12", strconv.Itoa(int(cluster.Config.SecondaryWorkerConfig.DiskConfig.BootDiskSizeGb))},
+			{"cluster_config.0.preemptible_worker_config.0.disk_config.0.boot_disk_size_gb", "17", strconv.Itoa(int(cluster.Config.SecondaryWorkerConfig.DiskConfig.BootDiskSizeGb))},
 			{"cluster_config.0.preemptible_worker_config.0.disk_config.0.num_local_ssds", "1", strconv.Itoa(int(cluster.Config.SecondaryWorkerConfig.DiskConfig.NumLocalSsds))},
 			{"cluster_config.0.preemptible_worker_config.0.disk_config.0.boot_disk_type", "pd-ssd", cluster.Config.SecondaryWorkerConfig.DiskConfig.BootDiskType},
 			{"cluster_config.0.preemptible_worker_config.0.instance_names.#", "1", strconv.Itoa(len(cluster.Config.SecondaryWorkerConfig.InstanceNames))},
@@ -861,7 +861,7 @@ resource "google_dataproc_cluster" "with_config_overrides" {
 			machine_type      = "n1-standard-1"
 			disk_config {
 				boot_disk_type    = "pd-ssd"
-				boot_disk_size_gb = 10
+				boot_disk_size_gb = 15
 			}
 		}
 
@@ -870,7 +870,7 @@ resource "google_dataproc_cluster" "with_config_overrides" {
 			machine_type      = "n1-standard-1"
 			disk_config {
 				boot_disk_type    = "pd-standard"
-				boot_disk_size_gb = 11
+				boot_disk_size_gb = 16
 				num_local_ssds    = 1
 			}
 		}
@@ -879,7 +879,7 @@ resource "google_dataproc_cluster" "with_config_overrides" {
 			num_instances     = 1
 			disk_config {
 				boot_disk_type    = "pd-ssd"
-				boot_disk_size_gb = 12
+				boot_disk_size_gb = 17
 				num_local_ssds    = 1
 			}
 		}
@@ -920,7 +920,7 @@ resource "google_dataproc_cluster" "with_init_action" {
 		master_config {
 			machine_type      = "n1-standard-1"
 			disk_config {
-				boot_disk_size_gb = 10
+				boot_disk_size_gb = 15
 			}
 		}
 
@@ -947,7 +947,7 @@ resource "google_dataproc_cluster" "updatable" {
 			num_instances      = "1"
 			machine_type      = "n1-standard-1"
 			disk_config {
-				boot_disk_size_gb = 10
+				boot_disk_size_gb = 15
 			}
 		}
 
@@ -955,14 +955,14 @@ resource "google_dataproc_cluster" "updatable" {
 			num_instances      = "%d"
 			machine_type      = "n1-standard-1"
 			disk_config {
-				boot_disk_size_gb = 10
+				boot_disk_size_gb = 15
 			}
 		}
 
 		preemptible_worker_config {
 			num_instances      = "%d"
 			disk_config {
-				boot_disk_size_gb = 10
+				boot_disk_size_gb = 15
 			}
 		}
 	}
@@ -999,7 +999,7 @@ resource "google_dataproc_cluster" "with_bucket" {
 		master_config {
 			machine_type      = "n1-standard-1"
 			disk_config {
-				boot_disk_size_gb = 10
+				boot_disk_size_gb = 15
 			}
 		}
 	}
@@ -1065,7 +1065,7 @@ resource "google_dataproc_cluster" "with_service_account" {
 		master_config {
 			machine_type      = "n1-standard-1"
 			disk_config {
-				boot_disk_size_gb = 10
+				boot_disk_size_gb = 15
 			}
 		}
 
@@ -1108,6 +1108,7 @@ resource "google_compute_firewall" "dataproc_network_firewall" {
 	name = "dproc-cluster-test-%s-allow-internal"
 	description = "Firewall rules for dataproc Terraform acceptance testing"
 	network = "${google_compute_network.dataproc_network.name}"
+	source_ranges = ["192.168.0.0/16"]
 
 	allow {
 		protocol = "icmp"
@@ -1140,7 +1141,7 @@ resource "google_dataproc_cluster" "with_net_ref_by_name" {
 		master_config {
 			machine_type      = "n1-standard-1"
 			disk_config {
-				boot_disk_size_gb = 10
+				boot_disk_size_gb = 15
 			}
 		}
 
@@ -1166,7 +1167,7 @@ resource "google_dataproc_cluster" "with_net_ref_by_url" {
 		master_config {
 			machine_type      = "n1-standard-1"
 			disk_config {
-				boot_disk_size_gb = 10
+				boot_disk_size_gb = 15
 			}
 		}
 

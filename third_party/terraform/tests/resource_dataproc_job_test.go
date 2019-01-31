@@ -497,7 +497,7 @@ resource "google_dataproc_cluster" "basic" {
 			num_instances     = 1
 			machine_type      = "n1-standard-1"
 			disk_config {
-				boot_disk_size_gb = 10
+				boot_disk_size_gb = 15
 			}
 		}
 	}
@@ -608,12 +608,12 @@ func testAccDataprocJob_hadoop(rnd string) string {
 			args              = [
 			  "wordcount",
 			  "file:///usr/lib/spark/NOTICE",
-			  "gs://${google_dataproc_cluster.basic.cluster_config.0.bucket}/hadoopjob_output"
+			  "gs://${google_dataproc_cluster.basic.cluster_config.0.bucket}/hadoopjob_output_%s"
 			]
 		}
 
 	}
-	`, rnd)
+	`, rnd, rnd)
 
 }
 

@@ -35,12 +35,22 @@ resources:
           uri: git@github.com:GoogleCloudPlatform/magic-modules.git
           private_key: ((repo-key.private_key))
 
+    - name: magic-modules-new-external-prs
+      type: github-pull-request
+      source:
+          repo: GoogleCloudPlatform/magic-modules
+          private_key: ((repo-key.private_key))
+          access_token: ((github-account.password))
+          community_only: true
+          no_label: community
+
     - name: magic-modules-external-prs
       type: github-pull-request
       source:
           repo: GoogleCloudPlatform/magic-modules
           private_key: ((repo-key.private_key))
           access_token: ((github-account.password))
+          community_only: true
 
     - name: magic-modules-new-prs
       type: github-pull-request
@@ -97,6 +107,24 @@ resources:
         token: ((github-account.password))
 
 jobs:
+    - name: respond-to-community-pr
+      plan:
+          - get: magic-modules-new-external-prs
+            trigger: true
+          - get: magic-modules-gcp
+            # NOTE: we do NOT run a script from the external PR!
+          - task: write-welcome-message
+            file: magic-modules-gcp/.ci/magic-modules/welcome-contributor.yml
+          - put: magic-modules-external-prs
+            params:
+                status: pending
+                path: magic-modules-new-external-prs
+                label: community
+                comment: comment/pr_comment
+                assignee_file: comment/assignee
+            get_params:
+                skip_clone: true
+
     - name: authorize-single-rev
       plan:
           - get: magic-modules-external-prs
@@ -391,6 +419,10 @@ jobs:
       plan:
           - get: mm-approved-prs
             attempts: 2
+          - task: ensure-downstreams-merged
+            file: mm-approved-prs/.ci/magic-modules/ensure-downstreams-merged.yml
+            params:
+                GH_TOKEN: ((github-account.password))
           - put: mark-automerged
             resource: mm-approved-prs
             params:

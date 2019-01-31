@@ -48,6 +48,11 @@ resource "google_container_cluster" "primary" {
 
     tags = ["foo", "bar"]
   }
+
+  timeouts {
+    create = "30m"
+    update = "40m"
+  }
 }
 
 # The following outputs allow authentication and connectivity to the GKE Cluster.
@@ -176,7 +181,9 @@ to the datasource. A `region` can have a different set of supported versions tha
 
 * `node_version` - (Optional) The Kubernetes version on the nodes. Must either be unset
     or set to the same value as `min_master_version` on create. Defaults to the default
-    version set by GKE which is not necessarily the latest version.
+    version set by GKE which is not necessarily the latest version. This only affects
+    nodes in the default node pool. To update nodes in other node pools, use the `version`
+    attribute on the node pool.
 
 * `pod_security_policy_config` - (Optional, [Beta](https://terraform.io/docs/providers/google/provider_versions.html)) Configuration for the
     [PodSecurityPolicy](https://cloud.google.com/kubernetes-engine/docs/how-to/pod-security-policies) feature.
@@ -482,8 +489,8 @@ exported:
 [Timeouts](/docs/configuration/resources.html#timeouts) configuration options:
 
 - `create` - (Default `30 minutes`) Used for clusters
-- `update` - (Default `10 minutes`) Used for updates to clusters
-- `delete` - (Default `10 minutes`) Used for destroying clusters.
+- `update` - (Default `30 minutes`) Used for updates to clusters
+- `delete` - (Default `30 minutes`) Used for destroying clusters.
 
 ## Import
 
