@@ -19,11 +19,7 @@ manifest: !ruby/object:Provider::Inspec::Manifest
 overrides: !ruby/object:Overrides::ResourceOverrides
   Address: !ruby/object:Overrides::Inspec::ResourceOverride
     exclude: true
-  Autoscaler: !ruby/object:Overrides::Inspec::ResourceOverride
-    exclude: true
   BackendBucket: !ruby/object:Overrides::Inspec::ResourceOverride
-    exclude: true
-  BackendService: !ruby/object:Overrides::Inspec::ResourceOverride
     exclude: true
   DiskType: !ruby/object:Overrides::Inspec::ResourceOverride
     exclude: true
@@ -35,23 +31,11 @@ overrides: !ruby/object:Overrides::ResourceOverrides
       end
   ForwardingRule: !ruby/object:Overrides::Inspec::ResourceOverride
     exclude: true
-  GlobalAddress: !ruby/object:Overrides::Inspec::ResourceOverride
-    exclude: true
-  GlobalForwardingRule: !ruby/object:Overrides::Inspec::ResourceOverride
-    exclude: true
-  HealthCheck: !ruby/object:Overrides::Inspec::ResourceOverride
-    exclude: true
-  HttpHealthCheck: !ruby/object:Overrides::Inspec::ResourceOverride
-    exclude: true
-  HttpsHealthCheck: !ruby/object:Overrides::Inspec::ResourceOverride
-    exclude: true
   Image: !ruby/object:Overrides::Inspec::ResourceOverride
     exclude: true
   Instance: !ruby/object:Overrides::Inspec::ResourceOverride
     exclude: true
   InstanceGroup: !ruby/object:Overrides::Inspec::ResourceOverride
-    exclude: true
-  InstanceTemplate: !ruby/object:Overrides::Inspec::ResourceOverride
     exclude: true
   InterconnectAttachment: !ruby/object:Overrides::Inspec::ResourceOverride
     exclude: true
@@ -69,8 +53,6 @@ overrides: !ruby/object:Overrides::ResourceOverrides
     exclude: true
   RegionDiskType: !ruby/object:Overrides::Inspec::ResourceOverride
     exclude: true
-  Route: !ruby/object:Overrides::Inspec::ResourceOverride
-    exclude: true
   Router: !ruby/object:Overrides::Inspec::ResourceOverride
     exclude: true
   Snapshot: !ruby/object:Overrides::Inspec::ResourceOverride
@@ -79,19 +61,14 @@ overrides: !ruby/object:Overrides::ResourceOverrides
     exclude: true
   Subnetwork: !ruby/object:Overrides::Inspec::ResourceOverride
     exclude: true
-  TargetHttpProxy: !ruby/object:Overrides::Inspec::ResourceOverride
-    exclude: true
   TargetHttpsProxy: !ruby/object:Overrides::Inspec::ResourceOverride
     exclude: true
   TargetPool: !ruby/object:Overrides::Inspec::ResourceOverride
-    exclude: true
-  TargetTcpProxy: !ruby/object:Overrides::Inspec::ResourceOverride
-    exclude: true
+    additional_functions: |
+<%= lines(indent(compile('templates/inspec/custom_functions/google_compute_target_pool.rb'), 6)) -%>
   TargetVpnGateway: !ruby/object:Overrides::Inspec::ResourceOverride
     exclude: true
   TargetSslProxy: !ruby/object:Overrides::Inspec::ResourceOverride
-    exclude: true
-  UrlMap: !ruby/object:Overrides::Inspec::ResourceOverride
     exclude: true
   VpnTunnel: !ruby/object:Overrides::Inspec::ResourceOverride
     exclude: true

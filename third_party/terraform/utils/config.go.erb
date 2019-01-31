@@ -44,7 +44,7 @@ import (
 <% unless version == 'ga' -%>
 	"google.golang.org/api/servicenetworking/v1beta"
 <% end -%>
-	"google.golang.org/api/serviceusage/v1beta1"
+	"google.golang.org/api/serviceusage/v1"
 	"google.golang.org/api/sourcerepo/v1"
 	"google.golang.org/api/spanner/v1"
 	"google.golang.org/api/sqladmin/v1beta4"
@@ -60,6 +60,7 @@ type Config struct {
 	Project     string
 	Region      string
 	Zone        string
+	Scopes      []string
 
 	client    *http.Client
 	userAgent string
@@ -94,7 +95,7 @@ type Config struct {
 	clientSqlAdmin               *sqladmin.Service
 	clientIAM                    *iam.Service
 	clientServiceMan             *servicemanagement.APIService
-	clientServiceUsage           *serviceusage.APIService
+	clientServiceUsage           *serviceusage.Service
 	clientBigQuery               *bigquery.Service
 	clientCloudFunctions         *cloudfunctions.Service
 	clientCloudIoT               *cloudiot.Service
@@ -107,15 +108,19 @@ type Config struct {
 	bigtableClientFactory *BigtableClientFactory
 }
 
+var defaultClientScopes = []string{
+	"https://www.googleapis.com/auth/compute",
+	"https://www.googleapis.com/auth/cloud-platform",
+	"https://www.googleapis.com/auth/ndev.clouddns.readwrite",
+	"https://www.googleapis.com/auth/devstorage.full_control",
+}
+
 func (c *Config) loadAndValidate() error {
-	clientScopes := []string{
-		"https://www.googleapis.com/auth/compute",
-		"https://www.googleapis.com/auth/cloud-platform",
-		"https://www.googleapis.com/auth/ndev.clouddns.readwrite",
-		"https://www.googleapis.com/auth/devstorage.full_control",
+	if len(c.Scopes) == 0 {
+		c.Scopes = defaultClientScopes
 	}
 
-	tokenSource, err := c.getTokenSource(clientScopes)
+	tokenSource, err := c.getTokenSource(c.Scopes)
 	if err != nil {
 		return err
 	}
