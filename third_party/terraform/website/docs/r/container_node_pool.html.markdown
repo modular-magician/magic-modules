@@ -62,7 +62,6 @@ resource "google_container_cluster" "primary" {
   initial_node_count = 3
 
   additional_zones = [
-    "us-central1-b",
     "us-central1-c",
   ]
 
