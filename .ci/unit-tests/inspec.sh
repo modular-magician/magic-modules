@@ -16,15 +16,20 @@ export GCP_PROJECT_ID=${PROJECT_NAME}
 export GCP_PROJECT_NAME=${PROJECT_NAME}
 set -x
 
-pushd magic-modules-gcp
-rm "build/inspec/test/integration/verify/controls/*"
+gcloud auth activate-service-account terraform@graphite-test-sam-chef.iam.gserviceaccount.com --key-file=$GOOGLE_CLOUD_KEYFILE_JSON
+
+pushd magic-modules
+rm build/inspec/test/integration/verify/controls/*
 export VCR_MODE=none
-bundle exec compiler -p $i -e inspec -o "build/inspec/"
+bundle install
+bundle exec compiler -a -e inspec -o "build/inspec/"
 
 cp templates/inspec/vcr_config.rb build/inspec
 
 pushd build/inspec
 bundle
+
+bundle exec rake test:generate_integration_test_variables
 bundle exec rake test:run_integration_tests
 
 popd
