@@ -1,6 +1,6 @@
 platform: linux
 inputs:
-  - name: magic-modules
+  - name: magic-modules-branched
 image_resource:
   type: docker-image
   source:
