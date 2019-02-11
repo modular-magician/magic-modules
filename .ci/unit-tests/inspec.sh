@@ -16,7 +16,7 @@ export GCP_PROJECT_ID=${PROJECT_NAME}
 export GCP_PROJECT_NAME=${PROJECT_NAME}
 set -x
 
-pushd magic-modules-gcp
+pushd magic-modules-new-prs
 rm "build/inspec/test/integration/verify/controls/*"
 export VCR_MODE=none
 bundle exec compiler -p $i -e inspec -o "build/inspec/"
