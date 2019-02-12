@@ -494,6 +494,17 @@ jobs:
             PROJECT_NAME: ((inspec-project-name))
             PROJECT_NUMBER: ((inspec-project-number))
 
+    - name: inspec-vcr-record
+      serial: true
+      plan:
+        - get: magic-modules-new-prs
+        - task: inspec-vcr
+          file: magic-modules-gcp/.ci/acceptance-tests/inspec-vcr.yml
+          params:
+            TERRAFORM_KEY: ((terraform-key))
+            PROJECT_NAME: ((inspec-project-name))
+            PROJECT_NUMBER: ((inspec-project-number))
+
     - name: inspec-unit-test
       plan:
         - get: magic-modules-new-prs
