@@ -1,15 +1,16 @@
 [submodule "build/ansible"]
 	path = build/ansible
-	url = https://github.com/modular-magician/ansible
-	branch = devel
+	url = https://github.com/modular-magician/ansible.git
+	branch = codegen-sha-0d6be290
 [submodule "build/terraform"]
 	path = build/terraform
-	url = https://github.com/terraform-providers/terraform-provider-google
-	branch = master
+	url = https://github.com/modular-magician/terraform-provider-google.git
+	branch = codegen-sha-0d6be290
 [submodule "build/terraform-beta"]
 	path = build/terraform-beta
-	url = https://github.com/terraform-providers/terraform-provider-google-beta
-	branch = master
+	url = https://github.com/modular-magician/terraform-provider-google-beta.git
+	branch = codegen-sha-0d6be290
 [submodule "build/inspec"]
 	path = build/inspec
-	url = https://github.com/modular-magician/inspec-gcp
+	url = https://github.com/modular-magician/inspec-gcp.git
+	branch = codegen-sha-0d6be290
