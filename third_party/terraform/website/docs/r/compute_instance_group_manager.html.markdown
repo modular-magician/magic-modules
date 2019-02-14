@@ -95,7 +95,7 @@ The following arguments are supported:
 
 * `version` - (Required, [Beta](https://terraform.io/docs/providers/google/provider_versions.html)) Application versions managed by this instance group. Each
     version deals with a specific instance template, allowing canary release scenarios.
-    Structure is documented below.
+    This field is only present in the `google-beta` provider. Structure is documented below.
 
 * `name` - (Required) The name of the instance group manager. Must be 1-63
     characters long and comply with
