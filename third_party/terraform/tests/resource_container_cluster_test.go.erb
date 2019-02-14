@@ -3101,7 +3101,7 @@ func testAccContainerCluster_withInitialCIDR(clusterName string) string {
 	return fmt.Sprintf(`
 resource "google_container_cluster" "cidr_error_test_preempt" {
   name = "%s"
-  zone = "us-west1-a"
+  zone = "us-central1-a"
 
   initial_node_count = 1
 
