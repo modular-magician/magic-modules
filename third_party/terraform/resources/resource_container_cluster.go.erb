@@ -1511,13 +1511,11 @@ func resourceContainerClusterDelete(d *schema.ResourceData, meta interface{}) er
 	}
 
 	var location string
-	locations := []string{}
 	if regionName, isRegionalCluster := d.GetOk("region"); !isRegionalCluster {
 		location, err = getZone(d, config)
 		if err != nil {
 			return err
 		}
-		locations = append(locations, location)
 	} else {
 		location = regionName.(string)
 	}
