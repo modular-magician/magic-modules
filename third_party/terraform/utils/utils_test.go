@@ -488,8 +488,8 @@ func TestRetryTimeDuration(t *testing.T) {
 			Code: 500,
 		}
 	}
-	if err := retryTimeDuration(f, time.Duration(1000)*time.Millisecond); err != nil {
-		t.Errorf("error retrying: %v", err)
+	if err := retryTimeDuration(f, time.Duration(1000)*time.Millisecond); err == nil || err.(*googleapi.Error).Code != 500 {
+		t.Errorf("unexpected error retrying: %v", err)
 	}
 	if i < 2 {
 		t.Errorf("expected error function to be called at least twice, but was called %d times", i)
@@ -505,8 +505,8 @@ func TestRetryTimeDuration_wrapped(t *testing.T) {
 		}
 		return errwrap.Wrapf("nested error: {{err}}", err)
 	}
-	if err := retryTimeDuration(f, time.Duration(1000)*time.Millisecond); err != nil {
-		t.Errorf("error retrying: %v", err)
+	if err := retryTimeDuration(f, time.Duration(1000)*time.Millisecond); err == nil || err.(*googleapi.Error).Code != 500 {
+		t.Errorf("unexpected error retrying: %v", err)
 	}
 	if i < 2 {
 		t.Errorf("expected error function to be called at least twice, but was called %d times", i)
@@ -521,8 +521,8 @@ func TestRetryTimeDuration_noretry(t *testing.T) {
 			Code: 400,
 		}
 	}
-	if err := retryTimeDuration(f, time.Duration(1000)*time.Millisecond); err != nil {
-		t.Errorf("error retrying: %v", err)
+	if err := retryTimeDuration(f, time.Duration(1000)*time.Millisecond); err == nil || err.(*googleapi.Error).Code != 400 {
+		t.Errorf("unexpected error retrying: %v", err)
 	}
 	if i != 1 {
 		t.Errorf("expected error function to be called exactly once, but was called %d times", i)
