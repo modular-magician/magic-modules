@@ -3,7 +3,7 @@
 set -x
 
 # Install dependencies for Template Generator
-pushd "magic-modules-gcp"
+pushd "magic-modules-new-prs"
 bundle install
 
 # Setup SSH keys.
@@ -16,10 +16,10 @@ echo "$CREDS" > ~/github_private_key
 set -x
 chmod 400 ~/github_private_key
 
-ssh-agent bash -c "ssh-add ~/github_private_key; git submodule update --force --init"
+ssh-agent bash -c "ssh-add ~/github_private_key; git submodule update --remote --init build/ansible"
 popd
 
-pushd "magic-modules-gcp/build/ansible"
+pushd "magic-modules-new-prs/build/ansible"
 # Setup Git config.
 git config --global user.email "magic-modules@google.com"
 git config --global user.name "Modular Magician"

@@ -31,10 +31,10 @@ if ! git remote -v | grep "origin"; then
   exit 1
 fi
 
-git remote add upstream https://github.com/ansible/ansible.git
+git remote add upstream git@github.com:ansible/ansible.git
 
 # Use HTTPS endpoint so we don't have to setup SSH keys.
-git remote add magician https://github.com/modular-magician/ansible.git &>/dev/null
+git remote add magician git@github.com:modular-magician/ansible.git
 git fetch magician devel
 git fetch upstream devel
 echo "Remotes setup properly"
@@ -52,7 +52,6 @@ for filename in mm-bug*; do
   echo "Building a Bug Fix PR for $filename"
   # Checkout all files that file specifies and create a commit.
   git checkout upstream/devel
-  git branch -D bug_fixes$filename
   git checkout -b bug_fixes$filename
 
 
@@ -80,7 +79,6 @@ comm -3 <(sort magician) <(sort upstream) > new_modules
 while read module; do
   echo "Building a New Module PR for $module"
   git checkout upstream/devel
-  git branch -D $module
   git checkout -b $module
 
   git checkout magician/devel -- "lib/ansible/modules/cloud/google/$module.py"
