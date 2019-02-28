@@ -2796,6 +2796,7 @@ resource "google_container_cluster" "with_ip_allocation_policy" {
 	ip_allocation_policy {
 		cluster_ipv4_cidr_block  = "10.0.0.0/16"
 		services_ipv4_cidr_block = "10.1.0.0/16"
+        node_ipv4_cidr_block = "10.2.0.0/16"
 	}
 }`, cluster, cluster)
 }
@@ -2819,14 +2820,16 @@ resource "google_container_cluster" "with_ip_allocation_policy" {
 	zone = "us-central1-a"
 
 	network = "${google_compute_network.container_network.name}"
-	subnetwork = "${google_compute_subnetwork.container_subnetwork.name}"
+    create_subnetwork = true
+    subnetwork_name = "tf-test-%s"
 
 	initial_node_count = 1
 	ip_allocation_policy {
 		cluster_ipv4_cidr_block = "/16"
 		services_ipv4_cidr_block = "/22"
+        node_ipv4_cidr_block = "/22"
 	}
-}`, cluster, cluster)
+}`, cluster, cluster, cluster)
 }
 
 func testAccContainerCluster_withIPAllocationPolicy_createSubnetwork(cluster string) string {
