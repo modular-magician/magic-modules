@@ -22,7 +22,7 @@ import (
 func resourceStorageBucket() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceStorageBucketCreate,
-		Read:   resourceStorageBucketRead,
+		Read:	resourceStorageBucketRead,
 		Update: resourceStorageBucketUpdate,
 		Delete: resourceStorageBucketDelete,
 		Importer: &schema.ResourceImporter{
@@ -31,19 +31,19 @@ func resourceStorageBucket() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Type:     schema.TypeString,
+				Type:	  schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
 
 			"encryption": {
-				Type:     schema.TypeList,
+				Type:	  schema.TypeList,
 				Optional: true,
 				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"default_kms_key_name": {
-							Type:     schema.TypeString,
+							Type:	  schema.TypeString,
 							Required: true,
 						},
 					},
@@ -51,24 +51,24 @@ func resourceStorageBucket() *schema.Resource {
 			},
 
 			"requester_pays": {
-				Type:     schema.TypeBool,
+				Type:	  schema.TypeBool,
 				Optional: true,
 			},
 
 			"force_destroy": {
-				Type:     schema.TypeBool,
+				Type:	  schema.TypeBool,
 				Optional: true,
 				Default:  false,
 			},
 
 			"labels": {
-				Type:     schema.TypeMap,
+				Type:	  schema.TypeMap,
 				Optional: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Elem:	  &schema.Schema{Type: schema.TypeString},
 			},
 
 			"location": {
-				Type:     schema.TypeString,
+				Type:	  schema.TypeString,
 				Default:  "US",
 				Optional: true,
 				ForceNew: true,
@@ -78,89 +78,89 @@ func resourceStorageBucket() *schema.Resource {
 			},
 
 			"predefined_acl": {
-				Type:     schema.TypeString,
+				Type:	  schema.TypeString,
 				Removed:  "Please use resource \"storage_bucket_acl.predefined_acl\" instead.",
 				Optional: true,
 				ForceNew: true,
 			},
 
 			"project": {
-				Type:     schema.TypeString,
+				Type:	  schema.TypeString,
 				Optional: true,
 				Computed: true,
 				ForceNew: true,
 			},
 
 			"self_link": {
-				Type:     schema.TypeString,
+				Type:	  schema.TypeString,
 				Computed: true,
 			},
 
 			"url": {
-				Type:     schema.TypeString,
+				Type:	  schema.TypeString,
 				Computed: true,
 			},
 
 			"storage_class": {
-				Type:     schema.TypeString,
+				Type:	  schema.TypeString,
 				Optional: true,
 				Default:  "STANDARD",
 				ForceNew: true,
 			},
 
 			"lifecycle_rule": {
-				Type:     schema.TypeList,
+				Type:	  schema.TypeList,
 				Optional: true,
 				MaxItems: 100,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"action": {
-							Type:     schema.TypeSet,
+							Type:	  schema.TypeSet,
 							Required: true,
 							MinItems: 1,
 							MaxItems: 1,
-							Set:      resourceGCSBucketLifecycleRuleActionHash,
+							Set:	  resourceGCSBucketLifecycleRuleActionHash,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"type": {
-										Type:     schema.TypeString,
+										Type:	  schema.TypeString,
 										Required: true,
 									},
 									"storage_class": {
-										Type:     schema.TypeString,
+										Type:	  schema.TypeString,
 										Optional: true,
 									},
 								},
 							},
 						},
 						"condition": {
-							Type:     schema.TypeSet,
+							Type:	  schema.TypeSet,
 							Required: true,
 							MinItems: 1,
 							MaxItems: 1,
-							Set:      resourceGCSBucketLifecycleRuleConditionHash,
+							Set:	  resourceGCSBucketLifecycleRuleConditionHash,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"age": {
-										Type:     schema.TypeInt,
+										Type:	  schema.TypeInt,
 										Optional: true,
 									},
 									"created_before": {
-										Type:     schema.TypeString,
+										Type:	  schema.TypeString,
 										Optional: true,
 									},
 									"is_live": {
-										Type:     schema.TypeBool,
+										Type:	  schema.TypeBool,
 										Optional: true,
 									},
 									"matches_storage_class": {
-										Type:     schema.TypeList,
+										Type:	  schema.TypeList,
 										Optional: true,
 										MinItems: 1,
-										Elem:     &schema.Schema{Type: schema.TypeString},
+										Elem:	  &schema.Schema{Type: schema.TypeString},
 									},
 									"num_newer_versions": {
-										Type:     schema.TypeInt,
+										Type:	  schema.TypeInt,
 										Optional: true,
 									},
 								},
@@ -171,13 +171,13 @@ func resourceStorageBucket() *schema.Resource {
 			},
 
 			"versioning": {
-				Type:     schema.TypeList,
+				Type:	  schema.TypeList,
 				Optional: true,
 				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"enabled": {
-							Type:     schema.TypeBool,
+							Type:	  schema.TypeBool,
 							Optional: true,
 							Default:  false,
 						},
@@ -186,16 +186,16 @@ func resourceStorageBucket() *schema.Resource {
 			},
 
 			"website": {
-				Type:     schema.TypeList,
+				Type:	  schema.TypeList,
 				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"main_page_suffix": {
-							Type:     schema.TypeString,
+							Type:	  schema.TypeString,
 							Optional: true,
 						},
 						"not_found_page": {
-							Type:     schema.TypeString,
+							Type:	  schema.TypeString,
 							Optional: true,
 						},
 					},
@@ -203,50 +203,50 @@ func resourceStorageBucket() *schema.Resource {
 			},
 
 			"cors": {
-				Type:     schema.TypeList,
+				Type:	  schema.TypeList,
 				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"origin": {
-							Type:     schema.TypeList,
+							Type:	  schema.TypeList,
 							Optional: true,
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
 						},
 						"method": {
-							Type:     schema.TypeList,
+							Type:	  schema.TypeList,
 							Optional: true,
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
 						},
 						"response_header": {
-							Type:     schema.TypeList,
+							Type:	  schema.TypeList,
 							Optional: true,
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
 						},
 						"max_age_seconds": {
-							Type:     schema.TypeInt,
+							Type:	  schema.TypeInt,
 							Optional: true,
 						},
 					},
 				},
 			},
 			"logging": {
-				Type:     schema.TypeList,
+				Type:	  schema.TypeList,
 				Optional: true,
 				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"log_bucket": {
-							Type:     schema.TypeString,
+							Type:	  schema.TypeString,
 							Required: true,
 						},
 						"log_object_prefix": {
-							Type:     schema.TypeString,
+							Type:	  schema.TypeString,
 							Optional: true,
 							Computed: true,
 						},
@@ -271,7 +271,7 @@ func resourceStorageBucketCreate(d *schema.ResourceData, meta interface{}) error
 
 	// Create a bucket, setting the labels, location and name.
 	sb := &storage.Bucket{
-		Name:     bucket,
+		Name:	  bucket,
 		Labels:   expandLabels(d),
 		Location: location,
 	}
@@ -358,7 +358,7 @@ func resourceStorageBucketUpdate(d *schema.ResourceData, meta interface{}) error
 	if d.HasChange("requester_pays") {
 		v := d.Get("requester_pays")
 		sb.Billing = &storage.BucketBilling{
-			RequesterPays:   v.(bool),
+			RequesterPays:	 v.(bool),
 			ForceSendFields: []string{"RequesterPays"},
 		}
 	}
@@ -595,10 +595,10 @@ func expandCors(configured []interface{}) []*storage.BucketCors {
 	for _, raw := range configured {
 		data := raw.(map[string]interface{})
 		corsRule := storage.BucketCors{
-			Origin:         convertStringArr(data["origin"].([]interface{})),
-			Method:         convertStringArr(data["method"].([]interface{})),
+			Origin:			convertStringArr(data["origin"].([]interface{})),
+			Method:			convertStringArr(data["method"].([]interface{})),
 			ResponseHeader: convertStringArr(data["response_header"].([]interface{})),
-			MaxAgeSeconds:  int64(data["max_age_seconds"].(int)),
+			MaxAgeSeconds:	int64(data["max_age_seconds"].(int)),
 		}
 
 		corsRules = append(corsRules, &corsRule)
@@ -610,8 +610,8 @@ func flattenCors(corsRules []*storage.BucketCors) []map[string]interface{} {
 	corsRulesSchema := make([]map[string]interface{}, 0, len(corsRules))
 	for _, corsRule := range corsRules {
 		data := map[string]interface{}{
-			"origin":          corsRule.Origin,
-			"method":          corsRule.Method,
+			"origin":		   corsRule.Origin,
+			"method":		   corsRule.Method,
 			"response_header": corsRule.ResponseHeader,
 			"max_age_seconds": corsRule.MaxAgeSeconds,
 		}
@@ -623,9 +623,16 @@ func flattenCors(corsRules []*storage.BucketCors) []map[string]interface{} {
 
 func expandBucketEncryption(configured interface{}) *storage.BucketEncryption {
 	encs := configured.([]interface{})
+	if encs == nil || encs[0] == nil {
+		return nil
+	}
 	enc := encs[0].(map[string]interface{})
+	keyname := enc["default_kms_key_name"]
+	if keyname == nil || keyname.(string) == "" {
+		return nil
+	}
 	bucketenc := &storage.BucketEncryption{
-		DefaultKmsKeyName: enc["default_kms_key_name"].(string),
+		DefaultKmsKeyName: keyname.(string),
 	}
 	return bucketenc
 }
@@ -649,7 +656,7 @@ func expandBucketLogging(configured interface{}) *storage.BucketLogging {
 	logging := loggings[0].(map[string]interface{})
 
 	bucketLogging := &storage.BucketLogging{
-		LogBucket:       logging["log_bucket"].(string),
+		LogBucket:		 logging["log_bucket"].(string),
 		LogObjectPrefix: logging["log_object_prefix"].(string),
 	}
 
@@ -664,7 +671,7 @@ func flattenBucketLogging(bucketLogging *storage.BucketLogging) []map[string]int
 	}
 
 	logging := map[string]interface{}{
-		"log_bucket":        bucketLogging.LogBucket,
+		"log_bucket":		 bucketLogging.LogBucket,
 		"log_object_prefix": bucketLogging.LogObjectPrefix,
 	}
 
@@ -707,7 +714,7 @@ func flattenBucketLifecycle(lifecycle *storage.BucketLifecycle) []map[string]int
 
 	for _, rule := range lifecycle.Rule {
 		rules = append(rules, map[string]interface{}{
-			"action":    schema.NewSet(resourceGCSBucketLifecycleRuleActionHash, []interface{}{flattenBucketLifecycleRuleAction(rule.Action)}),
+			"action":	 schema.NewSet(resourceGCSBucketLifecycleRuleActionHash, []interface{}{flattenBucketLifecycleRuleAction(rule.Action)}),
 			"condition": schema.NewSet(resourceGCSBucketLifecycleRuleConditionHash, []interface{}{flattenBucketLifecycleRuleCondition(rule.Condition)}),
 		})
 	}
@@ -717,17 +724,17 @@ func flattenBucketLifecycle(lifecycle *storage.BucketLifecycle) []map[string]int
 
 func flattenBucketLifecycleRuleAction(action *storage.BucketLifecycleRuleAction) map[string]interface{} {
 	return map[string]interface{}{
-		"type":          action.Type,
+		"type":			 action.Type,
 		"storage_class": action.StorageClass,
 	}
 }
 
 func flattenBucketLifecycleRuleCondition(condition *storage.BucketLifecycleRuleCondition) map[string]interface{} {
 	ruleCondition := map[string]interface{}{
-		"age":                   int(condition.Age),
-		"created_before":        condition.CreatedBefore,
+		"age":					 int(condition.Age),
+		"created_before":		 condition.CreatedBefore,
 		"matches_storage_class": convertStringArrToInterface(condition.MatchesStorageClass),
-		"num_newer_versions":    int(condition.NumNewerVersions),
+		"num_newer_versions":	 int(condition.NumNewerVersions),
 	}
 	if condition.IsLive != nil {
 		ruleCondition["is_live"] = *condition.IsLive
