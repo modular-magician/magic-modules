@@ -56,52 +56,52 @@ import (
 type Config struct {
 	Credentials string
 	AccessToken string
-	Project     string
-	Region      string
-	Zone        string
-	Scopes      []string
+	Project		string
+	Region		string
+	Zone		string
+	Scopes		[]string
 
-	client    *http.Client
+	client	  *http.Client
 	userAgent string
 
 	tokenSource oauth2.TokenSource
 
 	<% unless version == 'ga' -%>
-	clientAccessContextManager   *accesscontextmanager.Service
+	clientAccessContextManager	 *accesscontextmanager.Service
 	<% end -%>
-	clientBilling                *cloudbilling.APIService
-	clientBuild                  *cloudbuild.Service
-	clientComposer               *composer.Service
-	clientCompute                *compute.Service
-	clientComputeBeta            *computeBeta.Service
-	clientContainer              *container.Service
-	clientContainerBeta          *containerBeta.Service
-	clientDataproc               *dataproc.Service
-	clientDataflow               *dataflow.Service
-	clientDns                    *dns.Service
-	clientDnsBeta                *dnsBeta.Service
-	clientFilestore              *file.Service
-	clientKms                    *cloudkms.Service
-	clientLogging                *cloudlogging.Service
-	clientPubsub                 *pubsub.Service
-	clientResourceManager        *cloudresourcemanager.Service
+	clientBilling				 *cloudbilling.APIService
+	clientBuild					 *cloudbuild.Service
+	clientComposer				 *composer.Service
+	clientCompute				 *compute.Service
+	clientComputeBeta			 *computeBeta.Service
+	clientContainer				 *container.Service
+	clientContainerBeta			 *containerBeta.Service
+	clientDataproc				 *dataproc.Service
+	clientDataflow				 *dataflow.Service
+	clientDns					 *dns.Service
+	clientDnsBeta				 *dnsBeta.Service
+	clientFilestore				 *file.Service
+	clientKms					 *cloudkms.Service
+	clientLogging				 *cloudlogging.Service
+	clientPubsub				 *pubsub.Service
+	clientResourceManager		 *cloudresourcemanager.Service
 	clientResourceManagerV2Beta1 *resourceManagerV2Beta1.Service
-	clientRuntimeconfig          *runtimeconfig.Service
-	clientSpanner                *spanner.Service
-	clientSourceRepo             *sourcerepo.Service
-	clientStorage                *storage.Service
-	clientSqlAdmin               *sqladmin.Service
-	clientIAM                    *iam.Service
-	clientServiceMan             *servicemanagement.APIService
-	clientServiceUsage           *serviceusage.Service
-	clientBigQuery               *bigquery.Service
-	clientCloudFunctions         *cloudfunctions.Service
-	clientCloudIoT               *cloudiot.Service
-	clientAppEngine              *appengine.APIService
+	clientRuntimeconfig			 *runtimeconfig.Service
+	clientSpanner				 *spanner.Service
+	clientSourceRepo			 *sourcerepo.Service
+	clientStorage				 *storage.Service
+	clientSqlAdmin				 *sqladmin.Service
+	clientIAM					 *iam.Service
+	clientServiceMan			 *servicemanagement.APIService
+	clientServiceUsage			 *serviceusage.Service
+	clientBigQuery				 *bigquery.Service
+	clientCloudFunctions		 *cloudfunctions.Service
+	clientCloudIoT				 *cloudiot.Service
+	clientAppEngine				 *appengine.APIService
 	<% unless version == 'ga' -%>
-	clientServiceNetworking      *servicenetworking.APIService
+	clientServiceNetworking		 *servicenetworking.APIService
 	<% end -%>
-	clientStorageTransfer        *storagetransfer.Service
+	clientStorageTransfer		 *storagetransfer.Service
 
 	bigtableClientFactory *BigtableClientFactory
 }
@@ -126,6 +126,10 @@ func (c *Config) loadAndValidate() error {
 
 	client := oauth2.NewClient(context.Background(), tokenSource)
 	client.Transport = logging.NewTransport("Google", client.Transport)
+	// Each individual request should return within 30s - timeouts will be retried.
+	// This is a timeout for, e.g. a single GET request of an operation - not a
+	// timeout for the maximum amount of time a logical request can take.
+	client.Timeout, _ = time.ParseDuration("30s")
 
 	terraformVersion := httpclient.UserAgentString()
 	<% if version.nil? || version == 'ga' -%>
@@ -303,7 +307,7 @@ func (c *Config) loadAndValidate() error {
 	<% end -%>
 
 	c.bigtableClientFactory = &BigtableClientFactory{
-		UserAgent:   userAgent,
+		UserAgent:	 userAgent,
 		TokenSource: tokenSource,
 	}
 
@@ -382,7 +386,7 @@ func (c *Config) getTokenSource(clientScopes []string) (oauth2.TokenSource, erro
 		}
 
 		log.Printf("[INFO] Authenticating using configured Google JSON 'access_token'...")
-		log.Printf("[INFO]   -- Scopes: %s", clientScopes)
+		log.Printf("[INFO]	 -- Scopes: %s", clientScopes)
 		token := &oauth2.Token{AccessToken: contents}
 		return oauth2.StaticTokenSource(token), nil
 	}
@@ -399,11 +403,11 @@ func (c *Config) getTokenSource(clientScopes []string) (oauth2.TokenSource, erro
 		}
 
 		log.Printf("[INFO] Authenticating using configured Google JSON 'credentials'...")
-		log.Printf("[INFO]   -- Scopes: %s", clientScopes)
+		log.Printf("[INFO]	 -- Scopes: %s", clientScopes)
 		return creds.TokenSource, nil
 	}
 
 	log.Printf("[INFO] Authenticating using DefaultClient...")
-	log.Printf("[INFO]   -- Scopes: %s", clientScopes)
+	log.Printf("[INFO]	 -- Scopes: %s", clientScopes)
 	return googleoauth.DefaultTokenSource(context.Background(), clientScopes...)
 }
