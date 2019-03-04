@@ -20,6 +20,7 @@ func TestAccContainerEngineVersions_basic(t *testing.T) {
 			{
 				Config: testAccCheckGoogleContainerEngineVersionsConfig,
 				Check: resource.ComposeTestCheckFunc(
+					testAccCheckGoogleContainerEngineVersionsMeta("data.google_container_engine_versions.location"),
 					testAccCheckGoogleContainerEngineVersionsMeta("data.google_container_engine_versions.versions"),
 				),
 			},
@@ -37,6 +38,7 @@ func TestAccContainerEngineVersions_regional(t *testing.T) {
 			{
 				Config: testAccCheckGoogleContainerEngineVersionsRegionalConfig,
 				Check: resource.ComposeTestCheckFunc(
+					testAccCheckGoogleContainerEngineVersionsMeta("data.google_container_engine_versions.location"),
 					testAccCheckGoogleContainerEngineVersionsMeta("data.google_container_engine_versions.versions"),
 				),
 			},
@@ -115,12 +117,20 @@ func testAccCheckGoogleContainerEngineVersionsMeta(n string) resource.TestCheckF
 }
 
 var testAccCheckGoogleContainerEngineVersionsConfig = `
+data "google_container_engine_versions" "location" {
+  location = "us-central1-b"
+}
+
 data "google_container_engine_versions" "versions" {
   zone = "us-central1-b"
 }
 `
 
 var testAccCheckGoogleContainerEngineVersionsRegionalConfig = `
+data "google_container_engine_versions" "location" {
+  location = "us-central1"
+}
+
 data "google_container_engine_versions" "versions" {
   region = "us-central1"
 }
