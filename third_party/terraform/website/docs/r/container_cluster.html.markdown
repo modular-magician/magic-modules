@@ -213,7 +213,9 @@ output "cluster_ca_certificate" {
     If unset, the cluster's version will be set by GKE to the version of the most recent
     official release (which is not necessarily the latest version).  Most users will find
     the `google_container_engine_versions` data source useful - it indicates which versions
-    are available.  If you intend to specify versions manually, [the docs](https://cloud.google.com/kubernetes-engine/versioning-and-upgrades#specifying_cluster_version)
+    are available, and can be use to approximate fuzzy versions in a
+    Terraform-compatible way. If you intend to specify versions manually,
+    [the docs](https://cloud.google.com/kubernetes-engine/versioning-and-upgrades#specifying_cluster_version)
     describe the various acceptable formats for this field.
 
 -> If you are using the `google_container_engine_versions` datasource with a regional cluster, ensure that you have provided a `region`
@@ -249,8 +251,11 @@ to the datasource. A `region` can have a different set of supported versions tha
 * `node_version` - (Optional) The Kubernetes version on the nodes. Must either be unset
     or set to the same value as `min_master_version` on create. Defaults to the default
     version set by GKE which is not necessarily the latest version. This only affects
-    nodes in the default node pool. To update nodes in other node pools, use the `version`
-    attribute on the node pool.
+    nodes in the default node pool. While a fuzzy version can be specified, it's
+    recommended that you specify explicit versions as Terraform will see spurious diffs
+    when fuzzy versions are used. See the `google_container_engine_versions` data source's
+    `version_prefix` field to approximate fuzzy versions in a Terraform-compatible way.
+    To update nodes in other node pools, use the `version` attribute on the node pool.
 
 * `pod_security_policy_config` - (Optional, [Beta](https://terraform.io/docs/providers/google/provider_versions.html)) Configuration for the
     [PodSecurityPolicy](https://cloud.google.com/kubernetes-engine/docs/how-to/pod-security-policies) feature.
@@ -289,7 +294,7 @@ The `addons_config` block supports:
 * `network_policy_config` - (Optional) Whether we should enable the network policy addon
     for the master.  This must be enabled in order to enable network policy for the nodes.
     It can only be disabled if the nodes already do not have network policies enabled.
-    Set `disabled = true` to disable.
+    Defaults to disabled; set `disabled = false` to enable.
     
 * `istio_config` - (Optional, [Beta](https://terraform.io/docs/providers/google/provider_versions.html)).
     Structure is documented below.
@@ -350,6 +355,11 @@ maintenance_policy {
 
 The `ip_allocation_policy` block supports:
 
+* `use_ip_aliases` - (Optional) Whether alias IPs will be used for pod IPs in
+the cluster. Defaults to `true` if the `ip_allocation_policy` block is defined,
+and to the API default otherwise. Prior to June 17th 2019, the default on the
+API is `false`; afterwards, it's `true`.
+
 * `cluster_secondary_range_name` - (Optional) The name of the secondary range to be
     used as for the cluster CIDR block. The secondary range will be used for pod IP
     addresses. This must be an existing secondary range associated with the cluster
@@ -361,6 +371,12 @@ The `ip_allocation_policy` block supports:
     subnetwork.
 
 * `cluster_ipv4_cidr_block` - (Optional) The IP address range for the cluster pod IPs.
+    Set to blank to have a range chosen with the default size. Set to /netmask (e.g. /14)
+    to have a range chosen with a specific netmask. Set to a CIDR notation (e.g. 10.96.0.0/14)
+    from the RFC-1918 private networks (e.g. 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16) to
+    pick a specific range to use.
+
+* `node_ipv4_cidr_block` - (Optional) The IP address range of the node IPs in this cluster.
     Set to blank to have a range chosen with the default size. Set to /netmask (e.g. /14)
     to have a range chosen with a specific netmask. Set to a CIDR notation (e.g. 10.96.0.0/14)
     from the RFC-1918 private networks (e.g. 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16) to
@@ -577,3 +593,10 @@ $ terraform import google_container_cluster.mycluster my-gcp-project/us-east1-a/
 
 $ terraform import google_container_cluster.mycluster us-east1-a/my-cluster
 ```
+
+~> **Note:** This resource has several fields that control Terraform-specific behavior and aren't present in the API. If they are set in config and you import a cluster, Terraform may need to perform an update immediately after import. Most of these updates should be no-ops but some may modify your cluster if the imported state differs.
+
+For example, the following fields will show diffs if set in config:
+
+- `min_master_version`
+- `remove_default_node_pool`

@@ -27,7 +27,7 @@ name = "google_#{product_ns.downcase}_#{object.name.underscore}"
   attr_reader :table
 
   filter_table_config = FilterTable.create
-<% object.all_user_properties.each do |prop| -%>
+<% object.all_user_properties.reject {|prop| prop.exclude_plural }.each do |prop| -%>
 
   <%= "filter_table_config.add(:#{prop.out_name.pluralize}, field: :#{prop.out_name})" -%>
 <% end # object.all_user_properties.each do -%>
@@ -35,29 +35,18 @@ name = "google_#{product_ns.downcase}_#{object.name.underscore}"
 
   filter_table_config.connect(self, :table)
 
-<%
-base = "'#{object.self_link_url[0].join}'"
--%>
-  def base
-    <%= base %>
-  end
-
-  def url
-    '<%= format_url(object.base_url) %>'
-  end
-
 <% 
 link_query = object.self_link_query || object.collection_url_response
 -%>
   def initialize(params = {})
     super(params.merge({ use_http_transport: true }))
     @params = params
-    @table = fetch_wrapped_resource(<%= "'#{link_query.items}'" -%>)
+<%= indent("@table = fetch_wrapped_resource('#{link_query.items}')", 4) %>
   end
 
   def fetch_wrapped_resource(wrap_path)
     # fetch_resource returns an array of responses (to handle pagination)
-    result = @connection.fetch_all(base, url, @params)
+    result = @connection.fetch_all(product_url, resource_base_url, @params)
     return if result.nil?
 
     # Conversion of string -> object hash to symbol -> object hash that InSpec needs
@@ -85,7 +74,7 @@ link_query = object.self_link_query || object.collection_url_response
 
   def transformers
     {
-<% object.all_user_properties.each do |prop| -%>
+<% object.all_user_properties.reject(&:exclude_plural).each do |prop| -%>
       '<%= prop.api_name -%>' => ->(obj) { <%= "return :#{prop.out_name}, #{parse_code(prop, 'obj')}" -%> },
 <% end # object.all_user_properties.each -%>
     }
@@ -94,5 +83,15 @@ link_query = object.self_link_query || object.collection_url_response
   # Handles parsing RFC3339 time string
   def parse_time_string(time_string)
     time_string ? Time.parse(time_string) : nil
+  end
+
+  private
+
+  def product_url
+    '<%= object.product_url || object.self_link_url[0].join %>'
+  end
+
+  def resource_base_url
+    '<%= format_url(object.base_url) %>'
   end
 end

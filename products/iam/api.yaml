@@ -15,14 +15,57 @@
 
 --- !ruby/object:Api::Product
 name: Iam
-display_name: Google Cloud IAM
+display_name: Cloud IAM
 versions:
   - !ruby/object:Api::Product::Version
     name: ga
     base_url: https://iam.googleapis.com/v1/
 scopes:
   - https://www.googleapis.com/auth/iam
+apis_required:
+  - !ruby/object:Api::Product::ApiReference
+    name: Identity and Access Management (IAM) API
+    url: https://console.cloud.google.com/apis/library/iam.googleapis.com/
 objects:
+  - !ruby/object:Api::Resource
+    name: 'Role'
+    base_url: projects/{{project}}/roles
+    description: >
+      A role in the Identity and Access Management API
+    update_mask: true
+    collection_url_response: !ruby/object:Api::Resource::ResponseList
+      items: 'roles'
+    properties:
+      - !ruby/object:Api::Type::String
+        name: 'name'
+        description: The name of the role.
+        required: true
+      - !ruby/object:Api::Type::String
+        name: 'title'
+        description: >
+          A human-readable title for the role. Typically this is limited to 100
+          UTF-8 bytes.
+      - !ruby/object:Api::Type::String
+        name: 'description'
+        description: "Human-readable description for the role"
+      - !ruby/object:Api::Type::Array
+        name: 'includedPermissions'
+        description: Names of permissions this role grants when bound in an IAM policy.
+        item_type: Api::Type::String
+      - !ruby/object:Api::Type::Enum
+        name: 'stage'
+        description: The current launch stage of the role.
+        values:
+          - :ALPHA
+          - :BETA
+          - :GA
+          - :DEPRECATED
+          - :DISABLED
+          - :EAP
+      - !ruby/object:Api::Type::Boolean
+        name: 'deleted'
+        description: The current deleted state of the role
+        output: true
   - !ruby/object:Api::Resource
     name: 'ServiceAccount'
     base_url: projects/{{project}}/serviceAccounts
@@ -31,8 +74,6 @@ objects:
       decoder: decode_response
     description: |
       A service account in the Identity and Access Management API.
-    exports:
-      - name
     properties:
       - !ruby/object:Api::Type::String
         name: name

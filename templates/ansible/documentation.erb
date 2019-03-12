@@ -17,7 +17,7 @@ DOCUMENTATION = '''
   'module' => module_name(object),
   'description' => format_description(object.description),
   'short_description' => "Creates a GCP #{object.name}",
-  'version_added' => @config.manifest.get('version_added', object).to_f,
+  'version_added' => version_added(object).to_f,
   'author' => @config.manifest.get('author', object),
   'requirements' => @config.manifest.get('requirements', object),
   'options' => [
@@ -34,7 +34,8 @@ DOCUMENTATION = '''
   'notes' => (
     [
       ("API Reference: U(#{object.references.api})" if object.references.api),
-      object.references.guides.map { |guide, link| "#{guide}: U(#{link})" }
+      (object.references.guides.map { |guide, link| "#{guide}: U(#{link})" } if object.references),
+      (object.notes if object.notes)
     ].flatten.compact if object.references
   )
 })-%>

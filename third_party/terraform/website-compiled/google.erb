@@ -17,17 +17,17 @@
         <li<%%= sidebar_current("docs-google-provider-x") %>>
           <a href="/docs/providers/google/index.html">Provider Info</a>
         </li>
-        <li<%%= sidebar_current("docs-google-provider-getting-started") %>>
-          <a href="/docs/providers/google/getting_started.html">Getting Started</a>
-        </li>
         <li<%%= sidebar_current("docs-google-provider-reference") %>>
-          <a href="/docs/providers/google/provider_reference.html">google provider reference</a>
+          <a href="/docs/providers/google/provider_reference.html">Provider Configuration Reference</a>
         </li>
         <li<%%= sidebar_current("docs-google-provider-versions") %>>
           <a href="/docs/providers/google/provider_versions.html">Google Provider Versions</a>
         </li>
+        <li<%%= sidebar_current("docs-google-provider-getting-started") %>>
+          <a href="/docs/providers/google/getting_started.html">Getting Started Guide</a>
+        </li>
         <li<%%= sidebar_current("docs-google-provider-version-2-upgrade") %>>
-          <a href="/docs/providers/google/version_2_upgrade.html">Version 2.0.0 Upgrade Guide</a>
+          <a href="/docs/providers/google/version_2_upgrade.html">2.0.0 Upgrade Guide</a>
         </li>
       </ul>
     </li>
@@ -43,6 +43,9 @@
       </li>
       <li<%%= sidebar_current("docs-google-datasource-client-config") %>>
         <a href="/docs/providers/google/d/datasource_client_config.html">google_client_config</a>
+      </li>
+      <li<%%= sidebar_current("docs-google-datasource-google-client-openid-userinfo") %>>
+        <a href="/docs/providers/google/d/datasource_google_client_openid_userinfo.html">google_client_openid_userinfo</a>
       </li>
       <li<%%= sidebar_current("docs-google-datasource-cloudfunctions-function") %>>
         <a href="/docs/providers/google/d/datasource_cloudfunctions_function.html">google_cloudfunctions_function</a>
@@ -140,6 +143,9 @@
       <li<%%= sidebar_current("docs-google-datasource-project") %>>
       <a href="/docs/providers/google/d/google_project.html">google_project</a>
       </li>
+      <li<%%= sidebar_current("docs-google-datasource-projects") %>>
+      <a href="/docs/providers/google/d/google_projects.html">google_projects</a>
+      </li>
       <li<%%= sidebar_current("docs-google-datasource-service-account") %>>
       <a href="/docs/providers/google/d/datasource_google_service_account.html">google_service_account</a>
       </li>
@@ -149,6 +155,9 @@
       <li<%%= sidebar_current("docs-google-datasource-signed_url") %>>
         <a href="/docs/providers/google/d/signed_url.html">google_storage_object_signed_url</a>
       </li>
+      <li<%%= sidebar_current("docs-google-datasource-storage-bucket-object") %>>
+        <a href="/docs/providers/google/d/storage_bucket_object.html">google_storage_bucket_object</a>
+      </li>
       <li<%%= sidebar_current("docs-google-datasource-storage-project-service-account") %>>
         <a href="/docs/providers/google/d/google_storage_project_service_account.html">google_storage_project_service_account</a>
       </li>
@@ -157,6 +166,21 @@
       </li>
     </ul>
     </li>
+
+<% unless version == 'ga' %>
+    <li<%%= sidebar_current("docs-google-access-context-manager") %>>
+    <a href="#">Google Access Context Manager Resources</a>
+    <ul class="nav nav-visible">
+      <li<%%= sidebar_current("docs-google-access-context-manager-access-level") %>>
+      <a href="/docs/providers/google/r/access_context_manager_access_level.html">google_access_context_manager_access_level</a>
+      <li<%%= sidebar_current("docs-google-access-context-manager-access-policy") %>>
+      <a href="/docs/providers/google/r/access_context_manager_access_policy.html">google_access_context_manager_access_policy</a>
+      <li<%%= sidebar_current("docs-google-access-context-manager-service-perimeter") %>>
+      <a href="/docs/providers/google/r/access_context_manager_service_perimeter.html">google_access_context_manager_service_perimeter</a>
+      </li>
+    </ul>
+    </li>
+<% end -%>
 
     <li<%%= sidebar_current("docs-google-app-engine") %>>
     <a href="#">Google App Engine Resources</a>
@@ -320,6 +344,17 @@
 
     </ul>
     </li>
+
+<% unless version == 'ga' %>
+    <li<%%= sidebar_current("docs-google-cloud-scheduler") %>>
+    <a href="#">Google Cloud Scheduler Resources</a>
+    <ul class="nav nav-visible">
+      <li<%%= sidebar_current("docs-google-cloud-scheduler-job") %>>
+      <a href="/docs/providers/google/r/cloud_scheduler_job.html">google_cloud_scheduler_job</a>
+      </li>
+    </ul>
+    </li>
+<% end -%>
 
     <li<%%= sidebar_current("docs-google-compute") %>>
     <a href="#">Google Compute Engine Resources</a>

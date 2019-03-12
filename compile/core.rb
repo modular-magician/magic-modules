@@ -150,6 +150,14 @@ module Compile
       compiled
     end
 
+    def to_yaml(obj, options = {})
+      if obj.is_a?(::Hash)
+        obj.reject { |_, v| v.nil? }.to_yaml(options).sub("---\n", '')
+      else
+        obj.to_yaml(options).sub("---\n", '')
+      end
+    end
+
     # Compiles a ERB template from a file.
     #
     # Arguments:
@@ -237,12 +245,12 @@ module Compile
     end
 
     def autogen_notice(lang)
-      @file_expectations[:autogen] = true
+      Thread.current[:autogen] = true
       comment_block(compile('templates/autogen_notice.erb').split("\n"), lang)
     end
 
     def autogen_exception
-      @file_expectations[:autogen] = true
+      Thread.current[:autogen] = true
     end
 
     def comment_block(text, lang)

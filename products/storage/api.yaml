@@ -13,13 +13,17 @@
 
 --- !ruby/object:Api::Product
 name: Storage
-display_name: Google Cloud Storage
+display_name: Cloud Storage
 versions:
   - !ruby/object:Api::Product::Version
     name: ga
     base_url: https://www.googleapis.com/storage/v1/
 scopes:
   - https://www.googleapis.com/auth/devstorage.full_control
+apis_required:
+  - !ruby/object:Api::Product::ApiReference
+    name: Google CLoud Storage
+    url: https://console.cloud.google.com/apis/library/storage-component.googleapis.com/
 objects:
   - !ruby/object:Api::Resource
     name: 'Object'
@@ -52,8 +56,6 @@ objects:
     kind: 'storage#bucket'
     base_url: b?project={{project}}
     self_link: b/{{name}}?projection=full
-    exports:
-      - name
     description: |
       The Buckets resource represents a bucket in Google Cloud Storage. There is
       a single global namespace shared by all buckets. For more information, see

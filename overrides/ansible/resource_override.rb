@@ -30,6 +30,7 @@ module Overrides
           has_tests
           hidden
           imports
+          notes
           post_create
           post_action
           provider_helpers
@@ -37,7 +38,6 @@ module Overrides
           template
           unwrap_resource
           update
-          version_added
 
           facts
         ]
@@ -59,6 +59,7 @@ module Overrides
         check :has_tests, type: :boolean, default: true
         check :hidden, type: ::Array, item_type: String
         check :imports, type: ::Array, default: [], item_type: String
+        check :notes, type: ::Array, item_type: String
         check :post_create, type: ::String
         check :post_action, type: ::String
         check :provider_helpers, type: ::Array, default: [], item_type: String
@@ -66,7 +67,6 @@ module Overrides
         check :template, type: ::String
         check :update, type: ::String
         check :unwrap_resource, type: :boolean, default: false
-        check :version_added, type: ::String
 
         check :facts, type: Provider::Ansible::FactsOverride,
                       default: Provider::Ansible::FactsOverride.new

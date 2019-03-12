@@ -134,11 +134,14 @@ resource "google_container_cluster" "primary" {
 
 * `version` - (Optional) The Kubernetes version for the nodes in this pool. Note that if this field
     and `auto_upgrade` are both specified, they will fight each other for what the node version should
-    be, so setting both is highly discouraged.
+    be, so setting both is highly discouraged. While a fuzzy version can be specified, it's
+    recommended that you specify explicit versions as Terraform will see spurious diffs
+    when fuzzy versions are used. See the `google_container_engine_versions` data source's
+    `version_prefix` field to approximate fuzzy versions in a Terraform-compatible way.
 
 The `autoscaling` block supports:
 
-* `min_node_count` - (Required) Minimum number of nodes in the NodePool. Must be >=1 and
+* `min_node_count` - (Required) Minimum number of nodes in the NodePool. Must be >=0 and
     <= `max_node_count`.
 
 * `max_node_count` - (Required) Maximum number of nodes in the NodePool. Must be >= min_node_count.

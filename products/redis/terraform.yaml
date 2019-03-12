@@ -14,19 +14,18 @@
 --- !ruby/object:Provider::Terraform::Config
 overrides: !ruby/object:Overrides::ResourceOverrides
   Instance: !ruby/object:Overrides::Terraform::ResourceOverride
+    autogen_async: true
     id_format: "{{project}}/{{region}}/{{name}}"
     import_format: ["projects/{{project}}/locations/{{region}}/instances/{{name}}"]
     examples:
       - !ruby/object:Provider::Terraform::Examples
         name: "redis_instance_basic"
         primary_resource_id: "cache"
-        version: <%= version_name %>
         vars:
           instance_name: "memory-cache"
       - !ruby/object:Provider::Terraform::Examples
         name: "redis_instance_full"
         primary_resource_id: "cache"
-        version: <%= version_name %>
         vars:
           instance_name: "ha-memory-cache"
           network_name: "authorized-network"

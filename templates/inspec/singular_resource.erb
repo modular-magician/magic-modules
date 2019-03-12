@@ -18,6 +18,7 @@
 <%
   require 'google/string_utils'
 
+
   inside_indent = 8
 
   requires = generate_requires(object.all_user_properties)
@@ -35,25 +36,18 @@ class <%= object.name -%> < GcpResourceBase
   <%= "attr_reader :#{prop.out_name}" -%>
 
 <% end -%>
-  def base
-    '<%= object.self_link_url[0].join %>'
-  end
-
-  def url
-    '<%= format_url(object.self_link_url[1]) %>'
-  end
 
 <% if object.self_link_query.nil? -%>
   def initialize(params)
     super(params.merge({ use_http_transport: true }))
-    @fetched = @connection.fetch(base, url, params)
+<%= indent('@fetched = @connection.fetch(product_url, resource_base_url, params)', 4) %>
     parse unless @fetched.nil?
   end
 <% else # object.self_link_query.nil? -%>
   def initialize(params)
     super(params.merge({ use_http_transport: true }))
-    fetched = @connection.fetch(base, url, params)
-    @fetched = unwrap(fetched, params)
+<%= indent('fetched = @connection.fetch(product_url, resource_base_url, params)', 4) %>
+<%= indent('@fetched = unwrap(fetched, params)', 4) %>
     parse unless @fetched.nil?
   end
 
@@ -92,4 +86,14 @@ class <%= object.name -%> < GcpResourceBase
 
 <%= lines(indent(object.additional_functions, 2)) -%>
 <% end -%>
+
+  private
+
+  def product_url
+    '<%= object.product_url || object.self_link_url[0].join %>'
+  end
+
+  def resource_base_url
+    '<%= format_url(object.self_link_url[1]) %>'
+  end
 end

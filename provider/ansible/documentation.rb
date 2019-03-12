@@ -22,14 +22,6 @@ module Provider
   module Ansible
     # Responsible for building out YAML documentation blocks.
     module Documentation
-      def to_yaml(obj)
-        if obj.is_a?(::Hash)
-          obj.reject { |_, v| v.nil? }.to_yaml.sub("---\n", '')
-        else
-          obj.to_yaml.sub("---\n", '')
-        end
-      end
-
       # Builds out the DOCUMENTATION for a property.
       # This will eventually be converted to YAML
       def documentation_for_property(prop)
@@ -50,11 +42,11 @@ module Provider
               end),
             'type' => ('bool' if prop.is_a? Api::Type::Boolean),
             'aliases' => prop.aliases,
-            'version_added' => (prop.version_added&.to_f),
+            'version_added' => (version_added(prop)&.to_f),
             'choices' => (prop.values.map(&:to_s) if prop.is_a? Api::Type::Enum),
             'suboptions' => (
                 if prop.nested_properties?
-                  prop.nested_properties.map { |p| documentation_for_property(p) }
+                  prop.nested_properties.reject(&:output).map { |p| documentation_for_property(p) }
                                         .reduce({}, :merge)
                 end
               )
@@ -80,8 +72,10 @@ module Provider
             'returned' => 'success',
             'type' => type,
             'contains' => (
-              prop.nested_properties.map { |p| returns_for_property(p) }.reduce({}, :merge) \
               if prop.nested_properties?
+                prop.nested_properties.map { |p| returns_for_property(p) }
+                                      .reduce({}, :merge)
+              end
             )
           }.reject { |_, v| v.nil? }
         }

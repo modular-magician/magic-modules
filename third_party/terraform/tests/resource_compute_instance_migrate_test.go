@@ -132,7 +132,7 @@ func TestComputeInstanceMigrateState_empty(t *testing.T) {
 
 	// should handle non-nil but empty
 	is = &terraform.InstanceState{}
-	is, err = resourceComputeInstanceMigrateState(0, is, meta)
+	_, err = resourceComputeInstanceMigrateState(0, is, meta)
 
 	if err != nil {
 		t.Fatalf("err: %#v", err)
@@ -841,7 +841,7 @@ func runInstanceMigrateTest(t *testing.T, id, testName string, version int, attr
 		ID:         id,
 		Attributes: attributes,
 	}
-	is, err := resourceComputeInstanceMigrateState(version, is, meta)
+	_, err := resourceComputeInstanceMigrateState(version, is, meta)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -901,7 +901,7 @@ func getInitializedConfig(t *testing.T) *Config {
 		Region:      getTestRegionFromEnv(),
 		Zone:        getTestZoneFromEnv(),
 	}
-	err := config.loadAndValidate()
+	err := config.LoadAndValidate()
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -13,12 +13,17 @@
 
 --- !ruby/object:Api::Product
 name: CloudBuild
+display_name: Cloud Build
 versions:
   - !ruby/object:Api::Product::Version
     name: ga
     base_url: https://cloudbuild.googleapis.com/v1/
 scopes:
   - https://www.googleapis.com/auth/cloud-platform
+apis_required:
+  - !ruby/object:Api::Product::ApiReference
+    name: Cloud Build API
+    url: https://console.cloud.google.com/apis/library/cloudbuild.googleapis.com/
 objects:
   - !ruby/object:Api::Resource
     name: 'Trigger'
@@ -29,6 +34,8 @@ objects:
       guides:
         'Automating builds using build triggers': 'https://cloud.google.com/cloud-build/docs/running-builds/automate-builds'
       api: 'https://cloud.google.com/cloud-build/docs/api/reference/rest/'
+    collection_url_response: !ruby/object:Api::Resource::ResponseList
+      items: 'triggers'
     description: |
       Configuration for an automated build in response to source repository changes.
     properties:
@@ -59,7 +66,7 @@ objects:
         conflicts:
           - build
         description: |
-          Path, from the source root, to a file whose contents is used for the template.
+          Path, from the source root, to a file whose contents is used for the template. Either a filename or build template must be provided.
       - !ruby/object:Api::Type::Array
         name: 'ignoredFiles'
         item_type: Api::Type::String
@@ -118,19 +125,19 @@ objects:
           - !ruby/object:Api::Type::String
             name: 'branchName'
             description: |
-              Name of the branch to build.
+              Name of the branch to build. Exactly one a of branch name, tag, or commit SHA must be provided.
           - !ruby/object:Api::Type::String
             name: 'tagName'
             description: |
-              Name of the tag to build.
+              Name of the tag to build. Exactly one of a branch name, tag, or commit SHA must be provided.
           - !ruby/object:Api::Type::String
             name: 'commitSha'
             description: |
-              Explicit commit SHA to build.
+              Explicit commit SHA to build. Exactly one of a branch name, tag, or commit SHA must be provided.
       - !ruby/object:Api::Type::NestedObject
         name: 'build'
         description: |
-          Contents of the build template.
+          Contents of the build template. Either a filename or build template must be provided.
         properties:
           - !ruby/object:Api::Type::Array
             name: 'tags'

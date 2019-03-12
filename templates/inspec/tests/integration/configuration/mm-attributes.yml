@@ -118,7 +118,6 @@ target_tcp_proxy:
 
 regional_cluster:
   name: inspec-gcp-regional-cluster
-  region: europe-west2
   initial_node_count: 1
 
 route:
@@ -169,3 +168,24 @@ ssl_certificate:
     AwEHoUQDQgAEHGzpcRJ4XzfBJCCPMQeXQpTXwlblimODQCuQ4mzkzTv0dXyB750f
     OGN02HtkpBOZzzvUARTR10JQoSe2/5PIwQ==
     -----END EC PRIVATE KEY-----
+
+dataset:
+  dataset_id: inspec_gcp_dataset
+  friendly_name: A BigQuery dataset test
+  description: Test BigQuery dataset description
+  location: EU
+  default_table_expiration_ms: 3600000
+  access_writer_role: WRITER
+  access_writer_special_group: projectWriters
+
+bigquery_table:
+  table_id: inspec_gcp_bigquery_table
+  description: A BigQuery table
+  expiration_time: 1738882264000
+  time_partitioning_type: DAY
+
+repository:
+  name: inspec-gcp-repository
+
+folder:
+  display_name: inspec-gcp-folder

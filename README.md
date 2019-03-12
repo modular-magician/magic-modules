@@ -19,6 +19,12 @@ Magic Modules generates GCP support for:
 * Ansible
 * InSpec
 
+In addition, Magic Modules generates support for several companion
+features/tools:
+
+* Terraform Google Inventory Mapper
+* Terraform in Cloud Shell
+
 Importantly, Magic Modules *isn't* full code generation. Every change is made
 manually; more than a code generator, Magic Modules is a force multiplier for 
 development. While many Magic Modules resources are defined exactly based on the
@@ -198,6 +204,11 @@ terraform (beta) | [`google-beta` provider testing guide](https://github.com/ter
 Don't worry about testing every tool, only the primary tool you're making
 changes against. The Magic Modules maintainers will ensure your changes work
 against each tool.
+
+If your changes have unintended consequences in another tool, a reviewer will
+instruct you to mark the field excluded or provide specific feedback on what
+changes to make to the tool-specific overrides in order for them to work
+correctly.
 
 ### Submitting a PR
 

@@ -187,7 +187,7 @@ func resourceSqlDatabaseInstance() *schema.Resource {
 									"private_network": &schema.Schema{
 										Type:             schema.TypeString,
 										Optional:         true,
-										ValidateFunc:     validateRegexp(privateNetworkLinkRegex),
+										ValidateFunc:     orEmpty(validateRegexp(privateNetworkLinkRegex)),
 										DiffSuppressFunc: compareSelfLinkRelativePaths,
 									},
 								},
@@ -288,6 +288,16 @@ func resourceSqlDatabaseInstance() *schema.Resource {
 			},
 
 			"first_ip_address": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+
+			"public_ip_address": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+
+			"private_ip_address": &schema.Schema{
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -722,6 +732,21 @@ func resourceSqlDatabaseInstanceRead(d *schema.ResourceData, meta interface{}) e
 		d.Set("first_ip_address", ipAddresses[0]["ip_address"])
 	}
 
+	publicIpAddress := ""
+	privateIpAddress := ""
+	for _, ip := range instance.IpAddresses {
+		if publicIpAddress == "" && ip.Type == "PRIMARY" {
+			publicIpAddress = ip.IpAddress
+		}
+
+		if privateIpAddress == "" && ip.Type == "PRIVATE" {
+			privateIpAddress = ip.IpAddress
+		}
+	}
+
+	d.Set("public_ip_address", publicIpAddress)
+	d.Set("private_ip_address", privateIpAddress)
+
 	if err := d.Set("server_ca_cert", flattenServerCaCert(instance.ServerCaCert)); err != nil {
 		log.Printf("[WARN] Failed to set SQL Database CA Certificate")
 	}
@@ -802,10 +827,12 @@ func resourceSqlDatabaseInstanceDelete(d *schema.ResourceData, meta interface{})
 
 func resourceSqlDatabaseInstanceImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
-	parseImportId([]string{
+	if err := parseImportId([]string{
 		"projects/(?P<project>[^/]+)/instances/(?P<name>[^/]+)",
 		"(?P<project>[^/]+)/(?P<name>[^/]+)",
-		"(?P<name>[^/]+)"}, d, config)
+		"(?P<name>[^/]+)"}, d, config); err != nil {
+			return nil, err
+		}
 
 	// Replace import id for the resource id
 	id, err := replaceVars(d, config, "{{name}}")

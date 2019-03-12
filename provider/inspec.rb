@@ -57,47 +57,19 @@ module Provider
       )
       generate_documentation(data, name, false)
       generate_documentation(data, name, true)
-      generate_properties(data)
+      generate_properties(data, data[:object].all_user_properties)
     end
 
-    def generate_properties(data)
-      object = data[:object]
-      props = object.is_a?(::Api::Resource) ? object.all_user_properties : object.properties
-      nested_object_arrays = props.select\
-        { |type| typed_array?(type) && nested_object?(type.item_type) }
+    def generate_properties(data, props)
+      nested_objects = props.select(&:nested_properties?)
+      return if nested_objects.empty?
 
-      nested_objects = props.select { |prop| nested_object?(prop) }
-
-      prop_map = nested_objects.map\
-        { |nested_object| emit_nested_object(nested_object_data(data, nested_object)) }
-
-      prop_map << nested_object_arrays.map\
-        { |array| emit_nested_object(nested_object_array_data(data, array)) }
-
+      # Create property files for any nested objects.
+      prop_map = nested_objects.map { |nested_object| emit_nested_object(nested_object) }
       generate_property_files(prop_map, data)
-      nested_objects.map { |prop| generate_properties(data.clone.merge(object: prop)) }
-      nested_object_arrays.map\
-        { |prop| generate_properties(data.clone.merge(object: prop.item_type)) }
-    end
 
-    def nested_object_data(data, nested_object)
-      data.clone.merge(
-        emit_array: false,
-        api_name: nested_object.name.underscore,
-        property: nested_object,
-        nested_properties: nested_object.properties,
-        obj_name: data[:object].name.underscore
-      )
-    end
-
-    def nested_object_array_data(data, nested_object_array)
-      data.clone.merge(
-        emit_array: true,
-        api_name: nested_object_array.name.underscore,
-        property: nested_object_array,
-        nested_properties: nested_object_array.item_type.properties,
-        obj_name: data[:object].name.underscore
-      )
+      # Create property files for any deeper nested objects.
+      nested_objects.each { |prop| generate_properties(data, prop.nested_properties) }
     end
 
     # Generate the files for the properties
@@ -106,9 +78,7 @@ module Provider
         compile_file_list(
           data[:output_folder],
           { prop[:target] => prop[:source] },
-          {
-            product_ns: data[:product].api_name.camelize(:upper)
-          }.merge((prop[:overrides] || {}))
+          prop
         )
       end
     end
@@ -155,6 +125,7 @@ module Provider
         attribute_file_name: attribute_file_name,
         doc_generation: false,
         default_template: 'templates/inspec/integration_test_template.erb',
+        privileged: data[:object].privileged,
         out_file: File.join(
           target_folder,
           'integration/verify/controls',
@@ -163,30 +134,12 @@ module Provider
       )
     end
 
-    def emit_nested_object(data)
-      target = if data[:emit_array]
-                 data[:property].item_type.property_file
-               else
-                 data[:property].property_file
-               end
+    def emit_nested_object(property)
       {
         source: File.join('templates', 'inspec', 'nested_object.erb'),
-        target: "libraries/#{target}.rb",
-        overrides: emit_nested_object_overrides(data)
+        target: "libraries/#{nested_object_requires(property)}.rb",
+        property: property
       }
-    end
-
-    def emit_nested_object_overrides(data)
-      data.clone.merge(
-        api_name: data[:api_name].camelize(:upper),
-        object_type: data[:obj_name].camelize(:upper),
-        product_ns: data[:product].api_name.camelize(:upper),
-        class_name: if data[:emit_array]
-                      data[:property].item_type.property_class.last
-                    else
-                      data[:property].property_class.last
-                    end
-      )
     end
 
     def time?(property)
@@ -236,7 +189,7 @@ module Provider
         'google',
         nested_object_type.__resource.__product.api_name,
         'property',
-        [nested_object_type.__resource.name, nested_object_type.name.underscore].join('_')
+        qualified_property_class(nested_object_type)
       ).downcase
     end
 
@@ -277,6 +230,25 @@ module Provider
       property.property_type.sub('Google::', 'GoogleInSpec::')
     end
 
+    def qualified_property_class(property)
+      name = property.name.underscore
+      other = property.__resource.name
+      until property.parent.nil?
+        property = property.parent
+        next if typed_array?(property)
+
+        name = property.name.underscore + '_' + name
+      end
+
+      other + '_' + name
+    end
+
+    def modularized_property_class(property)
+      class_name = qualified_property_class(property).camelize(:upper)
+      product_name = property.__resource.__product.name.camelize(:upper)
+      "GoogleInSpec::#{product_name}::Property::#{class_name}"
+    end
+
     # Returns Ruby code that will parse the given property from a hash
     # This is used in several places that need to parse an arbitrary property
     # from a JSON representation
@@ -290,9 +262,9 @@ module Provider
 
         return item_from_hash.to_s
       elsif typed_array?(property)
-        return "#{inspec_property_type(property)}.parse(#{item_from_hash})"
+        return "#{modularized_property_class(property.item_type)}Array.parse(#{item_from_hash})"
       end
-      "#{inspec_property_type(property)}.new(#{item_from_hash})"
+      "#{modularized_property_class(property)}.new(#{item_from_hash})"
     end
   end
 end

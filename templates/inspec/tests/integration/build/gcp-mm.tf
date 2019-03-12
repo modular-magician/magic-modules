@@ -98,6 +98,27 @@ variable "ssl_certificate" {
   type = "map"
 }
 
+variable "dataset" {
+  type = "map"
+}
+
+variable "bigquery_table" {
+  type = "map"
+}
+
+variable "repository" {
+  type = "map"
+}
+
+variable "folder" {
+  type = "map"
+}
+
+variable "gcp_organization_id" {
+  type = "string"
+  default = "none"
+}
+
 resource "google_compute_ssl_policy" "custom-ssl-policy" {
   name            = "${var.ssl_policy["name"]}"
   min_tls_version = "${var.ssl_policy["min_tls_version"]}"
@@ -337,7 +358,7 @@ resource "google_compute_target_tcp_proxy" "gcp-inspec-target-tcp-proxy" {
 resource "google_container_cluster" "gcp-inspec-regional-cluster" {
   project = "${var.gcp_project_id}"
   name = "${var.regional_cluster["name"]}"
-  region = "${var.regional_cluster["region"]}"
+  region = "${var.gcp_location}"
   initial_node_count = "${var.regional_cluster["initial_node_count"]}"
 }
 
@@ -393,4 +414,47 @@ resource "google_compute_target_https_proxy" "gcp-inspec-https-proxy" {
   url_map     = "${google_compute_url_map.gcp-inspec-url-map.self_link}"
   description = "${var.https_proxy["description"]}"
   ssl_certificates = ["${google_compute_ssl_certificate.gcp-inspec-ssl-certificate.self_link}"]
+}
+
+resource "google_bigquery_dataset" "gcp-inspec-dataset" {
+  project                     = "${var.gcp_project_id}"
+  dataset_id                  = "${var.dataset["dataset_id"]}"
+  friendly_name               = "${var.dataset["friendly_name"]}"
+  description                 = "${var.dataset["description"]}"
+  location                    = "${var.dataset["location"]}"
+  default_table_expiration_ms = "${var.dataset["default_table_expiration_ms"]}"
+
+  access {
+    role          = "${var.dataset["access_writer_role"]}"
+    special_group = "${var.dataset["access_writer_special_group"]}"
+  }
+
+  access {
+    role          = "OWNER"
+    special_group = "projectOwners"
+  }
+}
+
+resource "google_bigquery_table" "gcp-inspec-bigquery-table" {
+  project    = "${var.gcp_project_id}"
+  dataset_id = "${google_bigquery_dataset.gcp-inspec-dataset.dataset_id}"
+  table_id   = "${var.bigquery_table["table_id"]}"
+
+  time_partitioning {
+    type = "${var.bigquery_table["time_partitioning_type"]}"
+  }
+
+  description = "${var.bigquery_table["description"]}"
+  expiration_time = "${var.bigquery_table["expiration_time"]}"
+}
+
+resource "google_sourcerepo_repository" "gcp-inspec-sourcerepo-repository" {
+  project = "${var.gcp_project_id}"
+  name = "${var.repository["name"]}"
+}
+
+resource "google_folder" "inspec-gcp-folder" {
+  count = "${var.gcp_organization_id == "none" ? 0 : var.gcp_enable_privileged_resources}"
+  display_name = "${var.folder["display_name"]}"
+  parent       = "${var.gcp_organization_id}"
 }

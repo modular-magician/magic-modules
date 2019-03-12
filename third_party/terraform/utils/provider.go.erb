@@ -84,6 +84,7 @@ func Provider() terraform.ResourceProvider {
 			"google_billing_account":                           dataSourceGoogleBillingAccount(),
 			"google_dns_managed_zone":                          dataSourceDnsManagedZone(),
 			"google_client_config":                             dataSourceGoogleClientConfig(),
+			"google_client_openid_userinfo":                    dataSourceGoogleClientOpenIDUserinfo(),
 			"google_cloudfunctions_function":                   dataSourceGoogleCloudFunctionsFunction(),
 			"google_compute_address":                           dataSourceGoogleComputeAddress(),
 			"google_compute_backend_service":                   dataSourceGoogleComputeBackendService(),
@@ -114,6 +115,7 @@ func Provider() terraform.ResourceProvider {
 			"google_netblock_ip_ranges":                        dataSourceGoogleNetblockIpRanges(),
 			"google_organization":                              dataSourceGoogleOrganization(),
 			"google_project":                                   dataSourceGoogleProject(),
+			"google_projects":                                  dataSourceGoogleProjects(),
 			"google_project_services":                          dataSourceGoogleProjectServices(),
 			"google_service_account":                           dataSourceGoogleServiceAccount(),
 			"google_service_account_key":                       dataSourceGoogleServiceAccountKey(),
@@ -142,18 +144,20 @@ func ResourceMapWithErrors() (map[string]*schema.Resource, error) {
 			GeneratedContainerAnalysisResourcesMap,
 			GeneratedFilestoreResourcesMap,
 			GeneratedAccessContextManagerResourcesMap,
-			GeneratedCloudSchedulerResourcesMap,
 			// end beta-only products
 			<% end -%>
 			GeneratedAppEngineResourcesMap,
 			GeneratedComputeResourcesMap,
 			GeneratedCloudBuildResourcesMap,
+			GeneratedCloudSchedulerResourcesMap,
 			GeneratedDnsResourcesMap,
+			GeneratedPubsubResourcesMap,
 			GeneratedRedisResourcesMap,
 			GeneratedResourceManagerResourcesMap,
 			GeneratedSourceRepoResourcesMap,
 			GeneratedSpannerResourcesMap,
 			GeneratedStorageResourcesMap,
+			GeneratedTpuResourcesMap,
 			GeneratedMonitoringResourcesMap,
 			map[string]*schema.Resource{
 				"google_app_engine_application":                resourceAppEngineApplication(),
@@ -175,7 +179,6 @@ func ResourceMapWithErrors() (map[string]*schema.Resource, error) {
 				"google_compute_instance_group":                resourceComputeInstanceGroup(),
 				"google_compute_instance_group_manager":        resourceComputeInstanceGroupManager(),
 				"google_compute_instance_template":             resourceComputeInstanceTemplate(),
-				"google_compute_network":                       resourceComputeNetwork(),
 				"google_compute_network_peering":               resourceComputeNetworkPeering(),
 				"google_compute_project_metadata":              resourceComputeProjectMetadata(),
 				"google_compute_project_metadata_item":         resourceComputeProjectMetadataItem(),
@@ -248,11 +251,9 @@ func ResourceMapWithErrors() (map[string]*schema.Resource, error) {
 				"google_project_organization_policy":           resourceGoogleProjectOrganizationPolicy(),
 				"google_project_usage_export_bucket":           resourceProjectUsageBucket(),
 				"google_project_services":                      resourceGoogleProjectServices(),
-				"google_pubsub_topic":                          resourcePubsubTopic(),
 				"google_pubsub_topic_iam_binding":              ResourceIamBindingWithImport(IamPubsubTopicSchema, NewPubsubTopicIamUpdater, PubsubTopicIdParseFunc),
 				"google_pubsub_topic_iam_member":               ResourceIamMemberWithImport(IamPubsubTopicSchema, NewPubsubTopicIamUpdater, PubsubTopicIdParseFunc),
 				"google_pubsub_topic_iam_policy":               ResourceIamPolicyWithImport(IamPubsubTopicSchema, NewPubsubTopicIamUpdater, PubsubTopicIdParseFunc),
-				"google_pubsub_subscription":                   resourcePubsubSubscription(),
 				"google_pubsub_subscription_iam_binding":       ResourceIamBindingWithImport(IamPubsubSubscriptionSchema, NewPubsubSubscriptionIamUpdater, PubsubSubscriptionIdParseFunc),
 				"google_pubsub_subscription_iam_member":        ResourceIamMemberWithImport(IamPubsubSubscriptionSchema, NewPubsubSubscriptionIamUpdater, PubsubSubscriptionIdParseFunc),
 				"google_pubsub_subscription_iam_policy":        ResourceIamPolicyWithImport(IamPubsubSubscriptionSchema, NewPubsubSubscriptionIamUpdater, PubsubSubscriptionIdParseFunc),
@@ -302,7 +303,7 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 		config.Scopes[i] = scope.(string)
 	}
 
-	if err := config.loadAndValidate(); err != nil {
+	if err := config.LoadAndValidate(); err != nil {
 		return nil, err
 	}
 

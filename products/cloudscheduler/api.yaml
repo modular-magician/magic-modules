@@ -16,8 +16,8 @@ name: CloudScheduler
 display_name: Cloud Scheduler
 versions:
   - !ruby/object:Api::Product::Version
-    name: beta
-    base_url: https://cloudscheduler.googleapis.com/v1beta1/
+    name: ga
+    base_url: https://cloudscheduler.googleapis.com/v1/
 scopes:
   - https://www.googleapis.com/auth/cloud-platform
 objects:
@@ -33,6 +33,14 @@ objects:
       guides:
         'Official Documentation': 'https://cloud.google.com/scheduler/'
       api: 'https://cloud.google.com/scheduler/docs/reference/rest/'
+    parameters:
+      - !ruby/object:Api::Type::String
+        name: 'region'
+        description: |
+          Region where the scheduler job resides
+        required: true
+        input: true
+        url_param_only: true
     properties:
       - !ruby/object:Api::Type::String
         name: name
@@ -61,12 +69,6 @@ objects:
         required: false
         input: true
         default_value: 'Etc/UTC'
-      - !ruby/object:Api::Type::String
-        name: 'region'
-        description: |
-          Region where the schedule job resides.
-        required: false
-        input: true
       - !ruby/object:Api::Type::NestedObject
         name: retryConfig
         description: |

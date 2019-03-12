@@ -86,6 +86,8 @@ module Provider
       generate_datasources(output_folder, types, version_name) \
         unless @config.datasources.nil?
 
+      generate_operation(output_folder, types, version_name)
+
       # Write a file with the final version of the api, after overrides
       # have been applied.
       return unless dump_yaml
@@ -98,6 +100,8 @@ module Provider
         file.write(YAML.dump(@api))
       end
     end
+
+    def generate_operation(output_folder, types, version_name); end
 
     def copy_files(output_folder)
       copy_file_list(output_folder, @config.files.copy)
@@ -119,13 +123,15 @@ module Provider
     # rubocop:enable Lint/UnusedMethodArgument
 
     def copy_file_list(output_folder, files)
-      files.each do |target, source|
-        target_file = File.join(output_folder, target)
-        target_dir = File.dirname(target_file)
-        Google::LOGGER.debug "Copying #{source} => #{target}"
-        FileUtils.mkpath target_dir unless Dir.exist?(target_dir)
-        FileUtils.copy_entry source, target_file
-      end
+      files.map do |target, source|
+        Thread.new do
+          target_file = File.join(output_folder, target)
+          target_dir = File.dirname(target_file)
+          Google::LOGGER.debug "Copying #{source} => #{target}"
+          FileUtils.mkpath target_dir unless Dir.exist?(target_dir)
+          FileUtils.copy_entry source, target_file
+        end
+      end.map(&:join)
     end
 
     def compile_files(output_folder, version_name)
@@ -142,34 +148,41 @@ module Provider
     end
 
     def compile_file_list(output_folder, files, data = {})
-      files.each do |target, source|
-        Google::LOGGER.debug "Compiling #{source} => #{target}"
-        target_file = File.join(output_folder, target)
-        manifest = @config.respond_to?(:manifest) ? @config.manifest : {}
-        generate_file(
-          data.clone.merge(
-            name: target,
-            product: @api,
-            object: {},
-            config: {},
-            scopes: @api.scopes,
-            manifest: manifest,
-            tests: '',
-            template: source,
-            compiler: compiler,
-            output_folder: output_folder,
-            out_file: target_file,
-            product_ns: @api.name
+      files.map do |target, source|
+        Thread.new do
+          Google::LOGGER.debug "Compiling #{source} => #{target}"
+          target_file = File.join(output_folder, target)
+          manifest = @config.respond_to?(:manifest) ? @config.manifest : {}
+          generate_file(
+            data.clone.merge(
+              name: target,
+              product: @api,
+              object: {},
+              config: {},
+              scopes: @api.scopes,
+              manifest: manifest,
+              tests: '',
+              template: source,
+              compiler: compiler,
+              output_folder: output_folder,
+              out_file: target_file,
+              product_ns: @api.name
+            )
           )
-        )
 
-        format_output_file(target_file)
-      end
+          format_output_file(target_file)
+        end
+      end.map(&:join)
+    end
+
+    def api_version_setup(version_name)
+      version = @api.version_obj_or_default(version_name)
+      @api.set_properties_based_on_version(version)
+      version
     end
 
     def generate_objects(output_folder, types, version_name)
-      version = @api.version_obj_or_default(version_name)
-      @api.set_properties_based_on_version(version)
+      version = api_version_setup(version_name)
       (@api.objects || []).each do |object|
         if !types.empty? && !types.include?(object.name)
           Google::LOGGER.info "Excluding #{object.name} per user request"
@@ -379,16 +392,13 @@ module Provider
       ctx = binding
       data.each { |name, value| ctx.local_variable_set(name, value) }
 
-      # Use an (essentially) global variable to record whether a file has
-      # either generated an autogen header, or explicitly opted out.
-      @file_expectations = {
-        autogen: false
-      }
-
       Google::LOGGER.debug "Generating #{data[:name]} #{data[:type]}"
       File.open(path, 'w') { |f| f.puts compile_file(ctx, data[:template]) }
 
-      raise "#{path} missing autogen" unless @file_expectations[:autogen]
+      # Files are often generated in parallel.
+      # We can use thread-local variables to ensure that autogen checking
+      # stays specific to the file each thred represents.
+      raise "#{path} missing autogen" unless Thread.current[:autogen]
 
       old_file_chmod_mode = File.stat(data[:template]).mode
       FileUtils.chmod(old_file_chmod_mode, path)
@@ -407,7 +417,7 @@ module Provider
 
     def run_formatter(command)
       output = %x(#{command} 2>&1)
-      Google::LOGGER.error output if $CHILD_STATUS && $CHILD_STATUS.exitstatus != 0
+      Google::LOGGER.error output unless $CHILD_STATUS&.exitstatus&.zero?
     end
 
     def wrap_field(field, spaces)

@@ -13,13 +13,17 @@
 
 --- !ruby/object:Api::Product
 name: Sql
-display_name: Google Cloud SQL
+display_name: Cloud SQL
 versions:
   - !ruby/object:Api::Product::Version
     name: ga
     base_url: https://www.googleapis.com/sql/v1beta4/
 scopes:
   - https://www.googleapis.com/auth/sqlservice.admin
+apis_required:
+  - !ruby/object:Api::Product::ApiReference
+    name: CLoud SQL Admin API
+    url: https://console.cloud.google.com/apis/library/sqladmin.googleapis.com/
 objects:
   # 'BackupRun' is not idempotent and will not be covered.
   # | - !ruby/object:Api::Resource
@@ -34,8 +38,6 @@ objects:
       Represents a Cloud SQL instance. Cloud SQL instances are SQL databases
       hosted in Google's cloud. The Instances resource provides methods for
       common configuration and management tasks.
-    exports:
-      - name
 <%= indent(compile('templates/async.yaml.erb'), 4) %>
     properties:
       - !ruby/object:Api::Type::Enum
@@ -320,6 +322,35 @@ objects:
               example db-n1-standard-1. For MySQL instances, this field
               determines whether the instance is Second Generation (recommended)
               or First Generation.
+          - !ruby/object:Api::Type::Enum
+            name: 'availabilityType'
+            description: |
+              The availabilityType define if your postgres instance is run zonal 
+              or regional.
+            values:
+            - :ZONAL
+            - :REGIONAL
+          - !ruby/object:Api::Type::NestedObject
+            name: 'backupConfiguration'
+            description: |
+              The daily backup configuration for the instance.
+            properties:
+              #- !ruby/object:Api::Type::Constant
+              #  name: 'kind'
+              #  value: 'sql#backupConfiguration'
+              - !ruby/object:Api::Type::Boolean
+                name: 'enabled'
+                description: |
+                  Enable Autobackup for your instance.
+              - !ruby/object:Api::Type::Boolean
+                name: 'binaryLogEnabled'
+                description: |
+                  Whether binary log is enabled. If backup configuration 
+                  is disabled, binary log must be disabled as well. MySQL only.
+              - !ruby/object:Api::Type::String
+                name: 'startTime'
+                description: |
+                  Define the backup start time in UTC (HH:MM)
           - !ruby/object:Api::Type::Integer
             name: 'settingsVersion'
             output: true

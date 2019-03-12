@@ -52,6 +52,10 @@ The following arguments are supported:
 
 * `description` - (Optional) A user-friendly description of the dataset.
 
+* `delete_contents_on_destroy` - (Optional) If set to `true`, delete all the
+    tables in the dataset when destroying the resource; otherwise, destroying
+    the resource will fail if tables are present.
+
 * `location` - (Optional) The geographic location where the dataset should reside.
     See [official docs](https://cloud.google.com/bigquery/docs/dataset-locations).
 
@@ -105,6 +109,7 @@ The following arguments are supported:
 The `access` block supports the following fields (exactly one of `domain`,
 `group_by_email`, `special_group`, `user_by_email`, or `view` must be set,
 even though they are marked optional):
+
 * `role` - (Required unless `view` is set) Describes the rights granted to
     the user specified by the other member of the access object. The following
     string values are supported: `READER`, `WRITER`, `OWNER`.
@@ -130,6 +135,7 @@ even though they are marked optional):
     via an update operation. Structure is documented below.
 
 The `access.view` block supports:
+
 * `dataset_id` - (Required) The ID of the dataset containing this table.
 
 * `project_id` - (Required) The ID of the project containing this table.

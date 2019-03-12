@@ -30,6 +30,7 @@ require 'provider/ansible'
 require 'provider/inspec'
 require 'provider/terraform'
 require 'provider/terraform_example'
+require 'provider/terraform_object_library'
 require 'pp' if ENV['COMPILER_DEBUG']
 
 product_names = nil
@@ -110,7 +111,7 @@ product_names.each do |product_name|
   raise "Output path '#{output_path}' does not exist or is not a directory" \
     unless Dir.exist?(output_path)
 
-  Google::LOGGER.info "Compiling '#{product_name}' output to '#{output_path}'"
+  Google::LOGGER.info "Compiling '#{product_name}' (at #{version}) output to '#{output_path}'"
   Google::LOGGER.info \
     "Generating types: #{types_to_generate.empty? ? 'ALL' : types_to_generate}"
 
@@ -134,7 +135,8 @@ product_names.each do |product_name|
 
   else
     override_providers = {
-      'examples' => Provider::TerraformExample
+      'examples' => Provider::TerraformExample,
+      'validator' => Provider::TerraformObjectLibrary
     }
 
     provider_class = override_providers[force_provider]

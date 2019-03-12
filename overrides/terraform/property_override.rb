@@ -64,23 +64,39 @@ module Overrides
           # Names of attributes that can't be set alongside this one
           :conflicts_with,
 
+          # ====================
+          # Schema Modifications
+          # ====================
+          # Schema modifications change the schema of a resource in some
+          # fundamental way. They're not very portable, and will be hard to
+          # generate so we should limit their use. Generally, if you're not
+          # converting existing Terraform resources, these shouldn't be used.
+          #
+          # With great power comes great responsibility.
+
+          # Flatten the child field of a NestedObject into "convenience fields"
+          # that are addressed as if they were top level fields.
+          #
+          # We need this for cases where a field inside a nested object has a
+          # default, if we can't spend a breaking change to fix a misshapen
+          # field, or if the UX is _much_ better otherwise. Nesting flattened
+          # NestedObjects is inadvisable.
+          :flatten_object,
+
           # ===========
           # Custom code
           # ===========
           # All custom code attributes are string-typed.  The string should
           # be the name of a template file which will be compiled in the
           # specified / described place.
-          #
-          # Property Updates are used when a resource is updateable but
-          # resource.input is true.  In this case, only individual
-          # properties can be updated.  The value of this attribute should
-          # be the path to a template which will be compiled. This code is placed
-          # *inline* in the obj := { ... } definition - it is not a custom
-          # function, it is a custom statement.  Note that this cannot
-          # be used for nested properties, as they are not present in the
-          # obj := {...} statement.  This statement template receives `property`
-          # and `prefix` to aid in code reuse.
-          :update_statement,
+
+          # A custom expander replaces the default expander for an attribute.
+          # It is called as part of Create, and as part of Update if
+          # object.input is false.  It can return an object of any type,
+          # so the function header *is* part of the custom code template.
+          # As with flatten, `property` and `prefix` are available.
+          :custom_expand,
+
           # A custom flattener replaces the default flattener for an attribute.
           # It is called as part of Read.  It can return an object of any
           # type, and may sometimes need to return an object with non-interface{}
@@ -88,13 +104,7 @@ module Overrides
           # header *is* a part of the custom code template.  To help with
           # creating the function header, `property` and `prefix` are available,
           # just as they are in the standard flattener template.
-          :custom_flatten,
-          # A custom expander replaces the default expander for an attribute.
-          # It is called as part of Create, and as part of Update if
-          # object.input is false.  It can return an object of any type,
-          # so the function header *is* part of the custom code template.
-          # As with flatten, `property` and `prefix` are available.
-          :custom_expand
+          :custom_flatten
         ]
       end
 
@@ -117,7 +127,6 @@ module Overrides
         check :validation, type: Provider::Terraform::Validation
         check :set_hash_func, type: String
 
-        check :update_statement, type: String
         check :custom_flatten, type: String
         check :custom_expand, type: String
 
@@ -129,6 +138,11 @@ module Overrides
         unless description.nil?
           @description = format_string(:description, @description,
                                        api_property.description)
+        end
+
+        if @flatten_object && !api_property.is_a?(Api::Type::NestedObject)
+          raise 'Only NestedObjects can be flattened with flatten_object. Type'\
+            " is #{api_property.class} for property #{api_property.name}"
         end
 
         unless api_property.is_a?(Api::Type::Array) ||
