@@ -29,12 +29,17 @@ overrides: !ruby/object:Overrides::ResourceOverrides
         exclude_plural: true
       name: !ruby/object:Overrides::Inspec::PropertyOverride
         exclude_plural: true
+        exclude_reader: true
       lastModifiedTime: !ruby/object:Overrides::Inspec::PropertyOverride
         exclude_plural: true
+    additional_functions: |
+      def name
+        dataset_reference&.dataset_id
+      end
 
   Table: !ruby/object:Overrides::Inspec::ResourceOverride
     properties:
-      name: !ruby/object:Overrides::Inspec::PropertyOverride
-        exclude_plural: true
       description: !ruby/object:Overrides::Inspec::PropertyOverride
+        exclude_plural: true
+      name: !ruby/object:Overrides::Inspec::PropertyOverride
         exclude_plural: true
