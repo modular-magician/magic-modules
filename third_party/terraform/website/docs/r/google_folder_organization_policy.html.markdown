@@ -130,7 +130,7 @@ exported:
 
 ## Import
 
-Folder organization policies can be imported by `id` in the format `folders/<folderId>:constraints/<constraint>`. eg
+Folder organization policies can be imported with the format `folders/<folderId>:constraints/<constraint>`. eg
 
 ```
 $ terraform import google_folder_organization_policy.policy folders/folder-1234:constraints/serviceuser.services
