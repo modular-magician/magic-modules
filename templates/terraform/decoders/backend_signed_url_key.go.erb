@@ -15,8 +15,10 @@ if !ok {
 // key with this name exists and assume the key value hasn't been changed.
 for _, k := range keyNames.([]interface{}) {
   if keyName == k.(string) {
-    // Just return empty map to indicate key was found
-    return map[string]interface{}{}, nil
+    // Just return partial map to indicate key was found
+    return map[string]interface{}{
+      "keyName": keyName,
+    }, nil
   }
 }
 
