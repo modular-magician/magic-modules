@@ -1,0 +1,29 @@
+keyName := d.Get("name").(string)
+
+policyRaw, ok := res["cdnPolicy"]
+if !ok {
+  return nil, nil
+}
+
+policy := policyRaw.(map[string]interface{})
+keyNames, ok := policy["signedUrlKeyNames"]
+if !ok {
+  keyNames = make([]interface{}, 0)
+}
+
+// Because the sensitive key value is not returned, all we can do is verify a
+// key with this name exists and assume the key value hasn't been changed.
+for _, k := range keyNames.([]interface{}) {
+  if keyName == k.(string) {
+    // Just return partial map to indicate key was found
+    return map[string]interface{}{
+      "keyName": keyName,
+    }, nil
+  }
+}
+
+// If not found, the key doesn't exist anymore
+log.Printf("[WARN] Removing SignedUrlKey %q because it's gone", d.Id())
+d.SetId("")
+
+return nil, nil
