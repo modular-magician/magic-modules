@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"log"
 	"net/url"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
