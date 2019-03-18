@@ -53,6 +53,11 @@ module Api
       # list.  Otherwise, it's safe to leave empty.
       # If empty, we assume that `name` is the identifier.
       attr_reader :identity
+      # This is useful in case you need to change the query made for
+      # GET requests only. In particular, this is often used
+      # to extract an object from a parent object or a collection.
+      attr_reader :nested_decoder
+
       attr_reader :exclude
       attr_reader :async
       attr_reader :readonly
@@ -97,6 +102,25 @@ module Api
       def validate
         super
         check :create, type: ::String, required: true
+      end
+    end
+
+    class NestedDecoder < Api::Object
+      # A list of the nested keys, in traversal order.
+      # i.e. backendBucket --> cdnPolicy.signedUrlKeyNames
+      # should be ["cdnPolicy", "signedUrlKeyNames"]
+      attr_reader :keys
+
+      # If true, we expect the the nested list to be
+      # a list of IDs for the nested resource, rather
+      # than a list of nested resource objects
+      attr_reader :has_id_only_list
+
+      def validate
+        super
+
+        check :keys, type: Array, item_type: String, required: true
+        check :has_id_only_list, type: :boolean, default: false
       end
     end
 
@@ -189,6 +213,11 @@ module Api
       check :readonly, type: :boolean
       check :transport, type: Transport
       check :references, type: ReferenceLinks
+
+      check :nested_decoder, type: Api::Resource::NestedDecoder
+      if @nested_decoder&.has_id_only_list && @identity&.length != 1
+        raise 'Resource with :has_id_only_list in :nested_decoder must have exactly one :identity property"'
+      end
 
       check :collection_url_response, default: Api::Resource::ResponseList.new,
                                       type: Api::Resource::ResponseList
