@@ -94,7 +94,7 @@ func resourceCloudFunctionsFunction() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validateRegexp(`^[a-zA-Z][_-a-zA-Z0-9]*[a-zA-Z0-9]$`),
+				ValidateFunc: validateRegexp(`^[a-zA-Z][_-a-zA-Z0-9]{0,46}[a-zA-Z0-9]$`),
 			},
 
 			"source_archive_bucket": {
