@@ -63,6 +63,8 @@ module Provider
                         'third_party/validator/project_iam.go'],
                        ['google/folder_iam.go',
                         'third_party/validator/folder_iam.go'],
+                       ['google/storage_bucket.go',
+                        'third_party/validator/storage_bucket.go'],
                        ['google/image.go',
                         'third_party/terraform/utils/image.go'],
                        ['google/disk_type.go',
