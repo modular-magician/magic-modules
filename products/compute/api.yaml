@@ -313,8 +313,6 @@ objects:
       error: !ruby/object:Api::Async::Error
         path: 'error/errors'
         message: 'message'
-    transport: !ruby/object:Api::Resource::Transport
-      decoder: decode_response
     parameters:
       - !ruby/object:Api::Type::ResourceRef
         name: 'backendBucket'
