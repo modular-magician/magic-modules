@@ -58,9 +58,12 @@ fi
 
 pushd "build/$SHORT_NAME"
 
+# TODO: Remove this, this is just to see what the Magician does
+git status
+
 # go mod vendor is a very expensive operation.
 # If no changes, avoid running.
-if git diff-index --quiet HEAD --; then
+if [[ ! -z $(git status -s) ]]; then
   GO111MODULE=on go mod vendor
 fi
 
