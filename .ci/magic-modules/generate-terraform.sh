@@ -60,7 +60,7 @@ pushd "build/$SHORT_NAME"
 
 # go mod vendor is a very expensive operation.
 # If no changes, avoid running.
-if git diff-index --quiet HEAD --; then
+if git diff-index --quiet master --; then
   GO111MODULE=on go mod vendor
 fi
 
