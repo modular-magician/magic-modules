@@ -3,6 +3,7 @@ package google
 import (
 	"fmt"
 	"log"
+	"math"
 	"strconv"
 	"strings"
 
@@ -98,6 +99,7 @@ func resourceGoogleComputeBackendServiceBackendHash(v interface{}) int {
 
 	var buf bytes.Buffer
 	m := v.(map[string]interface{})
+	log.Printf("[DEBUG] hashing %v", m)
 
 	if group, err := getRelativePath(m["group"].(string)); err != nil {
 		log.Printf("[WARN] Error on retrieving relative path of instance group: %s", err)
@@ -107,29 +109,85 @@ func resourceGoogleComputeBackendServiceBackendHash(v interface{}) int {
 	}
 
 	if v, ok := m["balancing_mode"]; ok {
+		if v == nil {
+			v = ""
+		}
+
 		buf.WriteString(fmt.Sprintf("%s-", v.(string)))
 	}
 	if v, ok := m["capacity_scaler"]; ok {
+		if v == nil {
+			v = 0.0
+		}
+
 		buf.WriteString(fmt.Sprintf("%f-", v.(float64)))
 	}
 	if v, ok := m["description"]; ok {
+		if v == nil {
+			v = ""
+		}
+
+		log.Printf("[DEBUG] writing description %s", v)
 		buf.WriteString(fmt.Sprintf("%s-", v.(string)))
 	}
 	if v, ok := m["max_rate"]; ok {
+		if v == nil {
+			v = 0
+		}
+
 		buf.WriteString(fmt.Sprintf("%d-", int64(v.(int))))
 	}
 	if v, ok := m["max_rate_per_instance"]; ok {
+		if v == nil {
+			v = 0.0
+		}
+
 		buf.WriteString(fmt.Sprintf("%f-", v.(float64)))
 	}
 	if v, ok := m["max_connections"]; ok {
-		buf.WriteString(fmt.Sprintf("%d-", int64(v.(int))))
+		if v == nil {
+			v = 0
+		}
+
+		switch v := v.(type) {
+		case float64:
+			// The Golang JSON library can't tell int values apart from floats,
+			// because MM doesn't give fields strong types. Since another value
+			// in this block was a real float, it assumed this was a float too.
+			// It's not.
+			vInt := math.Round(v)
+			log.Printf("[DEBUG] writing float value %f as integer value %v", v, vInt)
+			buf.WriteString(fmt.Sprintf("%d-", vInt))
+		default:
+			buf.WriteString(fmt.Sprintf("%d-", int64(v.(int))))
+		}
 	}
 	if v, ok := m["max_connections_per_instance"]; ok {
-		buf.WriteString(fmt.Sprintf("%d-", int64(v.(int))))
+		if v == nil {
+			v = 0
+		}
+
+		switch v := v.(type) {
+		case float64:
+			// The Golang JSON library can't tell int values apart from floats,
+			// because MM doesn't give fields strong types. Since another value
+			// in this block was a real float, it assumed this was a float too.
+			// It's not.
+			vInt := math.Round(v)
+			log.Printf("[DEBUG] writing float value %f as integer value %v", v, vInt)
+			buf.WriteString(fmt.Sprintf("%d-", vInt))
+		default:
+			buf.WriteString(fmt.Sprintf("%d-", int64(v.(int))))
+		}
 	}
 	if v, ok := m["max_rate_per_instance"]; ok {
+		if v == nil {
+			v = 0.0
+		}
+
 		buf.WriteString(fmt.Sprintf("%f-", v.(float64)))
 	}
 
+	log.Printf("[DEBUG] computed hash value of %v from %v", hashcode.String(buf.String()), buf.String())
 	return hashcode.String(buf.String())
 }
