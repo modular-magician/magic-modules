@@ -214,6 +214,7 @@ module Provider
 
       generate_resource data
       generate_resource_tests data
+      generate_iam_policy(data) if data[:object].iam_policy&.exists
     end
 
     def generate_datasources(output_folder, types, version_name)
