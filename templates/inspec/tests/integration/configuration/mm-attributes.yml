@@ -203,8 +203,3 @@ backend_bucket:
   name: inspec-gcp-backend-bucket
   description: Backend bucket example
   enable_cdn: true
-
-subnetwork_policy_binding:
-  subnet_name: subnetwork-test
-  role: roles/compute.networkUser
-  member: user:slevenick@google.com
