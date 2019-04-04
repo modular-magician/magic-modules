@@ -45,6 +45,7 @@ module Provider
     # resources that can be used by InSpec
     def generate_resource(data)
       return if data[:object].no_resource
+
       target_folder = File.join(data[:output_folder], 'libraries')
       FileUtils.mkpath target_folder
       name = data[:object].name.underscore
@@ -71,15 +72,16 @@ module Provider
       target_folder = File.join(data[:output_folder], 'libraries')
       name = data[:object].name.underscore
 
+      iam_policy_resource_name = "google_#{data[:product].api_name}_#{name}_iam_policy"
       generate_resource_file data.clone.merge(
         default_template: 'templates/inspec/iam_policy/iam_policy.erb',
-        out_file: File.join(target_folder, "google_#{data[:product].api_name}_#{name}_iam_policy.rb")
+        out_file: File.join(target_folder, "#{iam_policy_resource_name}.rb")
       )
 
       markdown_target_folder = File.join(data[:output_folder], 'docs/resources')
       generate_resource_file data.clone.merge(
         default_template: 'templates/inspec/iam_policy/iam_policy.md.erb',
-        out_file: File.join(markdown_target_folder, "google_#{data[:product].api_name}_#{name}_iam_policy.md")
+        out_file: File.join(markdown_target_folder, "#{iam_policy_resource_name}.md")
       )
     end
 
@@ -130,6 +132,7 @@ module Provider
     # Copies InSpec tests to build folder
     def generate_resource_tests(data)
       return if data[:object].no_resource
+
       target_folder = File.join(data[:output_folder], 'test')
       FileUtils.mkpath target_folder
 
