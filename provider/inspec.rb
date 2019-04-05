@@ -18,6 +18,7 @@ require 'provider/inspec/manifest'
 require 'overrides/inspec/resource_override'
 require 'overrides/inspec/property_override'
 require 'active_support/inflector'
+require 'google/yaml_validator'
 
 module Provider
   # Code generator for Example Cookbooks that manage Google Cloud Platform
@@ -43,6 +44,8 @@ module Provider
     # This function uses the resource templates to create singular and plural
     # resources that can be used by InSpec
     def generate_resource(data)
+      return if data[:object].no_resource
+
       target_folder = File.join(data[:output_folder], 'libraries')
       FileUtils.mkpath target_folder
       name = data[:object].name.underscore
@@ -58,6 +61,30 @@ module Provider
       generate_documentation(data, name, false)
       generate_documentation(data, name, true)
       generate_properties(data, data[:object].all_user_properties)
+    end
+
+    # Generate the IAM policy for this object. This is used to query and test
+    # IAM policies separately from the resource itself
+    def generate_iam_policy(data)
+      property_target = File.join(data[:output_folder], 'libraries/google/iam/property')
+      FileUtils.mkpath property_target
+
+      FileUtils.cp_r 'templates/inspec/iam_policy/properties/.', property_target
+
+      target_folder = File.join(data[:output_folder], 'libraries')
+      name = data[:object].name.underscore
+
+      iam_policy_resource_name = "google_#{data[:product].api_name}_#{name}_iam_policy"
+      generate_resource_file data.clone.merge(
+        default_template: 'templates/inspec/iam_policy/iam_policy.erb',
+        out_file: File.join(target_folder, "#{iam_policy_resource_name}.rb")
+      )
+
+      markdown_target_folder = File.join(data[:output_folder], 'docs/resources')
+      generate_resource_file data.clone.merge(
+        default_template: 'templates/inspec/iam_policy/iam_policy.md.erb',
+        out_file: File.join(markdown_target_folder, "#{iam_policy_resource_name}.md")
+      )
     end
 
     def generate_properties(data, props)
@@ -106,6 +133,8 @@ module Provider
 
     # Copies InSpec tests to build folder
     def generate_resource_tests(data)
+      return if data[:object].no_resource
+
       target_folder = File.join(data[:output_folder], 'test')
       FileUtils.mkpath target_folder
 
@@ -266,6 +295,11 @@ module Provider
         return "#{class_name}Array.parse(#{item_from_hash}, to_s)"
       end
       "#{modularized_property_class(property)}.new(#{item_from_hash}, to_s)"
+    end
+
+    # Extracts identifiers of a resource in the form {{identifier}} from a url
+    def extract_identifiers(url)
+      url.scan(/({{)(\w+)(}})/).map { |arr| arr[1] }
     end
   end
 end
