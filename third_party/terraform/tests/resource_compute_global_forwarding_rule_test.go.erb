@@ -119,7 +119,7 @@ func TestAccComputeGlobalForwardingRule_labels(t *testing.T) {
 }
 <% end -%>
 
-func testAccComputeGlobalForwardingRule_httpProxy(fr, proxyTfName, proxy, proxy2, backend, hc, urlmap string) string {
+func testAccComputeGlobalForwardingRule_httpProxy(fr, targetProxy, proxy, proxy2, backend, hc, urlmap string) string {
 	return fmt.Sprintf(`
 	resource "google_compute_global_forwarding_rule" "forwarding_rule" {
 		description = "Resource created for Terraform acceptance testing"
@@ -173,7 +173,7 @@ func testAccComputeGlobalForwardingRule_httpProxy(fr, proxyTfName, proxy, proxy2
 			path = "/*"
 			service = "${google_compute_backend_service.backend.self_link}"
 		}
-	}`, fr, proxyTfName, proxy, proxy2, backend, hc, urlmap)
+	}`, fr, targetProxy, proxy, proxy2, backend, hc, urlmap)
 }
 
 <% unless version == 'ga' -%>
