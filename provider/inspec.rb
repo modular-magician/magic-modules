@@ -11,6 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'google/hcl_utils'
 require 'google/ruby_utils'
 require 'provider/config'
 require 'provider/core'
@@ -24,6 +25,7 @@ module Provider
   # resources.
   class Inspec < Provider::Core
     include Google::RubyUtils
+    include Google::HclUtils
     # Settings for the provider
     class Config < Provider::Config
       attr_reader :manifest
@@ -210,7 +212,7 @@ module Provider
     end
 
     def grab_attributes
-      YAML.load_file('templates/inspec/tests/integration/configuration/mm-attributes.yml')
+      YAML.safe_load(compile('templates/inspec/mm-attributes.yml'))
     end
 
     # Returns a variable name OR default value for that variable based on
@@ -266,6 +268,52 @@ module Provider
         return "#{class_name}Array.parse(#{item_from_hash}, to_s)"
       end
       "#{modularized_property_class(property)}.new(#{item_from_hash}, to_s)"
+    end
+
+    # Gets attributes from the new_examples file.
+    # These attributes will be used to generate the tf file + tf attributes file.
+    def new_examples
+      YAML.load_file('templates/inspec/new-examples.yaml')
+    end
+
+    # For a given resource, output the attribute file YAML placed in mm-attributes.yaml
+    def new_examples_attributes(object_name)
+      example_data = new_examples[object_name]
+      raise "No example found for #{object_name}" unless example_data
+
+      # Arrays should be multiple fields, not a single field.
+      example_data.select { |_, v| v.is_a?(Array) }
+                  .each do |k, v|
+                    v.each_with_index { |item, index| example_data["#{k}#{index + 1}"] = item }
+                    example_data.delete(k)
+                  end
+      YAML.dump(
+        object_name => example_data
+      ).sub('---', '')
+    end
+
+    def new_examples_tf_integration(full_name, short_name, name)
+      values = new_examples[short_name]
+      new_tf_values = values.map do |k, v|
+        {
+          k => if v.is_a?(String)
+                 "${var.#{short_name}[\"#{k}\"]}"
+               elsif v.is_a?(Array)
+                 v.enum_for(:each_with_index)
+                  .map { |_, index| "${var.#{short_name}[\"#{k}#{index + 1}\"]}" }
+               else
+                 raise "#{v.class} is not supported for TF creation on Inspec"
+               end
+        }
+      end.reduce({}, :merge)
+      new_tf_values['project'] = '${var.gcp_project_id}'
+      hcl(
+        'resource' => [{
+          full_name => [{
+            name => [new_tf_values]
+          }]
+        }]
+      )
     end
   end
 end
