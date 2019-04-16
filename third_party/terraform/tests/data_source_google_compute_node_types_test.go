@@ -64,8 +64,6 @@ func testAccCheckGoogleComputeNodeTypes(n string) resource.TestCheckFunc {
 			}
 		}
 		return nil
-
-		return nil
 	}
 }
 
