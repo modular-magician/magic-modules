@@ -3158,6 +3158,10 @@ objects:
       for creating sole-tenant nodes, such as node type, vCPU and memory
       requirments, node affinity labels, and region. 
     input: true
+    references: !ruby/object:Api::Resource::ReferenceLinks
+      guides:
+        'Sole-Tenant Nodes': 'https://cloud.google.com/compute/docs/nodes/'
+      api: 'https://cloud.google.com/compute/docs/reference/rest/v1/nodeTemplates'
     async: !ruby/object:Api::Async
       operation: !ruby/object:Api::Async::Operation
         kind: 'compute#operation'
