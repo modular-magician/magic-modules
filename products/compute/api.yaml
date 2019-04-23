@@ -2086,6 +2086,7 @@ objects:
     name: 'GlobalForwardingRule'
     kind: 'compute#forwardingRule'
     base_url: projects/{{project}}/global/forwardingRules
+    has_self_link: true
     collection_url_response: !ruby/object:Api::Resource::ResponseList
       kind: 'compute#forwardingRulesList'
       items: 'items'
@@ -2097,6 +2098,7 @@ objects:
 
       For more information, see
       https://cloud.google.com/compute/docs/load-balancing/http/
+    input: true
     async: !ruby/object:Api::Async
       operation: !ruby/object:Api::Async::Operation
         kind: 'compute#operation'
@@ -2116,6 +2118,20 @@ objects:
         path: 'error/errors'
         message: 'message'
     properties:
+      - !ruby/object:Api::Type::ResourceRef
+        # TODO(https://github.com/GoogleCloudPlatform/magic-modules/issues/200)
+        # After adding the RegionBackendService resource, move this field out
+        # of the common fields for forwarding rules. This field should refer
+        # to a RegionBackendService for a ForwardingRule and to a BackendService
+        # for a GlobalForwardingRule.
+        name: 'backendService'
+        resource: 'BackendService'
+        imports: 'selfLink'
+        description: |
+          A reference to a BackendService to receive the matched traffic.
+
+          This is used for internal load balancing.
+          (not used for external load balancing)
       - !ruby/object:Api::Type::Time
         name: 'creationTimestamp'
         description: 'Creation timestamp in RFC3339 text format.'
@@ -2178,20 +2194,6 @@ objects:
           - :AH
           - :SCTP
           - :ICMP
-      - !ruby/object:Api::Type::ResourceRef
-        # TODO(https://github.com/GoogleCloudPlatform/magic-modules/issues/200)
-        # After adding the RegionBackendService resource, move this field out
-        # of the common fields for forwarding rules. This field should refer
-        # to a RegionBackendService for a ForwardingRule and to a BackendService
-        # for a GlobalForwardingRule.
-        name: 'backendService'
-        resource: 'BackendService'
-        imports: 'selfLink'
-        description: |
-          A reference to a BackendService to receive the matched traffic.
-
-          This is used for internal load balancing.
-          (not used for external load balancing)
       - !ruby/object:Api::Type::Enum
         name: 'ipVersion'
         description: |
@@ -2201,6 +2203,21 @@ objects:
         values:
           - :IPV4
           - :IPV6
+      - !ruby/object:Api::Type::KeyValuePairs
+        name: 'labels'
+        description: |
+          Labels to apply to this forwarding rule.  A list of key->value pairs.
+        update_verb: :POST
+        update_url: 'projects/{{project}}/global/forwardingRules/{{name}}/setLabels'
+        min_version: beta
+      - !ruby/object:Api::Type::Fingerprint
+        name: 'labelFingerprint'
+        description: |
+          The fingerprint used for optimistic locking of this resource.  Used
+          internally during updates.
+        update_url: 'projects/{{project}}/global/forwardingRules/{{name}}/setLabels'
+        update_verb: :POST
+        min_version: beta
       - !ruby/object:Api::Type::Enum
         name: 'loadBalancingScheme'
         description: |
@@ -2288,14 +2305,6 @@ objects:
           subnetwork must be specified.
 
           This field is not used for external load balancing.
-      - !ruby/object:Api::Type::ResourceRef
-        name: 'region'
-        resource: 'Region'
-        imports: 'name'
-        description: |
-          A reference to the region where the regional forwarding rule resides.
-          This field is not applicable to global forwarding rules.
-        output: true
       # TODO(nelsonjr): Create a new type, WeakResourceRef that could accept
       # various different objects, instead of one, to enable these scenarios
       # where a field can receive multiple types (ditto in other places, look
@@ -2307,6 +2316,8 @@ objects:
           traffic must be of a type appropriate to the target object.
 
           Valid types: HTTP_PROXY, HTTPS_PROXY, SSL_PROXY, TCP_PROXY
+        update_verb: :POST
+        update_url: 'projects/{{project}}/global/forwardingRules/{{name}}/setTarget'
   - !ruby/object:Api::Resource
     name: 'HttpHealthCheck'
     kind: 'compute#httpHealthCheck'
