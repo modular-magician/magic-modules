@@ -2119,19 +2119,12 @@ objects:
         message: 'message'
     properties:
       - !ruby/object:Api::Type::ResourceRef
-        # TODO(https://github.com/GoogleCloudPlatform/magic-modules/issues/200)
-        # After adding the RegionBackendService resource, move this field out
-        # of the common fields for forwarding rules. This field should refer
-        # to a RegionBackendService for a ForwardingRule and to a BackendService
-        # for a GlobalForwardingRule.
         name: 'backendService'
         resource: 'BackendService'
         imports: 'selfLink'
         description: |
           A reference to a BackendService to receive the matched traffic.
-
-          This is used for internal load balancing.
-          (not used for external load balancing)
+          This is used for internal load balancing only.
       - !ruby/object:Api::Type::Time
         name: 'creationTimestamp'
         description: 'Creation timestamp in RFC3339 text format.'
@@ -2311,6 +2304,7 @@ objects:
       # for "mysterious" Api::Type::String based objects)
       - !ruby/object:Api::Type::String
         name: 'target'
+        required: true
         description: |
           This target must be a global load balancing resource. The forwarded
           traffic must be of a type appropriate to the target object.
