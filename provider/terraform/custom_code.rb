@@ -78,6 +78,7 @@ module Provider
       # test_env_vars is a Hash from template variable names to one of the
       # following symbols:
       #  - :PROJECT_NAME
+      #  - :FIRESTORE_PROJECT_NAME
       #  - :CREDENTIALS
       #  - :REGION
       #  - :ORG_ID
@@ -101,6 +102,7 @@ module Provider
       def config_documentation
         docs_defaults = {
           PROJECT_NAME: 'my-project-name',
+          FIRESTORE_PROJECT_NAME: 'my-project-name',
           CREDENTIALS: 'my/credentials/filename.json',
           REGION: 'us-west1',
           ORG_ID: '123456789',
