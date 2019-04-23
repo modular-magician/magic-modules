@@ -2316,6 +2316,8 @@ objects:
           traffic must be of a type appropriate to the target object.
 
           Valid types: HTTP_PROXY, HTTPS_PROXY, SSL_PROXY, TCP_PROXY
+        update_verb: :POST
+        update_url: 'projects/{{project}}/global/forwardingRules/{{name}}/setTarget'
   - !ruby/object:Api::Resource
     name: 'HttpHealthCheck'
     kind: 'compute#httpHealthCheck'
