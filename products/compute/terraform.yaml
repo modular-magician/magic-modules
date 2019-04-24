@@ -478,8 +478,6 @@ overrides: !ruby/object:Overrides::ResourceOverrides
           http_proxy_name: "target-proxy"
           backend_service_name: "backend"
     properties:
-      backendService: !ruby/object:Overrides::Terraform::PropertyOverride
-        exclude: true
       creationTimestamp: !ruby/object:Overrides::Terraform::PropertyOverride
         exclude: true
       id: !ruby/object:Overrides::Terraform::PropertyOverride
@@ -495,8 +493,6 @@ overrides: !ruby/object:Overrides::ResourceOverrides
         exclude: true
       portRange: !ruby/object:Overrides::Terraform::PropertyOverride
         diff_suppress_func: 'portRangeDiffSuppress'
-      ports: !ruby/object:Overrides::Terraform::PropertyOverride
-        exclude: true
       subnetwork: !ruby/object:Overrides::Terraform::PropertyOverride
         exclude: true
       target: !ruby/object:Overrides::Terraform::PropertyOverride
