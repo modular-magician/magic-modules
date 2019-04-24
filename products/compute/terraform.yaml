@@ -438,7 +438,6 @@ overrides: !ruby/object:Overrides::ResourceOverrides
         default_from_api: true
       target: !ruby/object:Overrides::Terraform::PropertyOverride
         diff_suppress_func: 'compareSelfLinkRelativePaths'
-        custom_expand: 'templates/terraform/custom_expand/self_link_from_name.erb'
       ports: !ruby/object:Overrides::Terraform::PropertyOverride
         is_set: true
         custom_expand: 'templates/terraform/custom_expand/set_to_list.erb'
@@ -502,7 +501,6 @@ overrides: !ruby/object:Overrides::ResourceOverrides
         exclude: true
       target: !ruby/object:Overrides::Terraform::PropertyOverride
         diff_suppress_func: 'compareSelfLinkRelativePaths'
-        custom_expand: 'templates/terraform/custom_expand/self_link_from_name.erb'
     custom_code: !ruby/object:Provider::Terraform::CustomCode
       post_create: templates/terraform/post_create/labels.erb
   HttpHealthCheck: !ruby/object:Overrides::Terraform::ResourceOverride
