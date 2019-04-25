@@ -89,7 +89,7 @@ module Provider
                        ['google/self_link_helpers.go',
                         'third_party/terraform/utils/self_link_helpers.go'],
                        ['google/utils.go',
-                        'third_party/terraform/utils/utils.go'],
+                        'third_party/terraform/utils/utils.go.erb'],
                        ['google/transport.go',
                         'third_party/terraform/utils/transport.go'],
                        ['google/bigtable_client_factory.go',
