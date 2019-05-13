@@ -163,7 +163,7 @@ module Api
 
       # Character that separates resource identifier from method call in URL
       # For example, PubSub subscription uses {resource}:getIamPolicy
-      # While Compute subnetwork uses {resource}/getIamPolicy 
+      # While Compute subnetwork uses {resource}/getIamPolicy
       attr_reader :method_name_separator
 
       def validate
