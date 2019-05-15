@@ -16,12 +16,12 @@ import (
 // avoid race conditions and aborted operations.
 func TestAccProjectOrganizationPolicy(t *testing.T) {
 	testCases := map[string]func(t *testing.T){
-		// "boolean":        testAccProjectOrganizationPolicy_boolean,
-		// "list_allowAll":  testAccProjectOrganizationPolicy_list_allowAll,
-		// "list_allowSome": testAccProjectOrganizationPolicy_list_allowSome,
-		// "list_denySome":  testAccProjectOrganizationPolicy_list_denySome,
-		// "list_update":    testAccProjectOrganizationPolicy_list_update,
-		// "restore_policy": testAccProjectOrganizationPolicy_restore_defaultTrue,
+		"boolean":        testAccProjectOrganizationPolicy_boolean,
+		"list_allowAll":  testAccProjectOrganizationPolicy_list_allowAll,
+		"list_allowSome": testAccProjectOrganizationPolicy_list_allowSome,
+		"list_denySome":  testAccProjectOrganizationPolicy_list_denySome,
+		"list_update":    testAccProjectOrganizationPolicy_list_update,
+		"restore_policy": testAccProjectOrganizationPolicy_restore_defaultTrue,
 		"empty_policy": testAccProjectOrganizationPolicy_none,
 	}
 
