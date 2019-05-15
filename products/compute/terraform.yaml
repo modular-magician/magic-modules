@@ -1360,6 +1360,24 @@ overrides: !ruby/object:Overrides::ResourceOverrides
         exclude: true
       tunnels: !ruby/object:Overrides::Terraform::PropertyOverride
         exclude: true
+  VpnGateway: !ruby/object:Overrides::Terraform::ResourceOverride
+    name: 'HaVpnGateway'
+    examples:
+      - !ruby/object:Provider::Terraform::Examples
+        name: "ha_vpn_gateway_basic"
+        primary_resource_id: "ha_gateway1"
+        vars:
+          ha_vpn_gateway1_name: "ha-vpn-1"
+          network1_name: "network1"
+          ha_vpn_gateway2_name: "ha-vpn-2"
+          network2_name: "network2"
+    properties:
+      id: !ruby/object:Overrides::Terraform::PropertyOverride
+        exclude: true
+      region: !ruby/object:Overrides::Terraform::PropertyOverride
+        required: false # the provider-default value will be used if not specified
+        default_from_api: true
+        custom_flatten: 'templates/terraform/custom_flatten/name_from_self_link.erb'
   UrlMap: !ruby/object:Overrides::Terraform::ResourceOverride
     examples:
       - !ruby/object:Provider::Terraform::Examples
@@ -1435,6 +1453,10 @@ overrides: !ruby/object:Overrides::ResourceOverrides
     properties:
       targetVpnGateway: !ruby/object:Overrides::Terraform::PropertyOverride
         resource: 'VpnGateway'
+      vpnGateway: !ruby/object:Overrides::Terraform::PropertyOverride
+        resource: 'HaVpnGateway'
+      peerGcpGateway: !ruby/object:Overrides::Terraform::PropertyOverride
+        resource: 'HaVpnGateway'
       peerIp: !ruby/object:Overrides::Terraform::PropertyOverride
         validation: !ruby/object:Provider::Terraform::Validation
           function: 'validatePeerAddr'
@@ -1458,6 +1480,8 @@ overrides: !ruby/object:Overrides::ResourceOverrides
         exclude: false
       router: !ruby/object:Overrides::Terraform::PropertyOverride
         custom_expand: 'templates/terraform/custom_expand/compute_full_url.erb'
+      peerIp: !ruby/object:Overrides::Terraform::PropertyOverride
+        default_from_api: true
     custom_code: !ruby/object:Provider::Terraform::CustomCode
       constants: templates/terraform/constants/vpn_tunnel.erb
       encoder: templates/terraform/encoders/vpn_tunnel.go.erb
