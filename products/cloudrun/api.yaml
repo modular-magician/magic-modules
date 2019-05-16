@@ -21,6 +21,7 @@ versions:
 scopes:
   - https://www.googleapis.com/auth/cloud-platform
 objects:
+# Cloud Run DomainMappings
 - !ruby/object:Api::Resource
   name: DomainMapping
   kind:
@@ -48,7 +49,6 @@ objects:
           name: message
           description: |-
             Human readable message indicating details about the current status.
-            +optional
         - !ruby/object:Api::Type::String
           name: status
           description: Status of the condition, one of True, False, Unknown.
@@ -56,7 +56,6 @@ objects:
           name: reason
           description: |-
             One-word CamelCase reason for the condition's current status.
-            +optional
         - !ruby/object:Api::Type::String
           name: type
           description: Type of domain mapping condition.
@@ -141,7 +140,6 @@ objects:
         Null for lists.
         More info:
         https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata
-        +optional
       output: true
     - !ruby/object:Api::Type::KeyValuePairs
       name: labels
@@ -150,13 +148,11 @@ objects:
         (scope and select) objects. May match selectors of replication controllers
         and routes.
         More info: http://kubernetes.io/docs/user-guide/labels
-        +optional
     - !ruby/object:Api::Type::Integer
       name: generation
       description: |-
         A sequence number representing a specific generation of the desired state.
         Populated by the system. Read-only.
-        +optional
       output: true
     - !ruby/object:Api::Type::String
       name: resourceVersion
@@ -173,7 +169,6 @@ objects:
         Value must be treated as opaque by clients and .
         More info:
         https://git.k8s.io/community/contributors/devel/api-conventions.md#concurrency-control-and-consistency
-        +optional
       output: true
     - !ruby/object:Api::Type::String
       name: selfLink
@@ -181,7 +176,6 @@ objects:
         SelfLink is a URL representing this object.
         Populated by the system.
         Read-only.
-        +optional
          string selfLink = 4;
       output: true
     - !ruby/object:Api::Type::String
@@ -194,7 +188,6 @@ objects:
         Populated by the system.
         Read-only.
         More info: http://kubernetes.io/docs/user-guide/identifiers#uids
-        +optional
       output: true
     - !ruby/object:Api::Type::String
       name: namespace
@@ -209,7 +202,7 @@ objects:
         Annotations is an unstructured key value map stored with a resource that
         may be set by external tools to store and retrieve arbitrary metadata. They
         are not queryable and should be preserved when modifying objects. More
-        info: http://kubernetes.io/docs/user-guide/annotations +optional
+        info: http://kubernetes.io/docs/user-guide/annotations
     - !ruby/object:Api::Type::String
       name: name
       required: true
@@ -220,7 +213,6 @@ objects:
         generation of an appropriate name automatically. Name is primarily intended
         for creation idempotence and configuration definition. Cannot be updated.
         More info: http://kubernetes.io/docs/user-guide/identifiers#names
-        +optional
     - !ruby/object:Api::Type::String
       name: deletionTimestamp
       description: |-
@@ -246,44 +238,11 @@ objects:
         Read-only.
         More info:
         https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata
-        +optional
       output: true
-    - !ruby/object:Api::Type::Array
-      name: ownerReferences
-      description: |-
-        List of objects that own this object. If ALL objects in the list have
-        been deleted, this object will be garbage collected.
-        +optional
-      item_type: !ruby/object:Api::Type::NestedObject
-        properties:
-        - !ruby/object:Api::Type::Boolean
-          name: blockOwnerDeletion
-          description: |-
-            If true, AND if the owner has the "foregroundDeletion" finalizer, then
-            the owner cannot be deleted from the key-value store until this
-            reference is removed.
-            Defaults to false.
-            To set this field, a user needs "delete" permission of the owner,
-            otherwise 422 (Unprocessable Entity) will be returned.
-            +optional
-        - !ruby/object:Api::Type::String
-          name: apiVersion
-          description: API version of the referent.
-        - !ruby/object:Api::Type::String
-          name: name
-          description: |-
-            Name of the referent.
-            More info: http://kubernetes.io/docs/user-guide/identifiers#names
-        - !ruby/object:Api::Type::String
-          name: uid
-          description: |-
-            UID of the referent.
-            More info: http://kubernetes.io/docs/user-guide/identifiers#uids
-        - !ruby/object:Api::Type::Boolean
-          name: controller
-          description: |-
-            If true, this reference points to the managing controller.
-            +optional
+
+
+
+# Cloud Run Service
 - !ruby/object:Api::Resource
   name: Service
   kind: Service
@@ -315,119 +274,12 @@ objects:
     url_param_only: true
     description: |-
       Convenience field for metadata.name
-  - !ruby/object:Api::Type::NestedObject
-    name: status
-    description: |-
-      Status communicates the observed state of the Service (from the
-      controller).
-    properties:
-    - !ruby/object:Api::Type::Array
-      name: traffic
-      description: |-
-        From RouteStatus.
-        Traffic holds the configured traffic distribution.
-        These entries will always contain RevisionName references.
-        When ConfigurationName appears in the spec, this will hold the
-        LatestReadyRevisionName that we last observed.
-      item_type: !ruby/object:Api::Type::NestedObject
-        properties:
-        - !ruby/object:Api::Type::String
-          name: configurationName
-          description: |-
-            ConfigurationName of a configuration to whose latest revision we will
-            send this portion of traffic. When the "status.latestReadyRevisionName"
-            of the referenced configuration changes, we will automatically migrate
-            traffic from the prior "latest ready" revision to the new one. This field
-            is never set in Route's status, only its spec. This is mutually exclusive
-            with RevisionName.
-
-            Cloud Run currently supports a single ConfigurationName.
-        - !ruby/object:Api::Type::Integer
-          name: percent
-          description: |-
-            Percent specifies percent of the traffic to this Revision or Configuration.
-            This defaults to zero if unspecified.
-
-            Cloud Run currently requires 100 percent for a single ConfigurationName
-            TrafficTarget entry.
-    - !ruby/object:Api::Type::String
-      name: domain
-      description: |-
-        From RouteStatus.
-        Domain holds the top-level domain that will distribute traffic over the
-        provided targets. It generally has the form
-        https://{route-hash}-{project-hash}-{cluster-level-suffix}.a.run.app
-    - !ruby/object:Api::Type::String
-      name: latestReadyRevisionName
-      description: |-
-        From ConfigurationStatus.
-        LatestReadyRevisionName holds the name of the latest Revision stamped out
-        from this Service's Configuration that has had its "Ready" condition become
-        "True".
-    - !ruby/object:Api::Type::String
-      name: latestCreatedRevisionName
-      description: |-
-        From ConfigurationStatus.
-        LatestCreatedRevisionName is the last revision that was created from this
-        Service's Configuration. It might not be ready yet, for that use
-        LatestReadyRevisionName.
-    - !ruby/object:Api::Type::Array
-      name: conditions
-      description: |-
-        Conditions communicates information about ongoing/complete
-        reconciliation processes that bring the "spec" inline with the observed
-        state of the world.
-      item_type: !ruby/object:Api::Type::NestedObject
-        properties:
-        - !ruby/object:Api::Type::String
-          name: type
-          description: |-
-            ServiceConditionType is used to communicate the status of the
-            reconciliation process. See also:
-            https://github.com/knative/serving/blob/master/docs/spec/errors.md#error-conditions-and-reporting
-
-            Types include: "Ready", "ConfigurationsReady", and "RoutesReady". "Ready"
-            will be true when the underlying Route and Configuration are ready.
-        - !ruby/object:Api::Type::String
-          name: message
-          description: |-
-            Human-readable message indicating details about last transition.
-            +optional
-        - !ruby/object:Api::Type::String
-          name: lastTransitionTime
-          description: |-
-            Last time the condition transitioned from one status to another.
-            +optional
-          output: true
-        - !ruby/object:Api::Type::String
-          name: status
-          description: Status of the condition, one of True, False, Unknown.
-        - !ruby/object:Api::Type::String
-          name: reason
-          description: |-
-            One-word CamelCase reason for the condition's last transition.
-            +optional
-    - !ruby/object:Api::Type::NestedObject
-      name: address
-      description: |-
-        From RouteStatus.
-        Similar to domain, information on where the service is available on HTTP.
-      properties:
-      - !ruby/object:Api::Type::String
-        name: hostname
-        description: hostname
-    - !ruby/object:Api::Type::Integer
-      name: observedGeneration
-      description: |-
-        ObservedGeneration is the 'Generation' of the Route that
-        was last processed by the controller.
-
-        Clients polling for completed reconciliation should poll until
-        observedGeneration = metadata.generation and the Ready condition's status
-        is True or False.
   - !ruby/object:Api::Type::String
     name: apiVersion
     description: The API version for this call such as "v1alpha1".
+    # default_value: serving.knative.dev/v1alpha1
+    # required: false
+    # TODO - hard code this?
   - !ruby/object:Api::Type::String
     name: kind
     # TODO chrisst - remove this and build a MM feature to send this.
@@ -445,7 +297,6 @@ objects:
         RunLatest defines a simple Service. It will automatically
         configure a route that keeps the latest ready revision
         from the supplied configuration running.
-        +optional
       properties:
       - !ruby/object:Api::Type::NestedObject
         name: configuration
@@ -479,6 +330,8 @@ objects:
                 Not currently used by Cloud Run.
             - !ruby/object:Api::Type::NestedObject
               name: container
+              update_url: TODO_replaceService
+              update_verb: :PUT
               required: true
               description: |-
                 Container defines the unit of execution for this Revision.
@@ -487,246 +340,6 @@ objects:
                 The runtime contract is documented here:
                 https://github.com/knative/serving/blob/master/docs/runtime-contract.md
               properties:
-              - !ruby/object:Api::Type::NestedObject
-                name: lifecycle
-                description: |-
-                  Actions that the management system should take in response to container
-                  lifecycle events. Cannot be updated. +optional
-                properties:
-                - !ruby/object:Api::Type::NestedObject
-                  name: preStop
-                  description: |-
-                    PreStop is called immediately before a container is terminated.
-                    The container is terminated after the handler completes.
-                    The reason for termination is passed to the handler.
-                    Regardless of the outcome of the handler, the container is eventually
-                    terminated. Other management of the container blocks until the hook
-                    completes. More info:
-                    https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/#container-hooks
-                    +optional
-                  properties:
-                  - !ruby/object:Api::Type::NestedObject
-                    name: exec
-                    description: |-
-                      One and only one of the following should be specified.
-                      Exec specifies the action to take.
-                      +optional
-                    properties:
-                    - !ruby/object:Api::Type::String
-                      name: command
-                      description: |-
-                        Command is the command line to execute inside the container, the working
-                        directory for the command  is root ('/') in the container's filesystem. The
-                        command is simply exec'd, it is not run inside a shell, so traditional
-                        shell instructions ('|', etc) won't work. To use a shell, you need to
-                        explicitly call out to that shell. Exit status of 0 is treated as
-                        live/healthy and non-zero is unhealthy. +optional
-                  - !ruby/object:Api::Type::NestedObject
-                    name: httpGet
-                    description: |-
-                      HTTPGet specifies the http request to perform.
-                      +optional
-                    properties:
-                    - !ruby/object:Api::Type::Array
-                      name: httpHeaders
-                      description: |-
-                        Custom headers to set in the request. HTTP allows repeated headers.
-                        +optional
-                      item_type: !ruby/object:Api::Type::NestedObject
-                        properties:
-                        - !ruby/object:Api::Type::String
-                          name: value
-                          description: The header field value
-                        - !ruby/object:Api::Type::String
-                          name: name
-                          description: The header field name
-                    - !ruby/object:Api::Type::String
-                      name: path
-                      description: |-
-                        Path to access on the HTTP server.
-                        +optional
-                    - !ruby/object:Api::Type::NestedObject
-                      name: port
-                      description: |-
-                        Name or number of the port to access on the container.
-                        Number must be in the range 1 to 65535.
-                        Name must be an IANA_SVC_NAME.
-                      properties:
-                      - !ruby/object:Api::Type::String
-                        name: type
-                        description: The type of the value.
-                      - !ruby/object:Api::Type::Integer
-                        name: intVal
-                        description: The int value.
-                      - !ruby/object:Api::Type::String
-                        name: strVal
-                        description: The string value.
-                    - !ruby/object:Api::Type::String
-                      name: host
-                      description: |-
-                        Host name to connect to, defaults to the pod IP. You probably want to set
-                        "Host" in httpHeaders instead.
-                        +optional
-                    - !ruby/object:Api::Type::String
-                      name: scheme
-                      description: |-
-                        Scheme to use for connecting to the host.
-                        Defaults to HTTP.
-                        +optional
-                - !ruby/object:Api::Type::NestedObject
-                  name: postStart
-                  description: |-
-                    PostStart is called immediately after a container is created. If the
-                    handler fails, the container is terminated and restarted according to its
-                    restart policy. Other management of the container blocks until the hook
-                    completes. More info:
-                    https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/#container-hooks
-                    +optional
-                  properties:
-                  - !ruby/object:Api::Type::NestedObject
-                    name: exec
-                    description: |-
-                      One and only one of the following should be specified.
-                      Exec specifies the action to take.
-                      +optional
-                    properties:
-                    - !ruby/object:Api::Type::String
-                      name: command
-                      description: |-
-                        Command is the command line to execute inside the container, the working
-                        directory for the command  is root ('/') in the container's filesystem. The
-                        command is simply exec'd, it is not run inside a shell, so traditional
-                        shell instructions ('|', etc) won't work. To use a shell, you need to
-                        explicitly call out to that shell. Exit status of 0 is treated as
-                        live/healthy and non-zero is unhealthy. +optional
-                  - !ruby/object:Api::Type::NestedObject
-                    name: httpGet
-                    description: |-
-                      HTTPGet specifies the http request to perform.
-                      +optional
-                    properties:
-                    - !ruby/object:Api::Type::Array
-                      name: httpHeaders
-                      description: |-
-                        Custom headers to set in the request. HTTP allows repeated headers.
-                        +optional
-                      item_type: !ruby/object:Api::Type::NestedObject
-                        properties:
-                        - !ruby/object:Api::Type::String
-                          name: value
-                          description: The header field value
-                        - !ruby/object:Api::Type::String
-                          name: name
-                          description: The header field name
-                    - !ruby/object:Api::Type::String
-                      name: path
-                      description: |-
-                        Path to access on the HTTP server.
-                        +optional
-                    - !ruby/object:Api::Type::NestedObject
-                      name: port
-                      description: |-
-                        Name or number of the port to access on the container.
-                        Number must be in the range 1 to 65535.
-                        Name must be an IANA_SVC_NAME.
-                      properties:
-                      - !ruby/object:Api::Type::String
-                        name: type
-                        description: The type of the value.
-                      - !ruby/object:Api::Type::Integer
-                        name: intVal
-                        description: The int value.
-                      - !ruby/object:Api::Type::String
-                        name: strVal
-                        description: The string value.
-                    - !ruby/object:Api::Type::String
-                      name: host
-                      description: |-
-                        Host name to connect to, defaults to the pod IP. You probably want to set
-                        "Host" in httpHeaders instead.
-                        +optional
-                    - !ruby/object:Api::Type::String
-                      name: scheme
-                      description: |-
-                        Scheme to use for connecting to the host.
-                        Defaults to HTTP.
-                        +optional
-              - !ruby/object:Api::Type::String
-                name: terminationMessagePath
-                description: |-
-                  Optional: Path at which the file to which the container's termination
-                  message will be written is mounted into the container's filesystem. Message
-                  written is intended to be brief final status, such as an assertion failure
-                  message. Will be truncated by the node if greater than 4096 bytes. The
-                  total message length across all containers will be limited to 12kb.
-                  Defaults to /dev/termination-log.
-                  Cannot be updated.
-                  +optional
-              - !ruby/object:Api::Type::Boolean
-                name: stdin
-                description: |-
-                  Whether this container should allocate a buffer for stdin in the container
-                  runtime. If this is not set, reads from stdin in the container will always
-                  result in EOF. Default is false. +optional
-              - !ruby/object:Api::Type::Array
-                name: volumeMounts
-                description: |-
-                  Pod volumes to mount into the container's filesystem.
-                  Cannot be updated.
-                  +optional
-                item_type: !ruby/object:Api::Type::NestedObject
-                  properties:
-                  - !ruby/object:Api::Type::Boolean
-                    name: readOnly
-                    description: |-
-                      Mounted read-only if true, read-write otherwise (false or unspecified).
-                      Defaults to false.
-                      +optional
-                    output: true
-                  - !ruby/object:Api::Type::String
-                    name: mountPropagation
-                    description: |-
-                      mountPropagation determines how mounts are propagated from the host
-                      to container and the other way around.
-                      When not set, MountPropagationHostToContainer is used.
-                      This field is beta in 1.10.
-                      +optional
-                  - !ruby/object:Api::Type::String
-                    name: mountPath
-                    description: |-
-                      Path within the container at which the volume should be mounted.  Must
-                      not contain ':'.
-                  - !ruby/object:Api::Type::String
-                    name: subPath
-                    description: |-
-                      Path within the volume from which the container's volume should be mounted.
-                      Defaults to "" (volume's root).
-                      +optional
-                  - !ruby/object:Api::Type::String
-                    name: name
-                    description: This must match the Name of a Volume.
-              - !ruby/object:Api::Type::Boolean
-                name: tty
-                description: |-
-                  Whether this container should allocate a TTY for itself, also requires
-                  'stdin' to be true. Default is false. +optional
-              - !ruby/object:Api::Type::Array
-                name: volumeDevices
-                description: |-
-                  volumeDevices is the list of block devices to be used by the container.
-                  This is an alpha feature and may change in the future.
-                  +optional
-                item_type: !ruby/object:Api::Type::NestedObject
-                  properties:
-                  - !ruby/object:Api::Type::String
-                    name: name
-                    description: name must match the name of a persistentVolumeClaim
-                      in the pod
-                  - !ruby/object:Api::Type::String
-                    name: devicePath
-                    description: |-
-                      devicePath is the path inside of the container that the device will be
-                      mapped to.
               - !ruby/object:Api::Type::Array
                 name: ports
                 description: |-
@@ -737,7 +350,6 @@ objects:
                   listening on the default "0.0.0.0" address inside a container will be
                   accessible from the network.
                   Cannot be updated.
-                  +optional
                 item_type: !ruby/object:Api::Type::NestedObject
                   properties:
                   - !ruby/object:Api::Type::Integer
@@ -750,19 +362,16 @@ objects:
                     description: |-
                       Protocol for port. Must be UDP or TCP.
                       Defaults to "TCP".
-                      +optional
                   - !ruby/object:Api::Type::String
                     name: hostIP
                     description: |-
                       What host IP to bind the external port to.
-                      +optional
                   - !ruby/object:Api::Type::String
                     name: name
                     description: |-
                       If specified, this must be an IANA_SVC_NAME and unique within the pod. Each
                       named port in a pod must have a unique name. Name for the port that can be
                       referred to by services.
-                      +optional
                   - !ruby/object:Api::Type::Integer
                     name: hostPort
                     description: |-
@@ -770,7 +379,6 @@ objects:
                       If specified, this must be a valid port number, 0 < x < 65536.
                       If HostNetwork is specified, this must match ContainerPort.
                       Most containers do not need this.
-                      +optional
               - !ruby/object:Api::Type::String
                 name: workingDir
                 description: |-
@@ -778,7 +386,6 @@ objects:
                   If not specified, the container runtime's default will be used, which
                   might be configured in the container image.
                   Cannot be updated.
-                  +optional
               - !ruby/object:Api::Type::Array
                 name: args
                 description: |-
@@ -792,19 +399,7 @@ objects:
                   Cannot be updated.
                   More info:
                   https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell
-                  +optional
                 item_type: Api::Type::String
-              - !ruby/object:Api::Type::Boolean
-                name: stdinOnce
-                description: |-
-                  Whether the container runtime should close the stdin channel after it has
-                  been opened by a single attach. When stdin is true the stdin stream will
-                  remain open across multiple attach sessions. If stdinOnce is set to true,
-                  stdin is opened on container start, is empty until the first client
-                  attaches to stdin, and then remains open and accepts data until the client
-                  disconnects, at which time stdin is closed and remains closed until the
-                  container is restarted. If this flag is false, a container processes that
-                  reads from stdin will never receive an EOF. Default is false +optional
               - !ruby/object:Api::Type::Array
                 name: envFrom
                 description: |-
@@ -813,25 +408,23 @@ objects:
                   will be reported as an event when the container is starting. When a key
                   exists in multiple sources, the value associated with the last source will
                   take precedence. Values defined by an Env with a duplicate key will take
-                  precedence. Cannot be updated. +optional
+                  precedence. Cannot be updated.
                 item_type: !ruby/object:Api::Type::NestedObject
                   properties:
                   - !ruby/object:Api::Type::String
                     name: prefix
                     description: |-
                       An optional identifier to prepend to each key in the ConfigMap. Must be a
-                      C_IDENTIFIER. +optional
+                      C_IDENTIFIER.
                   - !ruby/object:Api::Type::NestedObject
                     name: configMapRef
                     description: |-
                       The ConfigMap to select from
-                      +optional
                     properties:
                     - !ruby/object:Api::Type::Boolean
                       name: optional
                       description: |-
                         Specify whether the ConfigMap must be defined
-                        +optional
                     - !ruby/object:Api::Type::NestedObject
                       name: localObjectReference
                       description: The ConfigMap to select from.
@@ -846,7 +439,6 @@ objects:
                     name: secretRef
                     description: |-
                       The Secret to select from
-                      +optional
                     properties:
                     - !ruby/object:Api::Type::NestedObject
                       name: localObjectReference
@@ -862,7 +454,6 @@ objects:
                       name: optional
                       description: |-
                         Specify whether the Secret must be defined
-                        +optional
               - !ruby/object:Api::Type::String
                 name: image
                 required: true
@@ -888,244 +479,12 @@ objects:
                   Cannot be updated.
                   More info:
                   https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell
-                  +optional
                 item_type: Api::Type::String
-              - !ruby/object:Api::Type::String
-                name: terminationMessagePolicy
-                description: |-
-                  Indicate how the termination message should be populated. File will use the
-                  contents of terminationMessagePath to populate the container status message
-                  on both success and failure. FallbackToLogsOnError will use the last chunk
-                  of container log output if the termination message file is empty and the
-                  container exited with an error. The log output is limited to 2048 bytes or
-                  80 lines, whichever is smaller. Defaults to File. Cannot be updated.
-                  +optional
-              - !ruby/object:Api::Type::NestedObject
-                name: securityContext
-                description: |-
-                  Security options the pod should run with.
-                  More info: https://kubernetes.io/docs/concepts/policy/security-context/
-                  More info:
-                  https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-                  +optional
-                properties:
-                - !ruby/object:Api::Type::NestedObject
-                  name: capabilities
-                  description: |-
-                    The capabilities to add/drop when running containers.
-                    Defaults to the default set of capabilities granted by the container
-                    runtime. +optional
-                  properties:
-                  - !ruby/object:Api::Type::Array
-                    name: add
-                    description: |-
-                      Added capabilities
-                      +optional
-                    item_type: Api::Type::String
-                  - !ruby/object:Api::Type::Array
-                    name: drop
-                    description: |-
-                      Removed capabilities
-                      +optional
-                    item_type: Api::Type::String
-                - !ruby/object:Api::Type::Boolean
-                  name: runAsNonRoot
-                  description: |-
-                    Indicates that the container must run as a non-root user.
-                    If true, the Kubelet will validate the image at runtime to ensure that it
-                    does not run as UID 0 (root) and fail to start the container if it does.
-                    If unset or false, no such validation will be performed.
-                    May also be set in PodSecurityContext.  If set in both SecurityContext and
-                    PodSecurityContext, the value specified in SecurityContext takes
-                    precedence. +optional
-                - !ruby/object:Api::Type::String
-                  name: runAsGroup
-                  description: |-
-                    The GID to run the entrypoint of the container process.
-                    Uses runtime default if unset.
-                    May also be set in PodSecurityContext.  If set in both SecurityContext and
-                    PodSecurityContext, the value specified in SecurityContext takes
-                    precedence. +optional
-                - !ruby/object:Api::Type::Boolean
-                  name: privileged
-                  description: |-
-                    Run container in privileged mode.
-                    Processes in privileged containers are essentially equivalent to root on
-                    the host. Defaults to false. +optional
-                - !ruby/object:Api::Type::Boolean
-                  name: allowPrivilegeEscalation
-                  description: |-
-                    AllowPrivilegeEscalation controls whether a process can gain more
-                    privileges than its parent process. This bool directly controls if
-                    the no_new_privs flag will be set on the container process.
-                    AllowPrivilegeEscalation is true always when the container is:
-                    1) run as Privileged
-                    2) has CAP_SYS_ADMIN
-                    +optional
-                - !ruby/object:Api::Type::NestedObject
-                  name: seLinuxOptions
-                  description: |-
-                    The SELinux context to be applied to the container.
-                    If unspecified, the container runtime will allocate a random SELinux
-                    context for each container.  May also be set in PodSecurityContext.  If set
-                    in both SecurityContext and PodSecurityContext, the value specified in
-                    SecurityContext takes precedence. +optional
-                  properties:
-                  - !ruby/object:Api::Type::String
-                    name: user
-                    description: |-
-                      User is a SELinux user label that applies to the container.
-                      +optional
-                  - !ruby/object:Api::Type::String
-                    name: type
-                    description: |-
-                      Type is a SELinux type label that applies to the container.
-                      +optional
-                  - !ruby/object:Api::Type::String
-                    name: role
-                    description: |-
-                      Role is a SELinux role label that applies to the container.
-                      +optional
-                  - !ruby/object:Api::Type::String
-                    name: level
-                    description: |-
-                      Level is SELinux level label that applies to the container.
-                      +optional
-                - !ruby/object:Api::Type::Boolean
-                  name: readOnlyRootFilesystem
-                  description: |-
-                    Whether this container has a read-only root filesystem.
-                    Default is false.
-                    +optional
-                  output: true
-                - !ruby/object:Api::Type::String
-                  name: runAsUser
-                  description: |-
-                    The UID to run the entrypoint of the container process.
-                    Defaults to user specified in image metadata if unspecified.
-                    May also be set in PodSecurityContext.  If set in both SecurityContext and
-                    PodSecurityContext, the value specified in SecurityContext takes
-                    precedence. +optional
-              - !ruby/object:Api::Type::NestedObject
-                name: livenessProbe
-                description: |-
-                  Periodic probe of container liveness.
-                  Container will be restarted if the probe fails.
-                  Cannot be updated.
-                  More info:
-                  https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes
-                  +optional
-                properties:
-                - !ruby/object:Api::Type::Integer
-                  name: failureThreshold
-                  description: |-
-                    Minimum consecutive failures for the probe to be considered failed after
-                    having succeeded. Defaults to 3. Minimum value is 1. +optional
-                - !ruby/object:Api::Type::Integer
-                  name: initialDelaySeconds
-                  description: |-
-                    Number of seconds after the container has started before liveness probes
-                    are initiated. More info:
-                    https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes
-                    +optional
-                - !ruby/object:Api::Type::Integer
-                  name: timeoutSeconds
-                  description: |-
-                    Number of seconds after which the probe times out.
-                    Defaults to 1 second. Minimum value is 1.
-                    More info:
-                    https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes
-                    +optional
-                - !ruby/object:Api::Type::NestedObject
-                  name: handler
-                  description: The action taken to determine the health of a container
-                  properties:
-                  - !ruby/object:Api::Type::NestedObject
-                    name: exec
-                    description: |-
-                      One and only one of the following should be specified.
-                      Exec specifies the action to take.
-                      +optional
-                    properties:
-                    - !ruby/object:Api::Type::String
-                      name: command
-                      description: |-
-                        Command is the command line to execute inside the container, the working
-                        directory for the command  is root ('/') in the container's filesystem. The
-                        command is simply exec'd, it is not run inside a shell, so traditional
-                        shell instructions ('|', etc) won't work. To use a shell, you need to
-                        explicitly call out to that shell. Exit status of 0 is treated as
-                        live/healthy and non-zero is unhealthy. +optional
-                  - !ruby/object:Api::Type::NestedObject
-                    name: httpGet
-                    description: |-
-                      HTTPGet specifies the http request to perform.
-                      +optional
-                    properties:
-                    - !ruby/object:Api::Type::Array
-                      name: httpHeaders
-                      description: |-
-                        Custom headers to set in the request. HTTP allows repeated headers.
-                        +optional
-                      item_type: !ruby/object:Api::Type::NestedObject
-                        properties:
-                        - !ruby/object:Api::Type::String
-                          name: value
-                          description: The header field value
-                        - !ruby/object:Api::Type::String
-                          name: name
-                          description: The header field name
-                    - !ruby/object:Api::Type::String
-                      name: path
-                      description: |-
-                        Path to access on the HTTP server.
-                        +optional
-                    - !ruby/object:Api::Type::NestedObject
-                      name: port
-                      description: |-
-                        Name or number of the port to access on the container.
-                        Number must be in the range 1 to 65535.
-                        Name must be an IANA_SVC_NAME.
-                      properties:
-                      - !ruby/object:Api::Type::String
-                        name: type
-                        description: The type of the value.
-                      - !ruby/object:Api::Type::Integer
-                        name: intVal
-                        description: The int value.
-                      - !ruby/object:Api::Type::String
-                        name: strVal
-                        description: The string value.
-                    - !ruby/object:Api::Type::String
-                      name: host
-                      description: |-
-                        Host name to connect to, defaults to the pod IP. You probably want to set
-                        "Host" in httpHeaders instead.
-                        +optional
-                    - !ruby/object:Api::Type::String
-                      name: scheme
-                      description: |-
-                        Scheme to use for connecting to the host.
-                        Defaults to HTTP.
-                        +optional
-                - !ruby/object:Api::Type::Integer
-                  name: successThreshold
-                  description: |-
-                    Minimum consecutive successes for the probe to be considered successful
-                    after having failed. Defaults to 1. Must be 1 for liveness. Minimum value
-                    is 1. +optional
-                - !ruby/object:Api::Type::Integer
-                  name: periodSeconds
-                  description: |-
-                    How often (in seconds) to perform the probe.
-                    Default to 10 seconds. Minimum value is 1.
-                    +optional
               - !ruby/object:Api::Type::Array
                 name: env
                 description: |-
                   List of environment variables to set in the container.
                   Cannot be updated.
-                  +optional
                 item_type: !ruby/object:Api::Type::NestedObject
                   properties:
                   - !ruby/object:Api::Type::String
@@ -1142,139 +501,12 @@ objects:
                       references will never be expanded, regardless of whether the variable
                       exists or not.
                       Defaults to "".
-                      +optional
-              - !ruby/object:Api::Type::String
-                name: imagePullPolicy
-                description: |-
-                  Image pull policy.
-                  One of Always, Never, IfNotPresent.
-                  Defaults to Always if :latest tag is specified, or IfNotPresent otherwise.
-                  Cannot be updated.
-                  More info:
-                  https://kubernetes.io/docs/concepts/containers/images#updating-images
-                  +optional
-              - !ruby/object:Api::Type::NestedObject
-                name: readinessProbe
-                description: |-
-                  Periodic probe of container service readiness.
-                  Container will be removed from service endpoints if the probe fails.
-                  Cannot be updated.
-                  More info:
-                  https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes
-                  +optional
-                properties:
-                - !ruby/object:Api::Type::Integer
-                  name: failureThreshold
-                  description: |-
-                    Minimum consecutive failures for the probe to be considered failed after
-                    having succeeded. Defaults to 3. Minimum value is 1. +optional
-                - !ruby/object:Api::Type::Integer
-                  name: initialDelaySeconds
-                  description: |-
-                    Number of seconds after the container has started before liveness probes
-                    are initiated. More info:
-                    https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes
-                    +optional
-                - !ruby/object:Api::Type::Integer
-                  name: timeoutSeconds
-                  description: |-
-                    Number of seconds after which the probe times out.
-                    Defaults to 1 second. Minimum value is 1.
-                    More info:
-                    https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes
-                    +optional
-                - !ruby/object:Api::Type::NestedObject
-                  name: handler
-                  description: The action taken to determine the health of a container
-                  properties:
-                  - !ruby/object:Api::Type::NestedObject
-                    name: exec
-                    description: |-
-                      One and only one of the following should be specified.
-                      Exec specifies the action to take.
-                      +optional
-                    properties:
-                    - !ruby/object:Api::Type::String
-                      name: command
-                      description: |-
-                        Command is the command line to execute inside the container, the working
-                        directory for the command  is root ('/') in the container's filesystem. The
-                        command is simply exec'd, it is not run inside a shell, so traditional
-                        shell instructions ('|', etc) won't work. To use a shell, you need to
-                        explicitly call out to that shell. Exit status of 0 is treated as
-                        live/healthy and non-zero is unhealthy. +optional
-                  - !ruby/object:Api::Type::NestedObject
-                    name: httpGet
-                    description: |-
-                      HTTPGet specifies the http request to perform.
-                      +optional
-                    properties:
-                    - !ruby/object:Api::Type::Array
-                      name: httpHeaders
-                      description: |-
-                        Custom headers to set in the request. HTTP allows repeated headers.
-                        +optional
-                      item_type: !ruby/object:Api::Type::NestedObject
-                        properties:
-                        - !ruby/object:Api::Type::String
-                          name: value
-                          description: The header field value
-                        - !ruby/object:Api::Type::String
-                          name: name
-                          description: The header field name
-                    - !ruby/object:Api::Type::String
-                      name: path
-                      description: |-
-                        Path to access on the HTTP server.
-                        +optional
-                    - !ruby/object:Api::Type::NestedObject
-                      name: port
-                      description: |-
-                        Name or number of the port to access on the container.
-                        Number must be in the range 1 to 65535.
-                        Name must be an IANA_SVC_NAME.
-                      properties:
-                      - !ruby/object:Api::Type::String
-                        name: type
-                        description: The type of the value.
-                      - !ruby/object:Api::Type::Integer
-                        name: intVal
-                        description: The int value.
-                      - !ruby/object:Api::Type::String
-                        name: strVal
-                        description: The string value.
-                    - !ruby/object:Api::Type::String
-                      name: host
-                      description: |-
-                        Host name to connect to, defaults to the pod IP. You probably want to set
-                        "Host" in httpHeaders instead.
-                        +optional
-                    - !ruby/object:Api::Type::String
-                      name: scheme
-                      description: |-
-                        Scheme to use for connecting to the host.
-                        Defaults to HTTP.
-                        +optional
-                - !ruby/object:Api::Type::Integer
-                  name: successThreshold
-                  description: |-
-                    Minimum consecutive successes for the probe to be considered successful
-                    after having failed. Defaults to 1. Must be 1 for liveness. Minimum value
-                    is 1. +optional
-                - !ruby/object:Api::Type::Integer
-                  name: periodSeconds
-                  description: |-
-                    How often (in seconds) to perform the probe.
-                    Default to 10 seconds. Minimum value is 1.
-                    +optional
               - !ruby/object:Api::Type::NestedObject
                 name: resources
                 description: |-
-                  Compute Resources required by this container.
-                  Cannot be updated.
+                  Compute Resources required by this container. Used to set values such as max memory
                   More info:
                   https://kubernetes.io/docs/concepts/storage/persistent-volumes#resources
-                  +optional
                 properties:
                 - !ruby/object:Api::Type::KeyValuePairs
                   name: limits
@@ -1301,6 +533,7 @@ objects:
                 - `2-N` thread-safe, max concurrency of N
             - !ruby/object:Api::Type::String
               name: serviceAccountName
+              exclude: true
               description: Not currently used by Cloud Run.
             - !ruby/object:Api::Type::Enum
               name: servingState
@@ -1318,168 +551,9 @@ objects:
               - :ACTIVE
               - :RESERVE
               - :RETIRED
-          - !ruby/object:Api::Type::NestedObject
-            name: metadata
-            description: |-
-              Optional metadata for this Revision, including labels and annotations. Name
-              will be generated by the Configuration.
-            properties:
-            - !ruby/object:Api::Type::String
-              name: creationTimestamp
-              description: |-
-                CreationTimestamp is a timestamp representing the server time when this
-                object was created. It is not guaranteed to be set in happens-before order
-                across separate operations. Clients may not set this value. It is
-                represented in RFC3339 form and is in UTC.
-
-                Populated by the system.
-                Read-only.
-                Null for lists.
-                More info:
-                https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata
-                +optional
-              output: true
-            - !ruby/object:Api::Type::KeyValuePairs
-              name: labels
-              description: |-
-                Map of string keys and values that can be used to organize and categorize
-                (scope and select) objects. May match selectors of replication controllers
-                and routes.
-                More info: http://kubernetes.io/docs/user-guide/labels
-                +optional
-            - !ruby/object:Api::Type::Integer
-              name: generation
-              description: |-
-                A sequence number representing a specific generation of the desired state.
-                Populated by the system. Read-only.
-                +optional
-              output: true
-            - !ruby/object:Api::Type::String
-              name: resourceVersion
-              description: |-
-                An opaque value that represents the internal version of this object that
-                can be used by clients to determine when objects have changed. May be used
-                for optimistic concurrency, change detection, and the watch operation on a
-                resource or set of resources. Clients must treat these values as opaque and
-                passed unmodified back to the server. They may only be valid for a
-                particular resource or set of resources.
-
-                Populated by the system.
-                Read-only.
-                Value must be treated as opaque by clients and .
-                More info:
-                https://git.k8s.io/community/contributors/devel/api-conventions.md#concurrency-control-and-consistency
-                +optional
-              output: true
-            - !ruby/object:Api::Type::String
-              name: selfLink
-              description: |-
-                SelfLink is a URL representing this object.
-                Populated by the system.
-                Read-only.
-                +optional
-                 string selfLink = 4;
-              output: true
-            - !ruby/object:Api::Type::String
-              name: uid
-              description: |-
-                UID is the unique in time and space value for this object. It is typically
-                generated by the server on successful creation of a resource and is not
-                allowed to change on PUT operations.
-
-                Populated by the system.
-                Read-only.
-                More info: http://kubernetes.io/docs/user-guide/identifiers#uids
-                +optional
-              output: true
-            - !ruby/object:Api::Type::String
-              name: namespace
-              description: |-
-                Namespace defines the space within each name must be unique, within a
-                Cloud Run region. In Cloud Run the namespace must be equal to either the
-                project ID or project number.
-            - !ruby/object:Api::Type::KeyValuePairs
-              name: annotations
-              description: |-
-                Annotations is an unstructured key value map stored with a resource that
-                may be set by external tools to store and retrieve arbitrary metadata. They
-                are not queryable and should be preserved when modifying objects. More
-                info: http://kubernetes.io/docs/user-guide/annotations +optional
-            - !ruby/object:Api::Type::String
-              name: name
-              description: |-
-                Name must be unique within a namespace, within a Cloud Run region.
-                Is required when creating
-                resources, although some resources may allow a client to request the
-                generation of an appropriate name automatically. Name is primarily intended
-                for creation idempotence and configuration definition. Cannot be updated.
-                More info: http://kubernetes.io/docs/user-guide/identifiers#names
-                +optional
-            - !ruby/object:Api::Type::String
-              name: deletionTimestamp
-              description: |-
-                DeletionTimestamp is RFC 3339 date and time at which this resource will be
-                deleted. This field is set by the server when a graceful deletion is
-                requested by the user, and is not directly settable by a client. The
-                resource is expected to be deleted (no longer visible from resource lists,
-                and not reachable by name) after the time in this field, once the
-                finalizers list is empty. As long as the finalizers list contains items,
-                deletion is blocked. Once the deletionTimestamp is set, this value may not
-                be unset or be set further into the future, although it may be shortened or
-                the resource may be deleted prior to this time. For example, a user may
-                request that a pod is deleted in 30 seconds. The Kubelet will react by
-                sending a graceful termination signal to the containers in the pod. After
-                that 30 seconds, the Kubelet will send a hard termination signal (SIGKILL)
-                to the container and after cleanup, remove the pod from the API. In the
-                presence of network partitions, this object may still exist after this
-                timestamp, until an administrator or automated process can determine the
-                resource is fully terminated.
-                If not set, graceful deletion of the object has not been requested.
-
-                Populated by the system when a graceful deletion is requested.
-                Read-only.
-                More info:
-                https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata
-                +optional
-              output: true
-            - !ruby/object:Api::Type::Array
-              name: ownerReferences
-              description: |-
-                List of objects that own this object. If ALL objects in the list have
-                been deleted, this object will be garbage collected.
-                +optional
-              item_type: !ruby/object:Api::Type::NestedObject
-                properties:
-                - !ruby/object:Api::Type::Boolean
-                  name: blockOwnerDeletion
-                  description: |-
-                    If true, AND if the owner has the "foregroundDeletion" finalizer, then
-                    the owner cannot be deleted from the key-value store until this
-                    reference is removed.
-                    Defaults to false.
-                    To set this field, a user needs "delete" permission of the owner,
-                    otherwise 422 (Unprocessable Entity) will be returned.
-                    +optional
-                - !ruby/object:Api::Type::String
-                  name: apiVersion
-                  description: API version of the referent.
-                - !ruby/object:Api::Type::String
-                  name: name
-                  description: |-
-                    Name of the referent.
-                    More info: http://kubernetes.io/docs/user-guide/identifiers#names
-                - !ruby/object:Api::Type::String
-                  name: uid
-                  description: |-
-                    UID of the referent.
-                    More info: http://kubernetes.io/docs/user-guide/identifiers#uids
-                - !ruby/object:Api::Type::Boolean
-                  name: controller
-                  description: |-
-                    If true, this reference points to the managing controller.
-                    +optional
   - !ruby/object:Api::Type::NestedObject
     name: metadata
+    # TODO - convenience this?
     required: true
     description: |-
       Metadata associated with this Service, including name, namespace, labels,
@@ -1498,7 +572,6 @@ objects:
         Null for lists.
         More info:
         https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata
-        +optional
       output: true
     - !ruby/object:Api::Type::KeyValuePairs
       name: labels
@@ -1507,13 +580,11 @@ objects:
         (scope and select) objects. May match selectors of replication controllers
         and routes.
         More info: http://kubernetes.io/docs/user-guide/labels
-        +optional
     - !ruby/object:Api::Type::Integer
       name: generation
       description: |-
         A sequence number representing a specific generation of the desired state.
         Populated by the system. Read-only.
-        +optional
       output: true
     - !ruby/object:Api::Type::String
       name: resourceVersion
@@ -1530,7 +601,6 @@ objects:
         Value must be treated as opaque by clients and .
         More info:
         https://git.k8s.io/community/contributors/devel/api-conventions.md#concurrency-control-and-consistency
-        +optional
       output: true
     - !ruby/object:Api::Type::String
       name: selfLink
@@ -1538,7 +608,6 @@ objects:
         SelfLink is a URL representing this object.
         Populated by the system.
         Read-only.
-        +optional
          string selfLink = 4;
       output: true
     - !ruby/object:Api::Type::String
@@ -1551,7 +620,6 @@ objects:
         Populated by the system.
         Read-only.
         More info: http://kubernetes.io/docs/user-guide/identifiers#uids
-        +optional
       output: true
     - !ruby/object:Api::Type::String
       name: namespace
@@ -1562,11 +630,12 @@ objects:
         project ID or project number.
     - !ruby/object:Api::Type::KeyValuePairs
       name: annotations
+      # TODO - look into these more
       description: |-
         Annotations is an unstructured key value map stored with a resource that
         may be set by external tools to store and retrieve arbitrary metadata. They
         are not queryable and should be preserved when modifying objects. More
-        info: http://kubernetes.io/docs/user-guide/annotations +optional
+        info: http://kubernetes.io/docs/user-guide/annotations
     - !ruby/object:Api::Type::String
       name: name
       required: true
@@ -1577,7 +646,6 @@ objects:
         generation of an appropriate name automatically. Name is primarily intended
         for creation idempotence and configuration definition. Cannot be updated.
         More info: http://kubernetes.io/docs/user-guide/identifiers#names
-        +optional
     - !ruby/object:Api::Type::String
       name: deletionTimestamp
       description: |-
@@ -1603,41 +671,4 @@ objects:
         Read-only.
         More info:
         https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata
-        +optional
       output: true
-    - !ruby/object:Api::Type::Array
-      name: ownerReferences
-      description: |-
-        List of objects that own this object. If ALL objects in the list have
-        been deleted, this object will be garbage collected.
-        +optional
-      item_type: !ruby/object:Api::Type::NestedObject
-        properties:
-        - !ruby/object:Api::Type::Boolean
-          name: blockOwnerDeletion
-          description: |-
-            If true, AND if the owner has the "foregroundDeletion" finalizer, then
-            the owner cannot be deleted from the key-value store until this
-            reference is removed.
-            Defaults to false.
-            To set this field, a user needs "delete" permission of the owner,
-            otherwise 422 (Unprocessable Entity) will be returned.
-            +optional
-        - !ruby/object:Api::Type::String
-          name: apiVersion
-          description: API version of the referent.
-        - !ruby/object:Api::Type::String
-          name: name
-          description: |-
-            Name of the referent.
-            More info: http://kubernetes.io/docs/user-guide/identifiers#names
-        - !ruby/object:Api::Type::String
-          name: uid
-          description: |-
-            UID of the referent.
-            More info: http://kubernetes.io/docs/user-guide/identifiers#uids
-        - !ruby/object:Api::Type::Boolean
-          name: controller
-          description: |-
-            If true, this reference points to the managing controller.
-            +optional
