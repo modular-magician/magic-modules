@@ -666,6 +666,13 @@ func resourceContainerCluster() *schema.Resource {
 				},
 			},
 
+			"resource_labels": {
+				Type:     schema.TypeMap,
+				Optional: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
+			},
+
+<% unless version == 'ga' -%>
 			"vertical_pod_autoscaling": {
 				Type:     schema.TypeList,
 				MaxItems: 1,
@@ -680,13 +687,6 @@ func resourceContainerCluster() *schema.Resource {
 				},
 			},
 
-			"resource_labels": {
-				Type:     schema.TypeMap,
-				Optional: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
-			},
-
-<% unless version == 'ga' -%>
 			"tpu_ipv4_cidr_block":  {
 				Computed: true,
 				Type: schema.TypeString,
@@ -1039,10 +1039,6 @@ func resourceContainerClusterRead(d *schema.ResourceData, meta interface{}) erro
 		return err
 	}
 
-	if err := d.Set("vertical_pod_autoscaling", flattenVerticalPodAutoscaling(cluster.VerticalPodAutoscaling)); err != nil {
-		return err
-	}
-
 	igUrls, err := getInstanceGroupUrlsFromManagerUrls(config, cluster.InstanceGroupUrls)
 	if err != nil {
 		return err
@@ -1052,6 +1048,10 @@ func resourceContainerClusterRead(d *schema.ResourceData, meta interface{}) erro
 	}
 
 <% unless version == 'ga' -%>
+	if err := d.Set("vertical_pod_autoscaling", flattenVerticalPodAutoscaling(cluster.VerticalPodAutoscaling)); err != nil {
+		return err
+	}
+
 	if err := d.Set("pod_security_policy_config", flattenPodSecurityPolicyConfig(cluster.PodSecurityPolicyConfig)); err != nil {
 		return err
 	}
@@ -2201,6 +2201,7 @@ func flattenPrivateClusterConfig(c *containerBeta.PrivateClusterConfig) []map[st
 	}
 }
 
+<% unless version == 'ga' -%>
 func flattenVerticalPodAutoscaling(c *containerBeta.VerticalPodAutoscaling) []map[string]interface{} {
 	if c == nil {
 		return nil
@@ -2211,10 +2212,10 @@ func flattenVerticalPodAutoscaling(c *containerBeta.VerticalPodAutoscaling) []ma
 		},
 	}
 }
+<% end -%>
 
 func flattenIPAllocationPolicy(c *containerBeta.Cluster, d *schema.ResourceData, config *Config) []map[string]interface{} {
 	if c == nil || c.IpAllocationPolicy == nil {
-
 		return nil
 	}
 	nodeCidrBlock := ""
