@@ -1,4 +1,4 @@
-# Copyright 2018 Google Inc.
+# Copyright 2019 Google Inc.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,11 +11,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-'lib/ansible/module_utils/gcp_utils.py': 'provider/ansible/gcp_utils.py'
-'lib/ansible/module_utils/gcp_utils.py': 'provider/ansible/gcp_utils.py'
-'lib/ansible/plugins/doc_fragments/gcp.py':
-  'provider/ansible/gcp_doc_frag.py'
-'test/integration/cloud-config-gcp.ini.template':
-  'provider/ansible/test_template.yaml'
-'test/runner/lib/cloud/gcp.py': 'provider/ansible/gcp_integration_runner.py'
-'test/units/module_utils/gcp/test_gcp_utils.py': 'provider/ansible/test_gcp_utils.py'
+require 'api/object'
+
+module Api
+  class Product < Api::Object::Named
+    # Represents any APIs that are required to be enabled to use this product
+    class ApiReference < Api::Object
+      attr_reader :name
+      attr_reader :url
+
+      def validate
+        super
+        check :name, type: String, required: true
+        check :url, type: String, required: true
+      end
+    end
+  end
+end
