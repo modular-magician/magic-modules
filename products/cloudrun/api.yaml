@@ -24,7 +24,7 @@ objects:
 # Cloud Run DomainMappings
 - !ruby/object:Api::Resource
   name: DomainMapping
-  kind:
+  kind: DomainMapping
   base_url: projects/{{project}}/locations/{{location}}/domainmappings
   description: Resource to hold the state and status of a user's domain mapping.
   parameters:
@@ -273,6 +273,7 @@ objects:
           properties:
           - !ruby/object:Api::Type::NestedObject
             name: spec
+            required: true
             description: RevisionSpec holds the desired state of the Revision (from
               the client).
             properties:
