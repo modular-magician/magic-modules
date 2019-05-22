@@ -14,13 +14,13 @@
 --- !ruby/object:Provider::Terraform::Config
 overrides: !ruby/object:Overrides::ResourceOverrides
   Service: !ruby/object:Overrides::Terraform::ResourceOverride
-    # examples:
-    # - !ruby/object:Provider::Terraform::Examples
-    #   name: "backend_service_basic"
-    #   primary_resource_id: "default"
-    #     vars:
-    #       backend_service_name: "backend-service"
-    #       http_health_check_name: "health-check"
+    examples:
+      - !ruby/object:Provider::Terraform::Examples
+        name: "cloudrun_service_basic"
+        primary_resource_id: "default"
+        vars:
+          cloudrun_service_name: "backend-service"
+          namespace: :PROJECT_NAME
     custom_code: !ruby/object:Provider::Terraform::CustomCode
       encoder: 'templates/terraform/encoders/cloudrun.go.erb'
       decoder: 'templates/terraform/decoders/cloudrun.go.erb'
