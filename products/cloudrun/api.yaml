@@ -127,20 +127,6 @@ objects:
     name: metadata
     description: Metadata associated with this BuildTemplate.
     properties:
-    - !ruby/object:Api::Type::String
-      name: creationTimestamp
-      description: |-
-        CreationTimestamp is a timestamp representing the server time when this
-        object was created. It is not guaranteed to be set in happens-before order
-        across separate operations. Clients may not set this value. It is
-        represented in RFC3339 form and is in UTC.
-
-        Populated by the system.
-        Read-only.
-        Null for lists.
-        More info:
-        https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata
-      output: true
     - !ruby/object:Api::Type::KeyValuePairs
       name: labels
       description: |-
@@ -213,32 +199,6 @@ objects:
         generation of an appropriate name automatically. Name is primarily intended
         for creation idempotence and configuration definition. Cannot be updated.
         More info: http://kubernetes.io/docs/user-guide/identifiers#names
-    - !ruby/object:Api::Type::String
-      name: deletionTimestamp
-      description: |-
-        DeletionTimestamp is RFC 3339 date and time at which this resource will be
-        deleted. This field is set by the server when a graceful deletion is
-        requested by the user, and is not directly settable by a client. The
-        resource is expected to be deleted (no longer visible from resource lists,
-        and not reachable by name) after the time in this field, once the
-        finalizers list is empty. As long as the finalizers list contains items,
-        deletion is blocked. Once the deletionTimestamp is set, this value may not
-        be unset or be set further into the future, although it may be shortened or
-        the resource may be deleted prior to this time. For example, a user may
-        request that a pod is deleted in 30 seconds. The Kubelet will react by
-        sending a graceful termination signal to the containers in the pod. After
-        that 30 seconds, the Kubelet will send a hard termination signal (SIGKILL)
-        to the container and after cleanup, remove the pod from the API. In the
-        presence of network partitions, this object may still exist after this
-        timestamp, until an administrator or automated process can determine the
-        resource is fully terminated.
-        If not set, graceful deletion of the object has not been requested.
-
-        Populated by the system when a graceful deletion is requested.
-        Read-only.
-        More info:
-        https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata
-      output: true
 
 
 
@@ -270,16 +230,14 @@ objects:
   properties:
   - !ruby/object:Api::Type::String
     name: name
-    # TODO chrisst - this needs to be a convenience field
     url_param_only: true
+    # TODO chrisst - this needs to be a convenience field
     description: |-
       Convenience field for metadata.name
   - !ruby/object:Api::Type::String
     name: apiVersion
     description: The API version for this call such as "v1alpha1".
     # default_value: serving.knative.dev/v1alpha1
-    # required: false
-    # TODO - hard code this?
   - !ruby/object:Api::Type::String
     name: kind
     # TODO chrisst - remove this and build a MM feature to send this.
@@ -532,6 +490,7 @@ objects:
                 - `1` not-thread-safe. Single concurrency
                 - `2-N` thread-safe, max concurrency of N
             - !ruby/object:Api::Type::String
+              # Will be added by the cloud run team soon
               name: serviceAccountName
               exclude: true
               description: Not currently used by Cloud Run.
@@ -559,20 +518,6 @@ objects:
       Metadata associated with this Service, including name, namespace, labels,
       and annotations.
     properties:
-    - !ruby/object:Api::Type::String
-      name: creationTimestamp
-      description: |-
-        CreationTimestamp is a timestamp representing the server time when this
-        object was created. It is not guaranteed to be set in happens-before order
-        across separate operations. Clients may not set this value. It is
-        represented in RFC3339 form and is in UTC.
-
-        Populated by the system.
-        Read-only.
-        Null for lists.
-        More info:
-        https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata
-      output: true
     - !ruby/object:Api::Type::KeyValuePairs
       name: labels
       description: |-
@@ -630,7 +575,6 @@ objects:
         project ID or project number.
     - !ruby/object:Api::Type::KeyValuePairs
       name: annotations
-      # TODO - look into these more
       description: |-
         Annotations is an unstructured key value map stored with a resource that
         may be set by external tools to store and retrieve arbitrary metadata. They
@@ -646,29 +590,3 @@ objects:
         generation of an appropriate name automatically. Name is primarily intended
         for creation idempotence and configuration definition. Cannot be updated.
         More info: http://kubernetes.io/docs/user-guide/identifiers#names
-    - !ruby/object:Api::Type::String
-      name: deletionTimestamp
-      description: |-
-        DeletionTimestamp is RFC 3339 date and time at which this resource will be
-        deleted. This field is set by the server when a graceful deletion is
-        requested by the user, and is not directly settable by a client. The
-        resource is expected to be deleted (no longer visible from resource lists,
-        and not reachable by name) after the time in this field, once the
-        finalizers list is empty. As long as the finalizers list contains items,
-        deletion is blocked. Once the deletionTimestamp is set, this value may not
-        be unset or be set further into the future, although it may be shortened or
-        the resource may be deleted prior to this time. For example, a user may
-        request that a pod is deleted in 30 seconds. The Kubelet will react by
-        sending a graceful termination signal to the containers in the pod. After
-        that 30 seconds, the Kubelet will send a hard termination signal (SIGKILL)
-        to the container and after cleanup, remove the pod from the API. In the
-        presence of network partitions, this object may still exist after this
-        timestamp, until an administrator or automated process can determine the
-        resource is fully terminated.
-        If not set, graceful deletion of the object has not been requested.
-
-        Populated by the system when a graceful deletion is requested.
-        Read-only.
-        More info:
-        https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata
-      output: true
