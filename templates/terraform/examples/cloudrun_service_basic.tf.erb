@@ -1,9 +1,10 @@
 resource "google_cloudrun_service" "<%= ctx[:primary_resource_id] %>" {
   name          = "<%= ctx[:vars]['cloudrun_service_name'] %>"
   location = "us-central1"
+  provider = "google-beta"
 
   metadata {
-    namespace = "<%= ctx[:vars]["namespace"] %>"
+    namespace = "<%= ctx[:test_env_vars]['namespace'] %>"
   }
 
   spec {
