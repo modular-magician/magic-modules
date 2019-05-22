@@ -14,15 +14,36 @@
 --- !ruby/object:Provider::Terraform::Config
 overrides: !ruby/object:Overrides::ResourceOverrides
   Service: !ruby/object:Overrides::Terraform::ResourceOverride
+    # examples:
+    # - !ruby/object:Provider::Terraform::Examples
+    #   name: "backend_service_basic"
+    #   primary_resource_id: "default"
+    #     vars:
+    #       backend_service_name: "backend-service"
+    #       http_health_check_name: "health-check"
     custom_code: !ruby/object:Provider::Terraform::CustomCode
-      post_create: templates/terraform/post_create/set_name_from_metadata.erb
+      encoder: 'templates/terraform/encoders/cloudrun.go.erb'
+      decoder: 'templates/terraform/decoders/cloudrun.go.erb'
     properties:
+      name: !ruby/object:Overrides::Terraform::PropertyOverride
+        required: true
+      apiVersion: !ruby/object:Overrides::Terraform::PropertyOverride
+        exclude: true
       spec: !ruby/object:Overrides::Terraform::PropertyOverride
         flatten_object: true
-      # spec.runLatest: !ruby/object:Overrides::Terraform::PropertyOverride
-      #   flatten_object: true
-      # spec.runLatest.configuration: !ruby/object:Overrides::Terraform::PropertyOverride
-      #   flatten_object: true
+      spec.runLatest: !ruby/object:Overrides::Terraform::PropertyOverride
+        flatten_object: true
+      spec.runLatest.configuration: !ruby/object:Overrides::Terraform::PropertyOverride
+        flatten_object: true
+      spec.runLatest.configuration.revisionTemplate: !ruby/object:Overrides::Terraform::PropertyOverride
+        flatten_object: true
+      metadata.labels: !ruby/object:Overrides::Terraform::PropertyOverride
+        default_from_api: true
+      metadata.annotations: !ruby/object:Overrides::Terraform::PropertyOverride
+        default_from_api: true
+      metadata.name: !ruby/object:Overrides::Terraform::PropertyOverride
+        exclude: true
+
 
 # This is for copying files over
 files: !ruby/object:Provider::Config::Files
