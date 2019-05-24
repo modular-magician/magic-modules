@@ -26,6 +26,11 @@ objects:
   name: DomainMapping
   kind: DomainMapping
   base_url: projects/{{project}}/locations/{{location}}/domainmappings
+  references: !ruby/object:Api::Resource::ReferenceLinks
+      guides:
+        'Official Documentation':
+          'https://cloud.google.com/run/docs/mapping-custom-domains'
+      api: 'https://cloud.google.com/run/docs/reference/rest/v1alpha1/projects.locations.domainmappings'
   description: Resource to hold the state and status of a user's domain mapping.
   parameters:
   - !ruby/object:Api::Type::String
@@ -207,6 +212,11 @@ objects:
   name: Service
   kind: Service
   base_url: projects/{{project}}/locations/{{location}}/services
+  references: !ruby/object:Api::Resource::ReferenceLinks
+      guides:
+        'Official Documentation':
+          'https://cloud.google.com/run/docs/'
+      api: 'https://cloud.google.com/run/docs/reference/rest/v1alpha1/projects.locations.services'
   description: |-
     Service acts as a top-level container that manages a set of Routes and
     Configurations which implement a network service. Service exists to provide a
@@ -295,45 +305,6 @@ objects:
                 The runtime contract is documented here:
                 https://github.com/knative/serving/blob/master/docs/runtime-contract.md
               properties:
-              - !ruby/object:Api::Type::Array
-                name: ports
-                description: |-
-                  List of ports to expose from the container. Exposing a port here gives
-                  the system additional information about the network connections a
-                  container uses, but is primarily informational. Not specifying a port here
-                  DOES NOT prevent that port from being exposed. Any port which is
-                  listening on the default "0.0.0.0" address inside a container will be
-                  accessible from the network.
-                  Cannot be updated.
-                item_type: !ruby/object:Api::Type::NestedObject
-                  properties:
-                  - !ruby/object:Api::Type::Integer
-                    name: containerPort
-                    description: |-
-                      Number of port to expose on the pod's IP address.
-                      This must be a valid port number, 0 < x < 65536.
-                  - !ruby/object:Api::Type::String
-                    name: protocol
-                    description: |-
-                      Protocol for port. Must be UDP or TCP.
-                      Defaults to "TCP".
-                  - !ruby/object:Api::Type::String
-                    name: hostIP
-                    description: |-
-                      What host IP to bind the external port to.
-                  - !ruby/object:Api::Type::String
-                    name: name
-                    description: |-
-                      If specified, this must be an IANA_SVC_NAME and unique within the pod. Each
-                      named port in a pod must have a unique name. Name for the port that can be
-                      referred to by services.
-                  - !ruby/object:Api::Type::Integer
-                    name: hostPort
-                    description: |-
-                      Number of port to expose on the host.
-                      If specified, this must be a valid port number, 0 < x < 65536.
-                      If HostNetwork is specified, this must match ContainerPort.
-                      Most containers do not need this.
               - !ruby/object:Api::Type::String
                 name: workingDir
                 description: |-
@@ -415,12 +386,6 @@ objects:
                 description: |-
                   Docker image name.
                   More info: https://kubernetes.io/docs/concepts/containers/images
-              - !ruby/object:Api::Type::String
-                name: name
-                description: |-
-                  Name of the container specified as a DNS_LABEL.
-                  Each container must have a unique name (DNS_LABEL).
-                  Cannot be updated.
               - !ruby/object:Api::Type::Array
                 name: command
                 description: |-
