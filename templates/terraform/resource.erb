@@ -209,13 +209,8 @@ func resource<%= resource_name -%>Read(d *schema.ResourceData, meta interface{})
         return handleNotFoundError(err, d, fmt.Sprintf("<%= resource_name -%> %q", d.Id()))
     }
 
-<% if object.custom_code.decoder -%>
-    res, err = resource<%= resource_name -%>Decoder(d, meta, res)
-    if err != nil {
-        return err
-    }
-<%  end -%>
-
+<%# Note elsif - if both nested_query and decoder are given,
+  # the decoder will be added inside nested query -%>
 <%  if object.nested_query -%>
     res, err = flattenNested<%= resource_name -%>(d, meta, res)
     if err != nil {
@@ -228,7 +223,13 @@ func resource<%= resource_name -%>Read(d *schema.ResourceData, meta interface{})
         d.SetId("")
         return nil
     }
+<% elsif object.custom_code.decoder -%>
+    res, err = resource<%= resource_name -%>Decoder(d, meta, res)
+    if err != nil {
+        return err
+    }
 <%  end -%>
+
 
 <%  if has_project -%>
     project, err := getProject(d, config)
@@ -579,7 +580,7 @@ func resource<%= resource_name -%>UpdateEncoder(d *schema.ResourceData, meta int
 
 <%  if object.nested_query -%>
 func flattenNested<%= resource_name -%>(d *schema.ResourceData, meta interface{}, res map[string]interface{}) (map[string]interface{}, error) {
-    <%=     compile_template('templates/terraform/nested_query.go.erb',
+<%=     compile_template('templates/terraform/nested_query.go.erb',
                          object: object,
                          settable_properties: object.settable_properties,
                          resource_name: resource_name) -%>
