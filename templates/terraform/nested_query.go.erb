@@ -27,6 +27,10 @@
 
 	items := v.([]interface{})
 	for _, vRaw := range items {
+		if vRaw == nil {
+			continue
+		}
+
 	<% if object.nested_query.is_list_of_ids -%>
 		// If only an id is given in parent resource,
 		// construct a resource map for that id KV pair.
@@ -36,18 +40,19 @@
 	<% end -%>
 	<% object.identity.each do |prop| -%>
 	<% if settable_properties.include?(prop) -%>
-		itemIdV, err := expand<%= resource_name -%><%= titlelize_property(prop) -%>(d.Get("<%= prop.name.underscore -%>"), d, meta.(*Config))
+		expected<%= titlelize_property(prop) -%>, err := expand<%= resource_name -%><%= titlelize_property(prop) -%>(d.Get("<%= prop.name.underscore -%>"), d, meta.(*Config))
 		if err != nil {
 			return nil, err
 		}
 	<% else -%>
-		itemIdV := d.Get("<%= prop.name.underscore -%>")
+		expected<%= titlelize_property(prop) -%> := d.Get("<%= prop.name.underscore -%>")
 	<% end # settable_properties.include?(prop)-%>
-		actualIdV := flatten<%= resource_name -%><%= titlelize_property(prop) -%>(item["<%= prop.api_name %>"], d)
-		log.Printf("[DEBUG] Checking if item's <%= prop.api_name %> (%#v) is equal to resource's (%#v)", itemIdV, actualIdV)
-		if !reflect.DeepEqual(itemIdV, actualIdV) {
+		item<%= titlelize_property(prop) -%> := flatten<%= resource_name -%><%= titlelize_property(prop) -%>(item["<%= prop.api_name %>"], d)
+		log.Printf("[DEBUG] Checking if item's <%= prop.api_name %> (%#v) is equal to resource's (%#v)", item<%= titlelize_property(prop) -%>, expected<%= titlelize_property(prop) -%>)
+		if !reflect.DeepEqual(item<%= titlelize_property(prop) -%>, expected<%= titlelize_property(prop) -%>) {
 			continue
 		}
+
 	<% end # object.identity.each -%>
 		return item, nil
 	}
