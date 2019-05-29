@@ -33,6 +33,7 @@ objects:
     input: true
     description: |
       A `KeyRing` is a toplevel logical grouping of `CryptoKeys`.
+      A full list of valid locations can be found by running `gcloud kms locations list`.
     collection_url_response: !ruby/object:Api::Resource::ResponseList
       items: 'keyRings'
     properties:
