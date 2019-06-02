@@ -82,6 +82,7 @@ overrides: !ruby/object:Overrides::ResourceOverrides
       custom_delete: templates/terraform/custom_delete/kms_crypto_key.erb
       decoder: templates/terraform/decoders/kms_crypto_key.go.erb
       encoder: templates/terraform/encoders/kms_crypto_key.go.erb
+      update_encoder: templates/terraform/update_encoder/kms_crypto_key.go.erb
       extra_schema_entry: templates/terraform/extra_schema_entry/kms_self_link.erb
 # This is for copying files over
 files: !ruby/object:Provider::Config::Files
