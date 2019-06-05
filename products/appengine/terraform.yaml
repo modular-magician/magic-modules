@@ -24,6 +24,21 @@ overrides: !ruby/object:Overrides::ResourceOverrides
           project_id: "test-project"
         test_env_vars:
           org_id: :ORG_ID
+  StandardAppVersion: !ruby/object:Overrides::Terraform::ResourceOverride
+    id_format: "{{project}}/{{serviceId}}/{{name}}"
+    import_format: ["{{project}}/{{serviceId}}/{{name}}"]
+    properties:
+      id: !ruby/object:Overrides::Terraform::PropertyOverride
+        name: 'version_id'
+    examples:
+      - !ruby/object:Provider::Terraform::Examples
+        name: "app_engine_standard_app_version"
+        primary_resource_id: "name"
+        vars:
+          project_id: "test-project"
+          service: "default"
+        test_env_vars:
+          org_id: :ORG_ID
 
 # This is for copying files over
 files: !ruby/object:Provider::Config::Files
