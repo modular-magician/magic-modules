@@ -64,3 +64,524 @@ objects:
           - UNSPECIFIED_ACTION
           - ALLOW
           - DENY
+  - !ruby/object:Api::Resource
+    name: 'StandardAppVersion'
+    description: |
+      A single firewall rule that is evaluated against incoming traffic
+      and provides an action to take on matched requests.
+    base_url: 'apps/{{project}}/versions'
+    self_link: 'apps/{{project}}/versions/{{version_id}}'
+    update_verb: :PATCH
+    update_mask: true
+    references: !ruby/object:Api::Resource::ReferenceLinks
+      guides:
+        'Official Documentation':
+          'https://cloud.google.com/appengine/docs/standard/python/creating-firewalls#creating_firewall_rules'
+      api: 'https://cloud.google.com/appengine/docs/admin-api/reference/rest/v1/apps.firewall.ingressRules'
+    parameters:
+      - !ruby/object:Api::Type::String
+        name: 'name'
+        description: 'name'     
+    properties:
+# id    
+      - !ruby/object:Api::Type::String
+        name: 'id'
+        description: |
+          The unique identifier.
+# inboundServices      
+      - !ruby/object:Api::Type::Enum
+        name: 'inboundServices'
+        description: 'inboundServices'
+        values:
+          - :INBOUND_SERVICE_UNSPECIFIED
+          - :INBOUND_SERVICE_MAIL
+          - :INBOUND_SERVICE_MAIL_BOUNCE	
+          - :INBOUND_SERVICE_XMPP_ERROR
+          - :INBOUND_SERVICE_XMPP_MESSAGE	
+          - :INBOUND_SERVICE_XMPP_SUBSCRIBE
+          - :INBOUND_SERVICE_XMPP_PRESENCE
+          - :INBOUND_SERVICE_CHANNEL_PRESENCE
+          - :INBOUND_SERVICE_WARMUP     
+# instanceClass     
+      - !ruby/object:Api::Type::String
+        name: 'instanceClass'
+        description: 'instance class'
+        required: false        
+# zones      
+      - !ruby/object:Api::Type::Array
+        name: 'zones'
+        item_type: Api::Type::String
+        description: 'zone'
+# resources      
+      - !ruby/object:Api::Type::NestedObject
+        name: 'resources'
+        description: 'resources'
+        required: false
+        properties:
+          - !ruby/object:Api::Type::Integer
+            name: 'cpu'  
+            description: 'cpu'
+          - !ruby/object:Api::Type::Integer
+            name: 'diskGb'
+            description: 'disk in gb'
+          - !ruby/object:Api::Type::Integer
+            name: 'memoryGb'
+            description: 'memoryGb in gb'
+          - !ruby/object:Api::Type::NestedObject
+            name: 'volumes'
+            description: 'volumes'
+            properties:
+              - !ruby/object:Api::Type::String
+                name: 'name'
+                description: 'name'
+              - !ruby/object:Api::Type::String
+                name: 'volumeType'
+                description: 'volumeType'
+              - !ruby/object:Api::Type::Integer
+                name: 'sizeGb'
+                description: 'sizeGb'
+# runtime      
+      - !ruby/object:Api::Type::String
+        name: 'runtime'
+        description: 'runtime'
+        required: true        
+# runtimeChannel      
+      - !ruby/object:Api::Type::String
+        name: 'runtimeChannel'
+        description: 'runtimeChannel'
+        required: false        
+# threadsafe      
+      - !ruby/object:Api::Type::Boolean
+        name: 'threadsafe'
+        description: 'threadsafe'
+        required: false        
+# vm      
+      - !ruby/object:Api::Type::Boolean
+        name: 'vm'
+        description: 'vm'
+        required: false        
+# betaSettings      
+      - !ruby/object:Api::Type::Map
+        name: 'betaSettings'
+        description: 'betaSettings'
+        required: false
+        key_name: 'key'
+        key_description: 'key'
+        value_type: !ruby/object:Api::Type::NestedObject
+          properties:
+            - !ruby/object:Api::Type::String
+              name: 'value'
+              description: 'value'    
+# env
+      - !ruby/object:Api::Type::String
+        name: 'env'
+        description: 'env'
+        required: false        
+# servingStatus      
+      - !ruby/object:Api::Type::Enum
+        name: 'servingStatus'
+        description: servingStatus.
+        values:
+          - :SERVING_STATUS_UNSPECIFIED
+          - :SERVING
+          - :STOPPED
+# runtimeApiVersion      
+      - !ruby/object:Api::Type::String
+        name: 'runtimeApiVersion'
+        description: 'runtimeApiVersion'
+# handlers      
+      - !ruby/object:Api::Type::Array
+        name: 'handlers'
+        description: 'handlers'
+        item_type: !ruby/object:Api::Type::NestedObject
+          properties:
+          - !ruby/object:Api::Type::String
+            name: 'urlRegex'
+            description: 'url regex'
+          - !ruby/object:Api::Type::Enum
+            name: 'securityLevel'
+            description: 'Security Level'
+            values:
+              - :SECURE_UNSPECIFIED
+              - :SECURE_DEFAULT
+              - :SECURE_NEVER
+              - :SECURE_OPTIONAL
+              - :SECURE_ALWAYS
+          - !ruby/object:Api::Type::Enum
+            name: 'login'
+            description: 'Login'
+            values:
+              - :LOGIN_UNSPECIFIED
+              - :LOGIN_OPTIONAL
+              - :LOGIN_ADMIN
+              - :LOGIN_REQUIRED
+          - !ruby/object:Api::Type::Enum
+            name: 'authFailAction'
+            description: 'authFailAction'
+            values:
+              - :AUTH_FAIL_ACTION_UNSPECIFIED
+              - :AUTH_FAIL_ACTION_REDIRECT
+              - :AUTH_FAIL_ACTION_UNAUTHORIZED
+          - !ruby/object:Api::Type::Enum
+            name: 'redirectHttpResponseCode'
+            description: 'redirectHttpResponseCode'
+            values:
+              - :REDIRECT_HTTP_RESPONSE_CODE_UNSPECIFIED
+              - :REDIRECT_HTTP_RESPONSE_CODE_301
+              - :REDIRECT_HTTP_RESPONSE_CODE_302
+              - :REDIRECT_HTTP_RESPONSE_CODE_303
+              - :REDIRECT_HTTP_RESPONSE_CODE_307
+          - !ruby/object:Api::Type::NestedObject
+            name: 'staticFiles'
+            description: 'staticFiles'
+            properties:
+              - !ruby/object:Api::Type::String
+                name: 'path'
+                description: 'path'
+              - !ruby/object:Api::Type::String
+                name: 'uploadPathRegex'
+                description: 'uploadPathRegex'
+              - !ruby/object:Api::Type::Map
+                name: 'httpHeaders'
+                description: 'httpHeaders'
+                key_name: 'key'
+                key_description: 'key'
+                value_type: !ruby/object:Api::Type::NestedObject
+                  properties:
+                  - !ruby/object:Api::Type::String
+                    name: 'value'
+                    description: 'value'
+              - !ruby/object:Api::Type::String
+                name: 'mimeType'
+                description: 'mimeType'
+              - !ruby/object:Api::Type::String
+                name: 'expiration'
+                description: 'expiration'
+              - !ruby/object:Api::Type::Boolean
+                name: 'requireMatchingFile'
+                description: 'requireMatchingFile'
+              - !ruby/object:Api::Type::Boolean
+                name: 'applicationReadable'
+                description: 'applicationReadable'
+          - !ruby/object:Api::Type::NestedObject
+            name: 'script'
+            description: 'script'
+            properties:
+            - !ruby/object:Api::Type::String
+              name: 'scriptPath'
+              description: 'script paths'
+          - !ruby/object:Api::Type::NestedObject
+            name: 'apiEndpoint'
+            description: 'apiEndpoint'
+            properties:
+            - !ruby/object:Api::Type::String
+              name: 'scriptPath'
+              description: 'script path'  
+# errorHandlers      
+      - !ruby/object:Api::Type::Array
+        name: 'errorHandlers'
+        description: 'errorHandlers'
+        item_type: !ruby/object:Api::Type::NestedObject
+          properties:
+          - !ruby/object:Api::Type::Enum
+            name: 'errorCode'
+            description: 'errorCode'
+            values:
+              - :ERROR_CODE_UNSPECIFIED
+              - :ERROR_CODE_DEFAULT
+              - :ERROR_CODE_OVER_QUOTA
+              - :ERROR_CODE_DOS_API_DENIAL
+              - :ERROR_CODE_TIMEOUT
+          - !ruby/object:Api::Type::String
+            name: 'staticFile'
+            description: 'staticFile'
+          - !ruby/object:Api::Type::String
+            name: 'mimeType'
+            description: 'mimeType'
+# libraries      
+      - !ruby/object:Api::Type::Array
+        name: 'libraries'
+        description: 'libraries'
+        item_type: !ruby/object:Api::Type::NestedObject
+          properties:
+          - !ruby/object:Api::Type::String
+            name: 'name'
+            description: 'name'
+          - !ruby/object:Api::Type::String
+            name: 'version'
+            description: 'version'
+# apiConfig
+      - !ruby/object:Api::Type::NestedObject
+        name: 'apiConfig'
+        description: 'apiConfig'
+        required: true
+        properties:
+          - !ruby/object:Api::Type::Enum
+            name: 'authFailAction'
+            description: 'authFailAction'
+            values:
+              - :AUTH_FAIL_ACTION_UNSPECIFIED
+              - :AUTH_FAIL_ACTION_REDIRECT
+              - :AUTH_FAIL_ACTION_UNAUTHORIZED  
+          - !ruby/object:Api::Type::Enum
+            name: 'login'
+            description: 'login'
+            values:
+              - :LOGIN_UNSPECIFIED
+              - :LOGIN_OPTIONAL
+              - :LOGIN_ADMIN
+              - :LOGIN_REQUIRED  
+          - !ruby/object:Api::Type::String
+            name: 'script'
+            description: 'script'
+          - !ruby/object:Api::Type::Enum
+            name: 'securityLevel'
+            description: 'securityLevel'
+            values:
+              - :SECURE_UNSPECIFIED
+              - :SECURE_DEFAULT
+              - :SECURE_NEVER
+              - :SECURE_OPTIONAL
+              - :SECURE_ALWAYS  
+          - !ruby/object:Api::Type::String
+            name: 'url'
+            description: 'url'
+# envVariables      
+      - !ruby/object:Api::Type::KeyValuePairs
+        name: 'envVariables'
+        description: |
+          Map of environment variables
+
+          An object containing a list of "key": value pairs.
+          Example: { "name": "wrench", "mass": "1.3kg", "count": "3" }.
+#defaultExpiration
+      - !ruby/object:Api::Type::String
+        name: 'defaultExpiration'
+        description: 'defaultExpiration'
+# healthCheck      
+      - !ruby/object:Api::Type::NestedObject
+        name: 'healthCheck'
+        description: 'healthCheck'
+        required: false
+        properties:
+          - !ruby/object:Api::Type::Boolean
+            name: 'disableHealthCheck'
+            description: 'disableHealthCheck'
+          - !ruby/object:Api::Type::String
+            name: 'host'
+            description: 'host'
+          - !ruby/object:Api::Type::Integer
+            name: 'healthyThreshold'
+            description: 'healthyThreshold'
+          - !ruby/object:Api::Type::Integer
+            name: 'unhealthyThreshold'
+            description: 'unhealthyThreshold'
+          - !ruby/object:Api::Type::Integer
+            name: 'restartThreshold'
+            description: 'restartThreshold'
+          - !ruby/object:Api::Type::String
+            name: 'checkInterval'
+            description: 'checkInterval'
+          - !ruby/object:Api::Type::String
+            name: 'timeout'
+            description: 'timeout'
+# readinessCheck      
+      - !ruby/object:Api::Type::NestedObject
+        name: 'readinessCheck'
+        description: 'readinessCheck'
+        required: false
+        properties:
+          - !ruby/object:Api::Type::String
+            name: 'path'
+            description: 'path'
+          - !ruby/object:Api::Type::String
+            name: 'host'
+            description: 'host'
+          - !ruby/object:Api::Type::Integer
+            name: 'failureThreshold'
+            description: 'failureThreshold'
+          - !ruby/object:Api::Type::Integer
+            name: 'successThreshold'
+            description: 'successThreshold'
+          - !ruby/object:Api::Type::String
+            name: 'checkInterval'
+            description: 'checkInterval'
+          - !ruby/object:Api::Type::String
+            name: 'timeout'
+            description: 'timeout'
+          - !ruby/object:Api::Type::String
+            name: 'appStartTimeout'
+            description: 'appStartTimeout'
+# livenessCheck      
+      - !ruby/object:Api::Type::NestedObject
+        name: 'livenessCheck'
+        description: 'livenessCheck'
+        required: false
+        properties:
+          - !ruby/object:Api::Type::String
+            name: 'path'
+            description: 'path'
+          - !ruby/object:Api::Type::String
+            name: 'host'
+            description: 'host'
+          - !ruby/object:Api::Type::Integer
+            name: 'failureThreshold'
+            description: 'failureThreshold'
+          - !ruby/object:Api::Type::Integer
+            name: 'successThreshold'
+            description: 'successThreshold'
+          - !ruby/object:Api::Type::String
+            name: 'checkInterval'
+            description: 'checkInterval'
+          - !ruby/object:Api::Type::String
+            name: 'timeout'
+            description: 'timeout'
+          - !ruby/object:Api::Type::String
+            name: 'initialDelay'
+            description: 'initialDelay'
+#nobuildFilesRegex
+      - !ruby/object:Api::Type::String
+        name: 'nobuildFilesRegex'
+        description: 'nobuildFilesRegex'
+# deployment      
+      - !ruby/object:Api::Type::NestedObject
+        name: 'deployment'
+        description: 'deployment'
+        required: false
+        properties:      
+          - !ruby/object:Api::Type::Map
+            name: 'files'
+            description: 'files'
+            required: false
+            key_name: 'name'
+            key_description: 'name of file'
+            value_type: !ruby/object:Api::Type::NestedObject
+              properties:
+                - !ruby/object:Api::Type::String
+                  name: 'sha1Sum'
+                  description: 'sha1Sum'
+                - !ruby/object:Api::Type::String
+                  name: 'sourceUrl'
+                  description: 'sourceUrl'
+          - !ruby/object:Api::Type::NestedObject
+            name: 'zip'
+            description: 'Zip File'
+            required: false
+            properties:
+              - !ruby/object:Api::Type::String
+                name: 'sourceUrl'
+                description: 'Source URL'
+              - !ruby/object:Api::Type::Integer
+                name: 'filesCount'
+                description: 'files count'
+                required: false
+# endpointsApiService      
+      - !ruby/object:Api::Type::NestedObject
+        name: 'endpointsApiService'
+        description: 'endpointsApiService'
+        required: true
+        properties:
+          - !ruby/object:Api::Type::String
+            name: 'name'
+            description: 'name'
+          - !ruby/object:Api::Type::String
+            name: 'configId'
+            description: 'configId'
+          - !ruby/object:Api::Type::Enum
+            name: 'rolloutStrategy'
+            description: 'rolloutStrategy'
+            values:
+              - :UNSPECIFIED_ROLLOUT_STRATEGY
+              - :FIXED
+              - :MANAGED
+# entrypoint      
+      - !ruby/object:Api::Type::NestedObject
+        name: 'entrypoint'
+        description: 'entrypoint'
+        required: true
+        properties:
+          - !ruby/object:Api::Type::String
+            name: 'shell'
+            description: 'shell'
+#automaticScaling
+      - !ruby/object:Api::Type::NestedObject
+        name: 'automaticScaling'
+        description: 'automaticScaling'
+        required: false
+        properties:
+          - !ruby/object:Api::Type::String
+            name: 'coolDownPeriod'
+            description: 'coolDownPeriod'
+          - !ruby/object:Api::Type::NestedObject
+            name: 'cpuUtilization'
+            description: 'cpuUtilization'
+            properties:
+              - !ruby/object:Api::Type::String
+                name: 'aggregationWindowLength'
+                description: 'aggregationWindowLength'
+              - !ruby/object:Api::Type::String
+                name: 'targetUtilization'
+                description: 'targetUtilization'
+          - !ruby/object:Api::Type::Integer
+            name: 'maxConcurrentRequests'
+            description: 'maxConcurrentRequests'
+          - !ruby/object:Api::Type::Integer
+            name: 'maxIdleInstances'
+            description: 'maxIdleInstances'
+          - !ruby/object:Api::Type::Integer
+            name: 'maxTotalInstances'
+            description: 'maxTotalInstances'
+          - !ruby/object:Api::Type::String
+            name: 'maxPendingLatency'
+            description: 'maxPendingLatency'
+          - !ruby/object:Api::Type::Integer
+            name: 'minIdleInstances'
+            description: 'minIdleInstances'
+          - !ruby/object:Api::Type::Integer
+            name: 'minTotalInstances'
+            description: 'minTotalInstances'
+          - !ruby/object:Api::Type::String
+            name: 'minPendingLatency'
+            description: 'minPendingLatency'
+          - !ruby/object:Api::Type::NestedObject
+            name: 'requestUtilization'
+            description: 'requestUtilization'
+            properties:
+              - !ruby/object:Api::Type::Integer
+                name: 'targetRequestCountPerSecond'
+                description: 'targetRequestCountPerSecond'
+              - !ruby/object:Api::Type::Integer
+                name: 'targetConcurrentRequests'
+                description: 'targetConcurrentRequests'
+          - !ruby/object:Api::Type::NestedObject
+            name: 'networkUtilization'
+            description: 'networkUtilization'
+            properties:
+              - !ruby/object:Api::Type::Integer
+                name: 'targetSentBytesPerSecond'
+                description: 'targetSentBytesPerSecond'
+              - !ruby/object:Api::Type::Integer
+                name: 'targetSentPacketsPerSecond'
+                description: 'targetSentPacketsPerSecond'
+              - !ruby/object:Api::Type::Integer
+                name: 'targetReceivedBytesPerSecond'
+                description: 'targetReceivedBytesPerSecond'
+              - !ruby/object:Api::Type::Integer
+                name: 'targetReceivedPacketsPerSecond'
+                description: 'targetReceivedPacketsPerSecond'
+          - !ruby/object:Api::Type::NestedObject
+            name: 'standardSchedulerSettings'
+            description: 'standardSchedulerSettings'
+            properties:
+              - !ruby/object:Api::Type::Integer
+                name: 'targetCpuUtilization'
+                description: 'targetCpuUtilization'
+              - !ruby/object:Api::Type::Integer
+                name: 'targetThroughputUtilization'
+                description: 'targetThroughputUtilization'
+              - !ruby/object:Api::Type::Integer
+                name: 'minInstances'
+                description: 'minInstances'
+              - !ruby/object:Api::Type::Integer
+                name: 'maxInstances'
+                description: 'maxInstances'
