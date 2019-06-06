@@ -9,9 +9,13 @@ resource "google_app_engine_application" "app" {
   location_id = "us-central"
 }
 
-resource "google_app_engine_app_version" "v1" {
-  project = "${google_app_engine_application.app.project}"
-  priority = 1000
-  action = "ALLOW"
-  source_range = "*"
-}
+
+resource "google_app_engine_standard_app_version" "myapp" {
+  version_id = "v31"
+  project = "${google_app_engine_application.app.project}/services/default"
+  runtime = "nodejs10"
+  api_config = {}
+  endpoints_api_service = {}
+  entrypoint {
+    shell = "node index.js"
+  }
