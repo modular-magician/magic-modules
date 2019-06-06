@@ -67,8 +67,9 @@ objects:
   - !ruby/object:Api::Resource
     name: 'StandardAppVersion'
     description: |
-      A single firewall rule that is evaluated against incoming traffic
-      and provides an action to take on matched requests.
+      Standard App Version resource to create a new version of standard GAE Application.
+      Currently supporting Zip and File Containers.
+      Currently does not support async operation checking.
     base_url: 'apps/{{project}}/versions'
     self_link: 'apps/{{project}}/versions/{{version_id}}'
     update_verb: :PATCH
@@ -76,22 +77,25 @@ objects:
     references: !ruby/object:Api::Resource::ReferenceLinks
       guides:
         'Official Documentation':
-          'https://cloud.google.com/appengine/docs/standard/python/creating-firewalls#creating_firewall_rules'
-      api: 'https://cloud.google.com/appengine/docs/admin-api/reference/rest/v1/apps.firewall.ingressRules'
+          'https://cloud.google.com/appengine/docs/admin-api/deploying-overview'
+      api: 'https://cloud.google.com/appengine/docs/admin-api/reference/rest/v1/apps.services.versions'
     parameters:
+# Not sure if this parameter is required. Should be removed      
       - !ruby/object:Api::Type::String
         name: 'name'
-        description: 'name'     
+        description: |
+          Full path to the Version resource in the API. Example, apps/myapp/services/default/versions/v1.
     properties:
-# id    
+# The id parameter is required and overridden as 'version_id'   
       - !ruby/object:Api::Type::String
         name: 'id'
         description: |
-          The unique identifier.
+          Relative name of the version within the service. Example v1. Version names can contain only lowercase letters, numbers, or hyphens. Reserved names,"default", "latest", and any name with the prefix "ah-".
 # inboundServices      
       - !ruby/object:Api::Type::Enum
         name: 'inboundServices'
-        description: 'inboundServices'
+        description: |
+          Before an application can receive email or XMPP messages, the application must be configured to enable the service.
         values:
           - :INBOUND_SERVICE_UNSPECIFIED
           - :INBOUND_SERVICE_MAIL
@@ -105,17 +109,22 @@ objects:
 # instanceClass     
       - !ruby/object:Api::Type::String
         name: 'instanceClass'
-        description: 'instance class'
+        description: |
+          Instance class that is used to run this version. Valid values are
+          AutomaticScaling F1, F2, F4, F4_1G
+          ManualScaling or BasicScaling B1, B2, B4, B8, B4_1G
+          Defaults to F1 for AutomaticScaling and B1 for ManualScaling or BasicScaling.
         required: false        
+# network paramter is missing.
 # zones      
       - !ruby/object:Api::Type::Array
         name: 'zones'
         item_type: Api::Type::String
-        description: 'zone'
+        description: 'The Google Compute Engine zones that are supported by this version in the App Engine flexible environment.'
 # resources      
       - !ruby/object:Api::Type::NestedObject
         name: 'resources'
-        description: 'resources'
+        description: 'Machine resources for this version. Only applicable in the App Engine flexible environment.'
         required: false
         properties:
           - !ruby/object:Api::Type::Integer
@@ -143,27 +152,28 @@ objects:
 # runtime      
       - !ruby/object:Api::Type::String
         name: 'runtime'
-        description: 'runtime'
+        description: 'Desired runtime. Example: python27.'
         required: true        
 # runtimeChannel      
       - !ruby/object:Api::Type::String
         name: 'runtimeChannel'
-        description: 'runtimeChannel'
+        description: 'The channel of the runtime to use. Only available for some runtimes. Defaults to the default channel.'
         required: false        
 # threadsafe      
       - !ruby/object:Api::Type::Boolean
         name: 'threadsafe'
-        description: 'threadsafe'
+        description: 'Whether multiple requests can be dispatched to this version at once.'
         required: false        
 # vm      
       - !ruby/object:Api::Type::Boolean
         name: 'vm'
-        description: 'vm'
+        description: 'Whether to deploy this version in a container on a virtual machine.'
         required: false        
 # betaSettings      
       - !ruby/object:Api::Type::Map
         name: 'betaSettings'
-        description: 'betaSettings'
+        description: |
+          Metadata settings that are supplied to this version to enable beta runtime features.
         required: false
         key_name: 'key'
         key_description: 'key'
@@ -175,12 +185,14 @@ objects:
 # env
       - !ruby/object:Api::Type::String
         name: 'env'
-        description: 'env'
+        description: 'App Engine execution environment for this version. Defaults to standard.'
         required: false        
 # servingStatus      
       - !ruby/object:Api::Type::Enum
         name: 'servingStatus'
-        description: servingStatus.
+        description: |
+          Current serving status of this version. Only the versions with a SERVING status create instances and can be billed.
+          SERVING_STATUS_UNSPECIFIED is an invalid value. Defaults to SERVING.
         values:
           - :SERVING_STATUS_UNSPECIFIED
           - :SERVING
@@ -188,11 +200,11 @@ objects:
 # runtimeApiVersion      
       - !ruby/object:Api::Type::String
         name: 'runtimeApiVersion'
-        description: 'runtimeApiVersion'
+        description: 'The version of the API in the given runtime environment. Please see the app.yaml reference for valid values at https://cloud.google.com/appengine/docs/standard//config/appref'
 # handlers      
       - !ruby/object:Api::Type::Array
         name: 'handlers'
-        description: 'handlers'
+        description: 'An ordered list of URL-matching patterns that should be applied to incoming requests. The first matching URL handles the request and other request handlers are not attempted. Only returned in GET requests if view=FULL is set.'
         item_type: !ruby/object:Api::Type::NestedObject
           properties:
           - !ruby/object:Api::Type::String
@@ -280,7 +292,7 @@ objects:
 # errorHandlers      
       - !ruby/object:Api::Type::Array
         name: 'errorHandlers'
-        description: 'errorHandlers'
+        description: 'Custom static error pages. Limited to 10KB per page.'
         item_type: !ruby/object:Api::Type::NestedObject
           properties:
           - !ruby/object:Api::Type::Enum
@@ -301,7 +313,7 @@ objects:
 # libraries      
       - !ruby/object:Api::Type::Array
         name: 'libraries'
-        description: 'libraries'
+        description: 'Configuration for third-party Python runtime libraries that are required by the application.'
         item_type: !ruby/object:Api::Type::NestedObject
           properties:
           - !ruby/object:Api::Type::String
@@ -313,7 +325,7 @@ objects:
 # apiConfig
       - !ruby/object:Api::Type::NestedObject
         name: 'apiConfig'
-        description: 'apiConfig'
+        description: 'Serving configuration for Google Cloud Endpoints.'
         required: true
         properties:
           - !ruby/object:Api::Type::Enum
@@ -351,17 +363,16 @@ objects:
         name: 'envVariables'
         description: |
           Map of environment variables
-
           An object containing a list of "key": value pairs.
           Example: { "name": "wrench", "mass": "1.3kg", "count": "3" }.
 #defaultExpiration
       - !ruby/object:Api::Type::String
         name: 'defaultExpiration'
-        description: 'defaultExpiration'
+        description: 'Duration that static files should be cached by web proxies and browsers. Only applicable if the corresponding StaticFilesHandler does not specify its own expiration time.'
 # healthCheck      
       - !ruby/object:Api::Type::NestedObject
         name: 'healthCheck'
-        description: 'healthCheck'
+        description: 'Configures health checking for instances. Unhealthy instances are stopped and replaced with new instances. Only applicable in the App Engine flexible environment.'
         required: false
         properties:
           - !ruby/object:Api::Type::Boolean
@@ -388,7 +399,7 @@ objects:
 # readinessCheck      
       - !ruby/object:Api::Type::NestedObject
         name: 'readinessCheck'
-        description: 'readinessCheck'
+        description: 'Configures readiness health checking for instances. Unhealthy instances are not put into the backend traffic rotation.'
         required: false
         properties:
           - !ruby/object:Api::Type::String
@@ -415,7 +426,7 @@ objects:
 # livenessCheck      
       - !ruby/object:Api::Type::NestedObject
         name: 'livenessCheck'
-        description: 'livenessCheck'
+        description: 'Configures liveness health checking for instances. Unhealthy instances are stopped and replaced with new instances'
         required: false
         properties:
           - !ruby/object:Api::Type::String
@@ -442,11 +453,11 @@ objects:
 #nobuildFilesRegex
       - !ruby/object:Api::Type::String
         name: 'nobuildFilesRegex'
-        description: 'nobuildFilesRegex'
+        description: 'Files that match this pattern will not be built into this version. Only applicable for Go runtimes.'
 # deployment      
       - !ruby/object:Api::Type::NestedObject
         name: 'deployment'
-        description: 'deployment'
+        description: 'Code and application artifacts that make up this version.'
         required: false
         properties:      
           - !ruby/object:Api::Type::Map
@@ -478,7 +489,7 @@ objects:
 # endpointsApiService      
       - !ruby/object:Api::Type::NestedObject
         name: 'endpointsApiService'
-        description: 'endpointsApiService'
+        description: 'Cloud Endpoints configuration. If endpointsApiService is set, the Cloud Endpoints Extensible Service Proxy will be provided to serve the API implemented by the app.'
         required: true
         properties:
           - !ruby/object:Api::Type::String
@@ -497,7 +508,7 @@ objects:
 # entrypoint      
       - !ruby/object:Api::Type::NestedObject
         name: 'entrypoint'
-        description: 'entrypoint'
+        description: 'The entrypoint for the application.'
         required: true
         properties:
           - !ruby/object:Api::Type::String
@@ -506,7 +517,7 @@ objects:
 #automaticScaling
       - !ruby/object:Api::Type::NestedObject
         name: 'automaticScaling'
-        description: 'automaticScaling'
+        description: 'Automatic scaling is based on request rate, response latencies, and other application metrics.'
         required: false
         properties:
           - !ruby/object:Api::Type::String
@@ -585,3 +596,5 @@ objects:
               - !ruby/object:Api::Type::Integer
                 name: 'maxInstances'
                 description: 'maxInstances'
+# basicScaling
+# manualScaling
