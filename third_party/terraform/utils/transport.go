@@ -179,6 +179,12 @@ func buildReplacementFunc(re *regexp.Regexp, d TerraformResourceData, config *Co
 				return fmt.Sprintf("%v", v)
 			}
 		}
+
+		// Values from the provider config
+		if f := reflect.Indirect(reflect.ValueOf(config)).FieldByName(m); f.IsValid() {
+			return f.String()
+		}
+
 		return ""
 	}
 
