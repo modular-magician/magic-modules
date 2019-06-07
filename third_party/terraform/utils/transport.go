@@ -188,7 +188,6 @@ func buildReplacementFunc(re *regexp.Regexp, d TerraformResourceData, config *Co
 			}
 		}
 
-
 		return ""
 	}
 
