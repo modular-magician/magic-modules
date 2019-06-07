@@ -211,7 +211,7 @@ A full list of configurable keys, their default value, and an environment
 variable that can be used for configuration are below:
 
 * `compute_base_path` (`GOOGLE_COMPUTE_BASE_PATH`) - `https://www.googleapis.com/compute/v1/`
-* `cloud_functions_base_path` (`GOOGLE_CLOUD_FUNCTIONS_BASE_PATH`) - `https://cloudfunctions.googleapis.com/`
+* `cloud_functions_base_path` (`GOOGLE_CLOUD_FUNCTIONS_BASE_PATH`) - `https://cloudfunctions.googleapis.com/v1/`
 
 [OAuth 2.0 access token]: https://developers.google.com/identity/protocols/OAuth2
 [service account key file]: https://cloud.google.com/iam/docs/creating-managing-service-account-keys
