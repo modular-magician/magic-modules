@@ -3408,9 +3408,9 @@ resource "google_container_cluster" "with_workload_identity_config" {
 	zone = "us-central1-a"
 	initial_node_count = 1
 
-  workload_identity_config {
-    identity_namespace = "${data.google_project.project.project_id}.svc.id.goog"
-  }
+	workload_identity_config {
+		identity_namespace = "${data.google_project.project.project_id}.svc.id.goog"
+	}
 }
 `, projectID, clusterName)
 }
@@ -3421,9 +3421,6 @@ resource "google_container_cluster" "with_workload_identity_config" {
 	name = "%s"
 	zone = "us-central1-a"
 	initial_node_count = 1
-
-  workload_identity_config {
-  }
 }
 `, clusterName)
 }
