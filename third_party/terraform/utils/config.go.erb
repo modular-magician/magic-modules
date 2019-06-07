@@ -103,6 +103,8 @@ type Config struct {
 	clientServiceMan             *servicemanagement.APIService
 	clientServiceUsage           *serviceusage.Service
 	clientBigQuery               *bigquery.Service
+
+	CloudFunctionsBasePath       string
 	clientCloudFunctions         *cloudfunctions.Service
 	clientCloudIoT               *cloudiot.Service
 	clientAppEngine              *appengine.APIService
@@ -319,12 +321,14 @@ func (c *Config) LoadAndValidate() error {
 	}
 	c.clientBigQuery.UserAgent = userAgent
 
-	log.Printf("[INFO] Instantiating Google Cloud CloudFunctions Client...")
+	cloudFunctionsClientBasePath := removeBasePathVersion(c.CloudFunctionsBasePath)
+	log.Printf("[INFO] Instantiating Google Cloud CloudFunctions Client for path %s", cloudFunctionsClientBasePath)
 	c.clientCloudFunctions, err = cloudfunctions.NewService(context, option.WithHTTPClient(client))
 	if err != nil {
 		return err
 	}
 	c.clientCloudFunctions.UserAgent = userAgent
+	c.clientCloudFunctions.BasePath = cloudFunctionsClientBasePath
 
 	c.bigtableClientFactory = &BigtableClientFactory{
 		UserAgent:   userAgent,
