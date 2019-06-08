@@ -50,6 +50,9 @@
       <li<%%= sidebar_current("docs-google-datasource-cloudfunctions-function") %>>
         <a href="/docs/providers/google/d/datasource_cloudfunctions_function.html">google_cloudfunctions_function</a>
       </li>
+      <li<%%= sidebar_current("docs-google-datasource-composer-image-versions") %>>
+        <a href="/docs/providers/google/d/datasource_google_composer_image_versions.html">google_composer_image_versions</a>
+      </li>
       <li<%%= sidebar_current("docs-google-datasource-compute-address") %>>
         <a href="/docs/providers/google/d/datasource_compute_address.html">google_compute_address</a>
       </li>
@@ -504,6 +507,10 @@
       </li>
 
 <% unless version == 'ga' %>
+      <li<%%= sidebar_current("docs-google-compute-network-endpoint") %>>
+      <a href="/docs/providers/google/r/compute_network_endpoint.html">google_compute_network_endpoint</a>
+      </li>
+
       <li<%%= sidebar_current("docs-google-compute-network-endpoint-group") %>>
       <a href="/docs/providers/google/r/compute_network_endpoint_group.html">google_compute_network_endpoint_group</a>
       </li>
@@ -537,6 +544,12 @@
       <a href="/docs/providers/google/r/compute_region_instance_group_manager.html">google_compute_region_instance_group_manager</a>
       </li>
 
+<% unless version == 'ga' %>
+      <li<%%= sidebar_current("docs-google-compute-resource-policy") %>>
+      <a href="/docs/providers/google/r/compute_resource_policy.html">google_compute_resource_policy</a>
+      </li>
+
+<% end -%>
       <li<%%= sidebar_current("docs-google-compute-route-x") %>>
       <a href="/docs/providers/google/r/compute_route.html">google_compute_route</a>
       </li>
@@ -919,6 +932,10 @@
       <a href="/docs/providers/google/r/logging_organization_sink.html">google_logging_organization_sink</a>
       </li>
 
+      <li<%%= sidebar_current("docs-google-logging-metric") %>>
+      <a href="/docs/providers/google/r/logging_metric.html">google_logging_metric</a>
+      </li>
+
       <li<%%= sidebar_current("docs-google-logging-project-exclusion") %>>
       <a href="/docs/providers/google/r/logging_project_exclusion.html">google_logging_project_exclusion</a>
       </li>
@@ -1015,7 +1032,7 @@
         <a href="/docs/providers/google/r/google_kms_crypto_key_iam_member.html">google_kms_crypto_key_iam_member</a>
       </li>
       <li<%%= sidebar_current("docs-google-kms-key-ring-x") %>>
-        <a href="/docs/providers/google/r/google_kms_key_ring.html">google_kms_key_ring</a>
+        <a href="/docs/providers/google/r/kms_key_ring.html">google_kms_key_ring</a>
       </li>
       <li<%%= sidebar_current("docs-google-kms-key-ring-iam") %>>
         <a href="/docs/providers/google/r/google_kms_key_ring_iam.html">google_kms_key_ring_iam_binding</a>

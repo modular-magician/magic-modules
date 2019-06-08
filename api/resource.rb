@@ -15,7 +15,6 @@ require 'api/object'
 require 'api/resource/iam_policy'
 require 'api/resource/nested_query'
 require 'api/resource/reference_links'
-require 'api/resource/response_list'
 require 'google/string_utils'
 
 module Api
@@ -73,19 +72,20 @@ module Api
       attr_reader :update_url
       # [Optional] The HTTP verb used during create. Defaults to :POST.
       attr_reader :create_verb
+      # [Optional] The HTTP verb used during read. Defaults to :GET.
+      attr_reader :read_verb
       # [Optional] The HTTP verb used during update. Defaults to :PUT.
       attr_reader :update_verb
       # [Optional] The HTTP verb used during delete. Defaults to :DELETE.
       attr_reader :delete_verb
-
       # ====================
       # Collection / Identity URL Configuration
       # ====================
       #
-      # [Optional] (Api::Resource::ResponseList) This is the type of response
-      # from the collection URL. It contains the name of the list of items
-      # within the json, as well as the type that this list should be.
-      attr_reader :collection_url_response
+      # [Optional] This is the name of the list of items
+      # within the collection (list) json. Will default to the
+      # camelcase pluralize name of the resource.
+      attr_reader :collection_url_key
       # [Optional] This is an array with items that uniquely identify the
       # resource.
       # This is useful in case an API returns a list result and we need
@@ -148,10 +148,10 @@ module Api
               `has exactly one :identity property"'
       end
 
-      check :collection_url_response, default: Api::Resource::ResponseList.new,
-                                      type: Api::Resource::ResponseList
+      check :collection_url_key, default: @name.pluralize.camelize(:lower)
 
       check :create_verb, type: Symbol, default: :POST, allowed: %i[POST PUT]
+      check :read_verb, type: Symbol, default: :GET, allowed: %i[GET POST]
       check :delete_verb, type: Symbol, default: :DELETE, allowed: %i[POST PUT PATCH DELETE]
       check :update_verb, type: Symbol, default: :PUT, allowed: %i[POST PUT PATCH]
 
@@ -299,19 +299,19 @@ module Api
     # In newer resources there is much less standardisation in terms of value.
     # Generally for them though, it's the product.base_url + resource.name
     def self_link_url
-      base_url = @__product.base_url.split("\n").map(&:strip).compact
+      base_url = @__product.base_url
       if @self_link.nil?
         [base_url, [@base_url, '{{name}}'].join('/')].flatten.join
       else
-        self_link = @self_link.split("\n").map(&:strip).compact
+        self_link = @self_link
         [base_url, self_link].flatten.join
       end
     end
 
     def collection_url
       [
-        @__product.base_url.split("\n").map(&:strip).compact,
-        @base_url.split("\n").map(&:strip).compact
+        @__product.base_url,
+        @base_url
       ].flatten.join
     end
 
@@ -336,8 +336,8 @@ module Api
         default_create_url
       else
         [
-          @__product.base_url.split("\n").map(&:strip).compact,
-          @create_url.split("\n").map(&:strip).compact
+          @__product.base_url,
+          @create_url
         ].flatten.join
       end
     end
@@ -347,7 +347,7 @@ module Api
         self_link_url
       else
         [
-          @__product.base_url.split("\n").map(&:strip).compact,
+          @__product.base_url,
           @delete_url
         ].flatten.join
       end
@@ -378,7 +378,7 @@ module Api
     def to_json(opts = nil)
       # ignore fields that will contain references to parent resources
       ignored_fields = %i[@__product @__parent @__resource @api_name
-                          @collection_url_response @properties @parameters]
+                          @properties @parameters]
       json_out = {}
 
       instance_variables.each do |v|

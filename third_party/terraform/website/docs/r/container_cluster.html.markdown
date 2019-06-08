@@ -29,10 +29,13 @@ resource "google_container_cluster" "primary" {
   remove_default_node_pool = true
   initial_node_count = 1
 
-  # Setting an empty username and password explicitly disables basic auth
   master_auth {
     username = ""
     password = ""
+
+    client_certificate_config {
+      issue_client_certificate = false
+    }
   }
 }
 
@@ -56,20 +59,6 @@ resource "google_container_node_pool" "primary_preemptible_nodes" {
     ]
   }
 }
-
-# The following outputs allow authentication and connectivity to the GKE Cluster
-# by using certificate-based authentication.
-output "client_certificate" {
-  value = "${google_container_cluster.primary.master_auth.0.client_certificate}"
-}
-
-output "client_key" {
-  value = "${google_container_cluster.primary.master_auth.0.client_key}"
-}
-
-output "cluster_ca_certificate" {
-  value = "${google_container_cluster.primary.master_auth.0.cluster_ca_certificate}"
-}
 ```
 
 ## Example Usage - with the default node pool
@@ -80,10 +69,13 @@ resource "google_container_cluster" "primary" {
   location           = "us-central1-a"
   initial_node_count = 3
 
-  # Setting an empty username and password explicitly disables basic auth
   master_auth {
     username = ""
     password = ""
+
+    client_certificate_config {
+      issue_client_certificate = false
+    }
   }
 
   node_config {
@@ -107,20 +99,6 @@ resource "google_container_cluster" "primary" {
     create = "30m"
     update = "40m"
   }
-}
-
-# The following outputs allow authentication and connectivity to the GKE Cluster
-# by using certificate-based authentication.
-output "client_certificate" {
-  value = "${google_container_cluster.primary.master_auth.0.client_certificate}"
-}
-
-output "client_key" {
-  value = "${google_container_cluster.primary.master_auth.0.client_key}"
-}
-
-output "cluster_ca_certificate" {
-  value = "${google_container_cluster.primary.master_auth.0.cluster_ca_certificate}"
 }
 ```
 
@@ -289,6 +267,10 @@ to the datasource. A `region` can have a different set of supported versions tha
     [PodSecurityPolicy](https://cloud.google.com/kubernetes-engine/docs/how-to/pod-security-policies) feature.
     Structure is documented below.
 
+* `authenticator_groups_config` - (Optional, [Beta](https://terraform.io/docs/providers/google/provider_versions.html)) Configuration for the
+    [Google Groups for GKE](https://cloud.google.com/kubernetes-engine/docs/how-to/role-based-access-control#groups-setup-gsuite) feature.
+    Structure is documented below.
+
 * `private_cluster_config` - (Optional) A set of options for creating
     a private cluster. Structure is documented below.
 
@@ -305,8 +287,16 @@ to the datasource. A `region` can have a different set of supported versions tha
 * `subnetwork` - (Optional) The name or self_link of the Google Compute Engine subnetwork in
     which the cluster's instances are launched.
 
-* `vertical_pod_autoscaling` - Vertical Pod Autoscaling automatically adjusts the resources of pods controlled by it.
+* `vertical_pod_autoscaling` - (Optional, [Beta](https://terraform.io/docs/providers/google/provider_versions.html))
+    Vertical Pod Autoscaling automatically adjusts the resources of pods controlled by it.
     Structure is documented below.
+
+* `workload_identity_config` - (Optional, [Beta](https://terraform.io/docs/providers/google/provider_versions.html))
+    Workload Identity allows Kubernetes service accounts to act as a user-managed
+    [Google IAM Service Account](https://cloud.google.com/iam/docs/service-accounts#user-managed_service_accounts).
+
+* `enable_intranode_visibility` - (Optional, [Beta](https://terraform.io/docs/providers/google/provider_versions.html))
+    Whether Intra-node visibility is enabled for this cluster. This makes same node pod to pod traffic visible for VPC network.
 
 The `addons_config` block supports:
 
@@ -382,6 +372,10 @@ The `resource_limits` block supports:
 * `minimum` - (Optional) The minimum value for the resource type specified.
 
 * `maximum` - (Optional) The maximum value for the resource type specified.
+
+The `authenticator_groups_config` block supports:
+
+* `security_group` - (Required) The name of the RBAC security group for use with Google security groups in Kubernetes RBAC. Group name must be in format `gke-security-groups@yourdomain.com`.
 
 The `maintenance_policy` block supports:
 
@@ -593,6 +587,7 @@ The `workload_metadata_config` block supports:
     * UNSPECIFIED: Not Set
     * SECURE: Prevent workloads not in hostNetwork from accessing certain VM metadata, specifically kube-env, which contains Kubelet credentials, and the instance identity token. See [Metadata Concealment](https://cloud.google.com/kubernetes-engine/docs/how-to/metadata-proxy) documentation.
     * EXPOSE: Expose all VM metadata to pods.
+    * GKE_METADATA_SERVER: Enables [workload identity](https://cloud.google.com/kubernetes-engine/docs/how-to/workload-identity) on the node.
 
 The `vertical_pod_autoscaling` block supports:
 
@@ -628,6 +623,11 @@ exported:
 * `tpu_ipv4_cidr_block` - ([Beta](https://terraform.io/docs/providers/google/provider_versions.html)) The IP address range of the Cloud TPUs in this cluster, in
     [CIDR](http://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing)
     notation (e.g. `1.2.3.4/29`).
+
+* `services_ipv4_cidr` - The IP address range of the Kubernetes services in this
+  cluster, in [CIDR](http:en.wikipedia.org/wiki/Classless_Inter-Domain_Routing)
+  notation (e.g. `1.2.3.4/29`). Service addresses are typically put in the last
+  `/16` from the container CIDR.
 
 <a id="timeouts"></a>
 ## Timeouts

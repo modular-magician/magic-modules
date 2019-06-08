@@ -4,6 +4,7 @@ package google
 import (
 	"fmt"
 	"log"
+	"reflect"
 	"regexp"
 	"strings"
 	"time"
@@ -53,6 +54,8 @@ func resourceContainerCluster() *schema.Resource {
 		Read:   resourceContainerClusterRead,
 		Update: resourceContainerClusterUpdate,
 		Delete: resourceContainerClusterDelete,
+
+		CustomizeDiff: resourceContainerClusterIpAllocationCustomizeDiff,
 
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(30 * time.Minute),
@@ -296,7 +299,7 @@ func resourceContainerCluster() *schema.Resource {
 			},
 
 			"enable_binary_authorization": {
-<% if version.nil? || version == 'ga' -%>
+<% if version == 'ga' -%>
 				Removed:  "This field is in beta. Use it in the the google-beta provider instead. See https://terraform.io/docs/providers/google/provider_versions.html for more details.",
 				Computed:  true,
 <% else -%>
@@ -318,7 +321,7 @@ func resourceContainerCluster() *schema.Resource {
 				Type:     schema.TypeBool,
 				Optional: true,
 				ForceNew: true,
-<% if version.nil? || version == 'ga' -%>
+<% if version == 'ga' -%>
 				Removed:  "This field is in beta. Use it in the the google-beta provider instead. See https://terraform.io/docs/providers/google/provider_versions.html for more details.",
 				Computed: true,
 <% else -%>
@@ -331,6 +334,25 @@ func resourceContainerCluster() *schema.Resource {
 				Optional: true,
 				Default:  false,
 			},
+
+<% unless version == 'ga' -%>
+			"authenticator_groups_config": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Computed: true,
+				ForceNew: true,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"security_group": {
+							Type:     schema.TypeString,
+							Required: true,
+							ForceNew: true,
+						},
+					},
+				},
+			},
+<% end -%>
 
 			"initial_node_count": {
 				Type:     schema.TypeInt,
@@ -392,19 +414,22 @@ func resourceContainerCluster() *schema.Resource {
 							Optional: true,
 						},
 
+						// Ideally, this would be Optional (and not Computed).
+						// In past versions (incl. 2.X series) of the provider
+						// though, being unset was considered identical to set
+						// and the issue_client_certificate value being true.
 						"client_certificate_config": {
-							Type:             schema.TypeList,
-							MaxItems:         1,
-							Optional:         true,
-							DiffSuppressFunc: masterAuthClientCertCfgSuppress,
-							ForceNew:         true,
+							Type:     schema.TypeList,
+							MaxItems: 1,
+							Optional: true,
+							Computed: true,
+							ForceNew: true,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"issue_client_certificate": {
-										Type:             schema.TypeBool,
-										Required:         true,
-										ForceNew:         true,
-										DiffSuppressFunc: masterAuthClientCertCfgSuppress,
+										Type:     schema.TypeBool,
+										Required: true,
+										ForceNew: true,
 									},
 								},
 							},
@@ -498,7 +523,7 @@ func resourceContainerCluster() *schema.Resource {
 			},
 
 			"pod_security_policy_config": {
-<% if version.nil? || version == 'ga' -%>
+<% if version == 'ga' -%>
 				// Remove return nil from expand when this is removed for good.
 				Removed: "This field is in beta. Use it in the the google-beta provider instead. See https://terraform.io/docs/providers/google/provider_versions.html for more details.",
 <% else -%>
@@ -544,6 +569,11 @@ func resourceContainerCluster() *schema.Resource {
 			},
 
 			"master_version": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+
+			"services_ipv4_cidr": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -688,6 +718,22 @@ func resourceContainerCluster() *schema.Resource {
 				},
 			},
 
+			"workload_identity_config": {
+				Type:     schema.TypeList,
+				MaxItems: 1,
+				Optional: true,
+				ForceNew: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"identity_namespace": {
+							Type:     schema.TypeString,
+							Required: true,
+							ForceNew: true,
+						},
+					},
+				},
+			},
+
 			"tpu_ipv4_cidr_block":  {
 				Computed: true,
 				Type: schema.TypeString,
@@ -723,8 +769,48 @@ func resourceContainerCluster() *schema.Resource {
 				},
 			},
 <% end -%>
+
+			"enable_intranode_visibility": {
+				Type:     schema.TypeBool,
+				Optional: true,
+<% if version == 'ga' -%>
+				Removed: "This field is in beta. Use it in the the google-beta provider instead. See https://terraform.io/docs/providers/google/provider_versions.html for more details.",
+<% else -%>
+				Default:  false,
+<% end -%>
+			},
 		},
 	}
+}
+
+func resourceContainerClusterIpAllocationCustomizeDiff(diff *schema.ResourceDiff, meta interface{}) error {
+	// separate func to allow unit testing
+	return resourceContainerClusterIpAllocationCustomizeDiffFunc(diff)
+}
+
+func resourceContainerClusterIpAllocationCustomizeDiffFunc(diff TerraformResourceDiff) error {
+	o, n := diff.GetChange("ip_allocation_policy")
+
+	oList := o.([]interface{})
+	nList := n.([]interface{})
+	if len(oList) > 0 || len(nList) == 0 {
+		// we only care about going from unset to set, so return early if the field was set before
+		// or is unset now
+		return nil
+	}
+
+	// Unset is equivalent to a block where all the values are zero
+	// This might change if use_ip_aliases ends up defaulting to true server-side.
+	// The console says it will eventually, but it's unclear whether that's in the API
+	// too or just client code.
+	polMap := nList[0].(map[string]interface{})
+	for _, v := range polMap {
+		if !isEmptyValue(reflect.ValueOf(v)) {
+			// found a non-empty value, so continue with the diff as it was
+			return nil
+		}
+	}
+	return diff.Clear("ip_allocation_policy")
 }
 
 func resourceContainerClusterCreate(d *schema.ResourceData, meta interface{}) error {
@@ -776,6 +862,9 @@ func resourceContainerClusterCreate(d *schema.ResourceData, meta interface{}) er
 			ForceSendFields: []string{"Enabled"},
 		},
 		Autoscaling:    expandClusterAutoscaling(d.Get("cluster_autoscaling"), d),
+		NetworkConfig: &containerBeta.NetworkConfig{
+			EnableIntraNodeVisibility: d.Get("enable_intranode_visibility").(bool),
+		},
 <% end -%>
 		MasterAuth:     expandMasterAuth(d.Get("master_auth")),
 		ResourceLabels: expandStringMap(d, "resource_labels"),
@@ -864,6 +953,12 @@ func resourceContainerClusterCreate(d *schema.ResourceData, meta interface{}) er
 		cluster.NodeConfig = expandNodeConfig(v)
 	}
 
+<% unless version == 'ga' -%>
+	if v, ok := d.GetOk("authenticator_groups_config"); ok {
+		cluster.AuthenticatorGroupsConfig = expandAuthenticatorGroupsConfig(v)
+	}
+<% end -%>
+
 	if v, ok := d.GetOk("private_cluster_config"); ok {
 		cluster.PrivateClusterConfig = expandPrivateClusterConfig(v)
 	}
@@ -875,6 +970,10 @@ func resourceContainerClusterCreate(d *schema.ResourceData, meta interface{}) er
 
 	if v, ok := d.GetOk("vertical_pod_autoscaling"); ok {
 		cluster.VerticalPodAutoscaling = expandVerticalPodAutoscaling(v)
+	}
+
+	if v, ok := d.GetOk("workload_identity_config"); ok {
+		cluster.WorkloadIdentityConfig = expandWorkloadIdentityConfig(v)
 	}
 <% end -%>
 
@@ -922,13 +1021,16 @@ func resourceContainerClusterCreate(d *schema.ResourceData, meta interface{}) er
 
 	if d.Get("remove_default_node_pool").(bool) {
 		parent := fmt.Sprintf("%s/nodePools/%s", containerClusterFullName(project, location, clusterName), "default-pool")
-		op, err = config.clientContainerBeta.Projects.Locations.Clusters.NodePools.Delete(parent).Do()
+		err = retry(func() error {
+			op, err = config.clientContainerBeta.Projects.Locations.Clusters.NodePools.Delete(parent).Do()
+			return err
+		})
 		if err != nil {
 			return errwrap.Wrapf("Error deleting default node pool: {{err}}", err)
 		}
 		err = containerOperationWait(config, op, project, location, "removing default node pool", timeoutInMinutes)
 		if err != nil {
-			return errwrap.Wrapf("Error deleting default node pool: {{err}}", err)
+			return errwrap.Wrapf("Error while waiting to delete default node pool: {{err}}", err)
 		}
 	}
 
@@ -995,6 +1097,7 @@ func resourceContainerClusterRead(d *schema.ResourceData, meta interface{}) erro
 	d.Set("master_version", cluster.CurrentMasterVersion)
 	d.Set("node_version", cluster.CurrentNodeVersion)
 	d.Set("cluster_ipv4_cidr", cluster.ClusterIpv4Cidr)
+	d.Set("services_ipv4_cidr", cluster.ServicesIpv4Cidr)
 	d.Set("description", cluster.Description)
 	d.Set("enable_kubernetes_alpha", cluster.EnableKubernetesAlpha)
 	d.Set("enable_legacy_abac", cluster.LegacyAbac.Enabled)
@@ -1012,6 +1115,10 @@ func resourceContainerClusterRead(d *schema.ResourceData, meta interface{}) erro
 	if cluster.DefaultMaxPodsConstraint != nil {
 		d.Set("default_max_pods_per_node", cluster.DefaultMaxPodsConstraint.MaxPodsPerNode)
 	}
+	if err := d.Set("authenticator_groups_config", flattenAuthenticatorGroupsConfig(cluster.AuthenticatorGroupsConfig)); err != nil {
+		return err
+	}
+	d.Set("enable_intranode_visibility", cluster.NetworkConfig.EnableIntraNodeVisibility)
 <% else -%>
 	if err := d.Set("cluster_autoscaling", nil); err != nil {
 		return err
@@ -1050,6 +1157,10 @@ func resourceContainerClusterRead(d *schema.ResourceData, meta interface{}) erro
 
 <% unless version == 'ga' -%>
 	if err := d.Set("vertical_pod_autoscaling", flattenVerticalPodAutoscaling(cluster.VerticalPodAutoscaling)); err != nil {
+		return err
+	}
+
+	if err := d.Set("workload_identity_config", flattenWorkloadIdentityConfig(cluster.WorkloadIdentityConfig)); err != nil {
 		return err
 	}
 
@@ -1175,6 +1286,40 @@ func resourceContainerClusterUpdate(d *schema.ResourceData, meta interface{}) er
 		log.Printf("[INFO] GKE cluster %s's cluster-wide autoscaling has been updated", d.Id())
 
 		d.SetPartial("cluster_autoscaling")
+	}
+
+	if d.HasChange("enable_intranode_visibility") {
+		enabled := d.Get("enable_intranode_visibility").(bool)
+		req := &containerBeta.UpdateClusterRequest{
+			Update: &containerBeta.ClusterUpdate{
+				DesiredIntraNodeVisibilityConfig: &containerBeta.IntraNodeVisibilityConfig{
+					Enabled:         enabled,
+					ForceSendFields: []string{"Enabled"},
+				},
+			},
+		}
+		updateF := func() error {
+			log.Println("[DEBUG] updating enable_intranode_visibility")
+			name := containerClusterFullName(project, location, clusterName)
+			op, err := config.clientContainerBeta.Projects.Locations.Clusters.Update(name, req).Do()
+			if err != nil {
+				return err
+			}
+
+			// Wait until it's updated
+			err = containerOperationWait(config, op, project, location, "updating GKE Intra Node Visibility", timeoutInMinutes)
+			log.Println("[DEBUG] done updating enable_intranode_visibility")
+			return err
+		}
+
+		// Call update serially.
+		if err := lockedCall(lockKey, updateF); err != nil {
+			return err
+		}
+
+		log.Printf("[INFO] GKE cluster %s Intra Node Visibility has been updated to %v", d.Id(), enabled)
+
+		d.SetPartial("enable_intranode_visibility")
 	}
 <% end -%>
 
@@ -1972,6 +2117,22 @@ func expandClusterAutoscaling(configured interface{}, d *schema.ResourceData) *c
 }
 <% end -%>
 
+<% unless version == 'ga' -%>
+func expandAuthenticatorGroupsConfig(configured interface{}) *containerBeta.AuthenticatorGroupsConfig {
+	l := configured.([]interface{})
+	if len(l) == 0 {
+		return nil
+	}
+	result := &containerBeta.AuthenticatorGroupsConfig{}
+	config := l[0].(map[string]interface{})
+	if securityGroup, ok := config["security_group"]; ok {
+		result.Enabled = true
+		result.SecurityGroup = securityGroup.(string)
+	}
+	return result
+}
+<% end -%>
+
 func expandMasterAuth(configured interface{}) *containerBeta.MasterAuth {
 	l := configured.([]interface{})
 	if len(l) == 0 || l[0] == nil {
@@ -1983,16 +2144,17 @@ func expandMasterAuth(configured interface{}) *containerBeta.MasterAuth {
 		Username: masterAuth["username"].(string),
 		Password: masterAuth["password"].(string),
 	}
-	if _, ok := masterAuth["client_certificate_config"]; ok {
-		if len(masterAuth["client_certificate_config"].([]interface{})) > 0 {
+
+	if v, ok := masterAuth["client_certificate_config"]; ok {
+		if len(v.([]interface{})) > 0 {
 			clientCertificateConfig := masterAuth["client_certificate_config"].([]interface{})[0].(map[string]interface{})
-			if _, ok := clientCertificateConfig["issue_client_certificate"]; ok {
-				result.ClientCertificateConfig = &containerBeta.ClientCertificateConfig{
-					IssueClientCertificate: clientCertificateConfig["issue_client_certificate"].(bool),
-				}
+
+			result.ClientCertificateConfig = &containerBeta.ClientCertificateConfig{
+				IssueClientCertificate: clientCertificateConfig["issue_client_certificate"].(bool),
 			}
 		}
 	}
+
 	return result
 }
 
@@ -2071,6 +2233,17 @@ func expandVerticalPodAutoscaling(configured interface{}) *containerBeta.Vertica
 	config := l[0].(map[string]interface{})
 	return &containerBeta.VerticalPodAutoscaling{
 		Enabled: config["enabled"].(bool),
+	}
+}
+
+func expandWorkloadIdentityConfig(configured interface{}) *containerBeta.WorkloadIdentityConfig {
+	l := configured.([]interface{})
+	if len(l) == 0 {
+		return nil
+	}
+	config := l[0].(map[string]interface{})
+	return &containerBeta.WorkloadIdentityConfig{
+		IdentityNamespace: config["identity_namespace"].(string),
 	}
 }
 <% end -%>
@@ -2192,6 +2365,19 @@ func flattenClusterNodePools(d *schema.ResourceData, config *Config, c []*contai
 	return nodePools, nil
 }
 
+<% unless version == 'ga' -%>
+func flattenAuthenticatorGroupsConfig(c *containerBeta.AuthenticatorGroupsConfig) []map[string]interface{} {
+	if c == nil {
+		return nil
+	}
+	return []map[string]interface{}{
+		{
+			"security_group": c.SecurityGroup,
+		},
+	}
+}
+<% end -%>
+
 func flattenPrivateClusterConfig(c *containerBeta.PrivateClusterConfig) []map[string]interface{} {
 	if c == nil {
 		return nil
@@ -2215,6 +2401,16 @@ func flattenVerticalPodAutoscaling(c *containerBeta.VerticalPodAutoscaling) []ma
 	return []map[string]interface{}{
 		{
 			"enabled": c.Enabled,
+		},
+	}
+}
+func flattenWorkloadIdentityConfig(c *containerBeta.WorkloadIdentityConfig) []map[string]interface{} {
+	if c == nil {
+		return nil
+	}
+	return []map[string]interface{}{
+		{
+			"identity_namespace": c.IdentityNamespace,
 		},
 	}
 }
@@ -2283,11 +2479,18 @@ func flattenMasterAuth(ma *containerBeta.MasterAuth) []map[string]interface{} {
 			"cluster_ca_certificate": ma.ClusterCaCertificate,
 		},
 	}
-	if len(ma.ClientCertificate) == 0 {
-		masterAuth[0]["client_certificate_config"] = []map[string]interface{}{
-			{"issue_client_certificate": false},
-		}
+
+	// No version of the GKE API returns the client_certificate_config value.
+	// Instead, we need to infer whether or not it was set based on the
+	// client cert being returned from the API or not.
+	// Previous versions of the provider didn't record anything in state when
+	// a client cert was enabled, only setting the block when it was false.
+	masterAuth[0]["client_certificate_config"] = []map[string]interface{}{
+		{
+			"issue_client_certificate": len(ma.ClientCertificate) != 0,
+		},
 	}
+
 	return masterAuth
 }
 
@@ -2311,6 +2514,8 @@ func flattenClusterAutoscaling(a *containerBeta.ClusterAutoscaling) []map[string
 	return []map[string]interface{}{r}
 }
 <% end -%>
+
+
 
 func flattenMasterAuthorizedNetworksConfig(c *containerBeta.MasterAuthorizedNetworksConfig) []map[string]interface{} {
 	if c == nil {
@@ -2425,30 +2630,6 @@ func extractNodePoolInformationFromCluster(d *schema.ResourceData, config *Confi
 func cidrOrSizeDiffSuppress(k, old, new string, d *schema.ResourceData) bool {
 	// If the user specified a size and the API returned a full cidr block, suppress.
 	return strings.HasPrefix(new, "/") && strings.HasSuffix(old, new)
-}
-
-// We want to suppress diffs for empty or default client certificate configs, i.e:
-// 	[{ "issue_client_certificate": true}] --> []
-//  [] -> [{ "issue_client_certificate": true}]
-func masterAuthClientCertCfgSuppress(k, old, new string, r *schema.ResourceData) bool {
-	var clientConfig map[string]interface{}
-	if v, ok := r.GetOk("master_auth"); ok {
-		masterAuths := v.([]interface{})
-		masterAuth := masterAuths[0].(map[string]interface{})
-		cfgs := masterAuth["client_certificate_config"].([]interface{})
-		if len(cfgs) > 0 {
-			clientConfig = cfgs[0].(map[string]interface{})
-		}
-	}
-
-	if strings.HasSuffix(k, "client_certificate_config.#") && old == "0" && new == "1" {
-		// nil --> { "issue_client_certificate": true }
-		if issueCert, ok := clientConfig["issue_client_certificate"]; ok {
-			return issueCert.(bool)
-		}
-	}
-
-	return strings.HasSuffix(k, ".issue_client_certificate") && old == "" && new == "true"
 }
 
 // We want to suppress diffs for empty/disabled private cluster config.
