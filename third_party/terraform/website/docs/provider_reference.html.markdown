@@ -97,6 +97,13 @@ authenticate HTTP requests to GCP APIs. This is an alternative to `credentials`,
 and ignores the `scopes` field. If both are specified, `access_token` will be
 used over the `credentials` field.
 
+* `{{service}}_custom_endpoint` - (Optional) The endpoint for a service's APIs,
+such as `compute_custom_endpoint`. Defaults to the production GCP endpoint for
+the service. This can be used to configure the Google provider to communicate
+with GCP-like APIs such as [the Cloud Functions emulator](https://github.com/googlearchive/cloud-functions-emulator).
+Values are expected to include the version of the service, such as
+`https://www.googleapis.com/compute/v1/`.
+
 ### Full Reference
 
 * `credentials` - (Optional) Either the path to or the contents of a
@@ -190,6 +197,21 @@ an access token using the service account key specified in `credentials`.
     * https://www.googleapis.com/auth/cloud-platform
     * https://www.googleapis.com/auth/ndev.clouddns.readwrite
     * https://www.googleapis.com/auth/devstorage.full_control
+
+---
+
+* `{{service}}_custom_endpoint` - (Optional) The endpoint for a service's APIs,
+such as `compute_custom_endpoint`. Defaults to the production GCP endpoint for
+the service. This can be used to configure the Google provider to communicate
+with GCP-like APIs such as [the Cloud Functions emulator](https://github.com/googlearchive/cloud-functions-emulator).
+Values are expected to include the version of the service, such as
+`https://www.googleapis.com/compute/v1/`.
+
+A full list of configurable keys, their default value, and an environment
+variable that can be used for configuration are below:
+
+* `compute_custom_endpoint` (`GOOGLE_COMPUTE_CUSTOM_ENDPOINT`) - `https://www.googleapis.com/compute/v1/`
+* `cloud_functions_custom_endpoint` (`GOOGLE_CLOUD_FUNCTIONS_CUSTOM_ENDPOINT`) - `https://cloudfunctions.googleapis.com/v1/`
 
 [OAuth 2.0 access token]: https://developers.google.com/identity/protocols/OAuth2
 [service account key file]: https://cloud.google.com/iam/docs/creating-managing-service-account-keys
