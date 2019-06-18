@@ -128,6 +128,8 @@ func TestAccComputeGlobalForwardingRule_internalLoadBalancing(t *testing.T) {
 	backend := fmt.Sprintf("forwardrule-test-%s", acctest.RandString(10))
 	hc := fmt.Sprintf("forwardrule-test-%s", acctest.RandString(10))
 	urlmap := fmt.Sprintf("forwardrule-test-%s", acctest.RandString(10))
+	igm := fmt.Sprintf("forwardrule-test-%s", acctest.RandString(10))
+	it := fmt.Sprintf("forwardrule-test-%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -135,7 +137,7 @@ func TestAccComputeGlobalForwardingRule_internalLoadBalancing(t *testing.T) {
 		CheckDestroy: testAccCheckComputeGlobalForwardingRuleDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccComputeGlobalForwardingRule_internalLoadBalancing(fr, proxy, backend, hc, urlmap),
+				Config: testAccComputeGlobalForwardingRule_internalLoadBalancing(fr, proxy, backend, hc, urlmap, igm, it),
 			},
 			{
 				ResourceName:      "google_compute_global_forwarding_rule.forwarding_rule",
@@ -369,7 +371,7 @@ func testAccComputeGlobalForwardingRule_ipv6(fr, proxy, backend, hc, urlmap stri
 }
 
 <% unless version == 'ga' -%>
-func testAccComputeGlobalForwardingRule_internalLoadBalancing(fr, proxy, backend, hc, urlmap string) string {
+func testAccComputeGlobalForwardingRule_internalLoadBalancing(fr, proxy, backend, hc, urlmap, igm, it string) string {
 	return fmt.Sprintf(`
 resource "google_compute_global_forwarding_rule" "forwarding_rule" {
   name                  = "%s"
@@ -393,7 +395,7 @@ resource "google_compute_backend_service" "default" {
   load_balancing_scheme = "INTERNAL_SELF_MANAGED"
 
   backend {
-    group = "${google_compute_instance_group_manager.foobar.instance_group}"
+    group = "${google_compute_instance_group_manager.igm.instance_group}"
     balancing_mode = "RATE"
     capacity_scaler = 0.4
     max_rate_per_instance = 50
@@ -438,19 +440,19 @@ data "google_compute_image" "debian_image" {
   project  = "debian-cloud"
 }
 
-resource "google_compute_instance_group_manager" "foobar" {
-  name               = "igm-internal"
+resource "google_compute_instance_group_manager" "igm" {
+  name               = "%s"
   version {
-    instance_template  = "${google_compute_instance_template.foobar.self_link}"
+    instance_template  = "${google_compute_instance_template.instance_template.self_link}"
     name               = "primary"
   }
-  base_instance_name = "foobar"
+  base_instance_name = "internal-igm"
   zone               = "us-central1-f"
   target_size        = 1
 }
 
-resource "google_compute_instance_template" "foobar" {
-  name         = "instance-template-internal"
+resource "google_compute_instance_template" "instance_template" {
+  name         = "%s"
   machine_type = "n1-standard-1"
 
   network_interface {
@@ -462,6 +464,6 @@ resource "google_compute_instance_template" "foobar" {
     auto_delete  = true
     boot         = true
   }
-}`, fr, proxy, backend, hc, urlmap)
+}`, fr, proxy, backend, hc, urlmap, igm, it)
 }
 <% end -%>
