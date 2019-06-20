@@ -65,13 +65,38 @@ objects:
           - ALLOW
           - DENY
   - !ruby/object:Api::Resource
+    name: 'Service'
+    description: |
+      A Service resource is a logical component of an application that can share state and communicate in a secure fashion with other services. 
+      For example, an application that handles customer requests might include separate services to handle tasks such as backend data analysis or API requests from mobile devices. 
+      Each service has a collection of versions that define a specific set of code used to implement the functionality of that service.
+    base_url: 'apps/{{project}}/services'
+    self_link: 'apps/{{project}}/services/{{id}}'
+    references: !ruby/object:Api::Resource::ReferenceLinks
+      guides:
+        'Official Documentation':
+          'https://cloud.google.com/appengine/docs/admin-api/deploying-overview'
+      api: 'https://cloud.google.com/appengine/docs/admin-api/reference/rest/v1/apps.services'
+    properties:
+      - !ruby/object:Api::Type::String
+        name: 'name'
+        output: true
+        description: |
+          Full path to the Service resource in the API. Example apps/myapp/services/default.
+          This field is used in responses only. Any value specified here in a request is ignored.
+      - !ruby/object:Api::Type::String
+        name: 'id'
+        output: true
+        description: |
+           Relative name of the service within the application. Example default.
+  - !ruby/object:Api::Resource
     name: 'StandardAppVersion'
     description: |
       Standard App Version resource to create a new version of standard GAE Application.
       Currently supporting Zip and File Containers.
       Currently does not support async operation checking.
-    base_url: 'apps/{{project}}/versions'
-    self_link: 'apps/{{project}}/versions/{{version_id}}'
+    base_url: 'apps/{{project}}/services/{{service}}/versions'
+    self_link: 'apps/{{project}}/services/{{service}}/versions/{{versionId}}'
     update_verb: :PATCH
     update_mask: true
     references: !ruby/object:Api::Resource::ReferenceLinks
@@ -80,18 +105,23 @@ objects:
           'https://cloud.google.com/appengine/docs/admin-api/deploying-overview'
       api: 'https://cloud.google.com/appengine/docs/admin-api/reference/rest/v1/apps.services.versions'
     parameters:
-# Not sure if this parameter is required. Should be removed      
+      - !ruby/object:Api::Type::ResourceRef
+        name: 'service'
+        url_param_only: true
+        resource: 'Service'
+        imports: 'id'
+        description: |
+          Service
+    properties:
       - !ruby/object:Api::Type::String
         name: 'name'
+        output: true
         description: |
-          Full path to the Version resource in the API. Example, apps/myapp/services/default/versions/v1.
-    properties:
-# The id parameter is required and overridden as 'version_id'   
+          Full path to the Version resource in the API. Example, "v1".
       - !ruby/object:Api::Type::String
         name: 'id'
         description: |
-          Relative name of the version within the service. Example v1. Version names can contain only lowercase letters, numbers, or hyphens. Reserved names,"default", "latest", and any name with the prefix "ah-".
-# inboundServices      
+          Relative name of the version within the service. Example v1. Version names can contain only lowercase letters, numbers, or hyphens. Reserved names,"default", "latest", and any name with the prefix "ah-". 
       - !ruby/object:Api::Type::Enum
         name: 'inboundServices'
         description: |
@@ -106,7 +136,6 @@ objects:
           - :INBOUND_SERVICE_XMPP_PRESENCE
           - :INBOUND_SERVICE_CHANNEL_PRESENCE
           - :INBOUND_SERVICE_WARMUP     
-# instanceClass     
       - !ruby/object:Api::Type::String
         name: 'instanceClass'
         description: |
@@ -115,13 +144,10 @@ objects:
           ManualScaling or BasicScaling B1, B2, B4, B8, B4_1G
           Defaults to F1 for AutomaticScaling and B1 for ManualScaling or BasicScaling.
         required: false        
-# network paramter is missing.
-# zones      
       - !ruby/object:Api::Type::Array
         name: 'zones'
         item_type: Api::Type::String
         description: 'The Google Compute Engine zones that are supported by this version in the App Engine flexible environment.'
-# resources      
       - !ruby/object:Api::Type::NestedObject
         name: 'resources'
         description: 'Machine resources for this version. Only applicable in the App Engine flexible environment.'
@@ -149,27 +175,22 @@ objects:
               - !ruby/object:Api::Type::Integer
                 name: 'sizeGb'
                 description: 'sizeGb'
-# runtime      
       - !ruby/object:Api::Type::String
         name: 'runtime'
         description: 'Desired runtime. Example: python27.'
         required: true        
-# runtimeChannel      
       - !ruby/object:Api::Type::String
         name: 'runtimeChannel'
         description: 'The channel of the runtime to use. Only available for some runtimes. Defaults to the default channel.'
         required: false        
-# threadsafe      
       - !ruby/object:Api::Type::Boolean
         name: 'threadsafe'
         description: 'Whether multiple requests can be dispatched to this version at once.'
         required: false        
-# vm      
       - !ruby/object:Api::Type::Boolean
         name: 'vm'
         description: 'Whether to deploy this version in a container on a virtual machine.'
         required: false        
-# betaSettings      
       - !ruby/object:Api::Type::Map
         name: 'betaSettings'
         description: |
@@ -182,12 +203,10 @@ objects:
             - !ruby/object:Api::Type::String
               name: 'value'
               description: 'value'    
-# env
       - !ruby/object:Api::Type::String
         name: 'env'
         description: 'App Engine execution environment for this version. Defaults to standard.'
         required: false        
-# servingStatus      
       - !ruby/object:Api::Type::Enum
         name: 'servingStatus'
         description: |
@@ -197,11 +216,9 @@ objects:
           - :SERVING_STATUS_UNSPECIFIED
           - :SERVING
           - :STOPPED
-# runtimeApiVersion      
       - !ruby/object:Api::Type::String
         name: 'runtimeApiVersion'
         description: 'The version of the API in the given runtime environment. Please see the app.yaml reference for valid values at https://cloud.google.com/appengine/docs/standard//config/appref'
-# handlers      
       - !ruby/object:Api::Type::Array
         name: 'handlers'
         description: 'An ordered list of URL-matching patterns that should be applied to incoming requests. The first matching URL handles the request and other request handlers are not attempted. Only returned in GET requests if view=FULL is set.'
@@ -289,7 +306,6 @@ objects:
             - !ruby/object:Api::Type::String
               name: 'scriptPath'
               description: 'script path'  
-# errorHandlers      
       - !ruby/object:Api::Type::Array
         name: 'errorHandlers'
         description: 'Custom static error pages. Limited to 10KB per page.'
@@ -310,7 +326,6 @@ objects:
           - !ruby/object:Api::Type::String
             name: 'mimeType'
             description: 'mimeType'
-# libraries      
       - !ruby/object:Api::Type::Array
         name: 'libraries'
         description: 'Configuration for third-party Python runtime libraries that are required by the application.'
@@ -322,7 +337,6 @@ objects:
           - !ruby/object:Api::Type::String
             name: 'version'
             description: 'version'
-# apiConfig
       - !ruby/object:Api::Type::NestedObject
         name: 'apiConfig'
         description: 'Serving configuration for Google Cloud Endpoints.'
@@ -358,18 +372,15 @@ objects:
           - !ruby/object:Api::Type::String
             name: 'url'
             description: 'url'
-# envVariables      
       - !ruby/object:Api::Type::KeyValuePairs
         name: 'envVariables'
         description: |
           Map of environment variables
           An object containing a list of "key": value pairs.
           Example: { "name": "wrench", "mass": "1.3kg", "count": "3" }.
-#defaultExpiration
       - !ruby/object:Api::Type::String
         name: 'defaultExpiration'
         description: 'Duration that static files should be cached by web proxies and browsers. Only applicable if the corresponding StaticFilesHandler does not specify its own expiration time.'
-# healthCheck      
       - !ruby/object:Api::Type::NestedObject
         name: 'healthCheck'
         description: 'Configures health checking for instances. Unhealthy instances are stopped and replaced with new instances. Only applicable in the App Engine flexible environment.'
@@ -396,7 +407,6 @@ objects:
           - !ruby/object:Api::Type::String
             name: 'timeout'
             description: 'timeout'
-# readinessCheck      
       - !ruby/object:Api::Type::NestedObject
         name: 'readinessCheck'
         description: 'Configures readiness health checking for instances. Unhealthy instances are not put into the backend traffic rotation.'
@@ -423,7 +433,6 @@ objects:
           - !ruby/object:Api::Type::String
             name: 'appStartTimeout'
             description: 'appStartTimeout'
-# livenessCheck      
       - !ruby/object:Api::Type::NestedObject
         name: 'livenessCheck'
         description: 'Configures liveness health checking for instances. Unhealthy instances are stopped and replaced with new instances'
@@ -450,11 +459,9 @@ objects:
           - !ruby/object:Api::Type::String
             name: 'initialDelay'
             description: 'initialDelay'
-#nobuildFilesRegex
       - !ruby/object:Api::Type::String
         name: 'nobuildFilesRegex'
         description: 'Files that match this pattern will not be built into this version. Only applicable for Go runtimes.'
-# deployment      
       - !ruby/object:Api::Type::NestedObject
         name: 'deployment'
         description: 'Code and application artifacts that make up this version.'
@@ -486,7 +493,6 @@ objects:
                 name: 'filesCount'
                 description: 'files count'
                 required: false
-# endpointsApiService      
       - !ruby/object:Api::Type::NestedObject
         name: 'endpointsApiService'
         description: 'Cloud Endpoints configuration. If endpointsApiService is set, the Cloud Endpoints Extensible Service Proxy will be provided to serve the API implemented by the app.'
@@ -505,7 +511,6 @@ objects:
               - :UNSPECIFIED_ROLLOUT_STRATEGY
               - :FIXED
               - :MANAGED
-# entrypoint      
       - !ruby/object:Api::Type::NestedObject
         name: 'entrypoint'
         description: 'The entrypoint for the application.'
@@ -514,7 +519,6 @@ objects:
           - !ruby/object:Api::Type::String
             name: 'shell'
             description: 'shell'
-#automaticScaling
       - !ruby/object:Api::Type::NestedObject
         name: 'automaticScaling'
         description: 'Automatic scaling is based on request rate, response latencies, and other application metrics.'
@@ -596,5 +600,4 @@ objects:
               - !ruby/object:Api::Type::Integer
                 name: 'maxInstances'
                 description: 'maxInstances'
-# basicScaling
-# manualScaling
+  
