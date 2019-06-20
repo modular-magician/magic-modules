@@ -25,8 +25,12 @@ overrides: !ruby/object:Overrides::ResourceOverrides
         test_env_vars:
           org_id: :ORG_ID
   StandardAppVersion: !ruby/object:Overrides::Terraform::ResourceOverride
-    id_format: "{{project}}/{{serviceId}}/{{name}}"
-    import_format: ["{{project}}/{{serviceId}}/{{name}}"]
+    id_format: "{{project}}/{{serviceId}}/{{versionId}}"
+    import_format: ["{{project}}/{{serviceId}}/{{versionId}}"]
+    parameters:
+      service: !ruby/object:Overrides::Terraform::PropertyOverride
+        default_from_api: true
+        required: false
     properties:
       id: !ruby/object:Overrides::Terraform::PropertyOverride
         name: 'version_id'
@@ -36,10 +40,10 @@ overrides: !ruby/object:Overrides::ResourceOverrides
         primary_resource_id: "name"
         vars:
           project_id: "test-project"
-          service: "default"
         test_env_vars:
           org_id: :ORG_ID
-
+  Service: !ruby/object:Overrides::Terraform::ResourceOverride
+    exclude: true
 # This is for copying files over
 files: !ruby/object:Provider::Config::Files
   # These files have templating (ERB) code that will be run.
