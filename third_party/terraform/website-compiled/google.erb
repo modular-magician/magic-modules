@@ -420,6 +420,12 @@
       <a href="/docs/providers/google/r/compute_disk.html">google_compute_disk</a>
       </li>
 
+<% unless version == 'ga' %>
+      <li<%%= sidebar_current("docs-google-compute-external-vpn-gateway") %>>
+      <a href="/docs/providers/google/r/compute_external_vpn_gateway.html">google_compute_external_vpn_gateway</a>
+      </li>
+
+<% end -%>
       <li<%%= sidebar_current("docs-google-compute-firewall") %>>
       <a href="/docs/providers/google/r/compute_firewall.html">google_compute_firewall</a>
       </li>
@@ -1023,7 +1029,7 @@
     <a href="#">Google Key Management Service Resources</a>
     <ul class="nav nav-visible">
       <li<%%= sidebar_current("docs-google-kms-crypto-key-x") %>>
-        <a href="/docs/providers/google/r/google_kms_crypto_key.html">google_kms_crypto_key</a>
+        <a href="/docs/providers/google/r/kms_crypto_key.html">google_kms_crypto_key</a>
       </li>
       <li<%%= sidebar_current("docs-google-kms-crypto-key-iam-binding") %>>
         <a href="/docs/providers/google/r/google_kms_crypto_key_iam_binding.html">google_kms_crypto_key_iam_binding</a>
