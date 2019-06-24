@@ -41,11 +41,7 @@ overrides: !ruby/object:Overrides::ResourceOverrides
         exclude: true
       spec: !ruby/object:Overrides::Terraform::PropertyOverride
         flatten_object: true
-      spec.runLatest: !ruby/object:Overrides::Terraform::PropertyOverride
-        flatten_object: true
-      spec.runLatest.configuration: !ruby/object:Overrides::Terraform::PropertyOverride
-        flatten_object: true
-      spec.runLatest.configuration.revisionTemplate: !ruby/object:Overrides::Terraform::PropertyOverride
+      spec.template: !ruby/object:Overrides::Terraform::PropertyOverride
         flatten_object: true
       metadata.labels: !ruby/object:Overrides::Terraform::PropertyOverride
         default_from_api: true
