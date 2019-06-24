@@ -18,7 +18,8 @@ module Provider
   class TerraformObjectLibrary < Provider::Terraform
     def generate(output_folder, types, version_name, _product_path, _dump_yaml)
       version = @api.version_obj_or_default(version_name)
-      generate_objects(output_folder, types, version)
+      @base_url = version.base_url
+      generate_objects(output_folder, types, version.name)
     end
 
     def generate_object(object, output_folder, version_name)
