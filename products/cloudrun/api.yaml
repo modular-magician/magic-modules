@@ -255,223 +255,213 @@ objects:
     description: Spec holds the desired state of the Service (from the client).
     properties:
     - !ruby/object:Api::Type::NestedObject
-      name: runLatest
-      required: true
+      name: Template
       description: |-
-        RunLatest defines a simple Service. It will automatically
-        configure a route that keeps the latest ready revision
-        from the supplied configuration running.
+        Template holds the latest specification for the Revision to
+        be stamped out. The template references the container image, and may also
+        include labels and annotations that should be attached to the Revision.
+        To correlate a Revision, and/or to force a Revision to be created when the
+        spec doesn't otherwise change, a nonce label may be provided in the
+        template metadata. For more details, see:
+        https://github.com/knative/serving/blob/master/docs/client-conventions.md#associate-modifications-with-revisions
+
+        Cloud Run does not currently support referencing a build that is
+        responsible for materializing the container image from source.
       properties:
       - !ruby/object:Api::Type::NestedObject
-        name: configuration
+        name: spec
         required: true
-        description: The configuration for this service.
+        description: RevisionSpec holds the desired state of the Revision (from
+          the client).
         properties:
-        - !ruby/object:Api::Type::NestedObject
-          name: revisionTemplate
+        - !ruby/object:Api::Type::Integer
+          name: timeoutSeconds
           description: |-
-            RevisionTemplate holds the latest specification for the Revision to
-            be stamped out. The template references the container image, and may also
-            include labels and annotations that should be attached to the Revision.
-            To correlate a Revision, and/or to force a Revision to be created when the
-            spec doesn't otherwise change, a nonce label may be provided in the
-            template metadata. For more details, see:
-            https://github.com/knative/serving/blob/master/docs/client-conventions.md#associate-modifications-with-revisions
-
-            Cloud Run does not currently support referencing a build that is
-            responsible for materializing the container image from source.
+            TimeoutSeconds holds the max duration the instance is allowed for
+            responding to a request.
+            Not currently used by Cloud Run.
+        - !ruby/object:Api::Type::NestedObject
+          name: container
+          update_url: TODO_replaceService
+          update_verb: :PUT
+          required: true
+          description: |-
+            Container defines the unit of execution for this Revision.
+            In the context of a Revision, we disallow a number of the fields of
+            this Container, including: name, ports, and volumeMounts.
+            The runtime contract is documented here:
+            https://github.com/knative/serving/blob/master/docs/runtime-contract.md
           properties:
-          - !ruby/object:Api::Type::NestedObject
-            name: spec
-            required: true
-            description: RevisionSpec holds the desired state of the Revision (from
-              the client).
-            properties:
-            - !ruby/object:Api::Type::Integer
-              name: timeoutSeconds
-              description: |-
-                TimeoutSeconds holds the max duration the instance is allowed for
-                responding to a request.
-                Not currently used by Cloud Run.
-            - !ruby/object:Api::Type::NestedObject
-              name: container
-              update_url: TODO_replaceService
-              update_verb: :PUT
-              required: true
-              description: |-
-                Container defines the unit of execution for this Revision.
-                In the context of a Revision, we disallow a number of the fields of
-                this Container, including: name, ports, and volumeMounts.
-                The runtime contract is documented here:
-                https://github.com/knative/serving/blob/master/docs/runtime-contract.md
+          - !ruby/object:Api::Type::String
+            name: workingDir
+            description: |-
+              Container's working directory.
+              If not specified, the container runtime's default will be used, which
+              might be configured in the container image.
+              Cannot be updated.
+          - !ruby/object:Api::Type::Array
+            name: args
+            description: |-
+              Arguments to the entrypoint.
+              The docker image's CMD is used if this is not provided.
+              Variable references $(VAR_NAME) are expanded using the container's
+              environment. If a variable cannot be resolved, the reference in the input
+              string will be unchanged. The $(VAR_NAME) syntax can be escaped with a
+              double $$, ie: $$(VAR_NAME). Escaped references will never be expanded,
+              regardless of whether the variable exists or not.
+              Cannot be updated.
+              More info:
+              https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell
+            item_type: Api::Type::String
+          - !ruby/object:Api::Type::Array
+            name: envFrom
+            description: |-
+              List of sources to populate environment variables in the container.
+              The keys defined within a source must be a C_IDENTIFIER. All invalid keys
+              will be reported as an event when the container is starting. When a key
+              exists in multiple sources, the value associated with the last source will
+              take precedence. Values defined by an Env with a duplicate key will take
+              precedence. Cannot be updated.
+            item_type: !ruby/object:Api::Type::NestedObject
               properties:
               - !ruby/object:Api::Type::String
-                name: workingDir
+                name: prefix
                 description: |-
-                  Container's working directory.
-                  If not specified, the container runtime's default will be used, which
-                  might be configured in the container image.
-                  Cannot be updated.
-              - !ruby/object:Api::Type::Array
-                name: args
+                  An optional identifier to prepend to each key in the ConfigMap. Must be a
+                  C_IDENTIFIER.
+              - !ruby/object:Api::Type::NestedObject
+                name: configMapRef
                 description: |-
-                  Arguments to the entrypoint.
-                  The docker image's CMD is used if this is not provided.
-                  Variable references $(VAR_NAME) are expanded using the container's
-                  environment. If a variable cannot be resolved, the reference in the input
-                  string will be unchanged. The $(VAR_NAME) syntax can be escaped with a
-                  double $$, ie: $$(VAR_NAME). Escaped references will never be expanded,
-                  regardless of whether the variable exists or not.
-                  Cannot be updated.
-                  More info:
-                  https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell
-                item_type: Api::Type::String
-              - !ruby/object:Api::Type::Array
-                name: envFrom
-                description: |-
-                  List of sources to populate environment variables in the container.
-                  The keys defined within a source must be a C_IDENTIFIER. All invalid keys
-                  will be reported as an event when the container is starting. When a key
-                  exists in multiple sources, the value associated with the last source will
-                  take precedence. Values defined by an Env with a duplicate key will take
-                  precedence. Cannot be updated.
-                item_type: !ruby/object:Api::Type::NestedObject
-                  properties:
-                  - !ruby/object:Api::Type::String
-                    name: prefix
-                    description: |-
-                      An optional identifier to prepend to each key in the ConfigMap. Must be a
-                      C_IDENTIFIER.
-                  - !ruby/object:Api::Type::NestedObject
-                    name: configMapRef
-                    description: |-
-                      The ConfigMap to select from
-                    properties:
-                    - !ruby/object:Api::Type::Boolean
-                      name: optional
-                      description: |-
-                        Specify whether the ConfigMap must be defined
-                    - !ruby/object:Api::Type::NestedObject
-                      name: localObjectReference
-                      description: The ConfigMap to select from.
-                      properties:
-                      - !ruby/object:Api::Type::String
-                        name: name
-                        description: |-
-                          Name of the referent.
-                          More info:
-                          https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                  - !ruby/object:Api::Type::NestedObject
-                    name: secretRef
-                    description: |-
-                      The Secret to select from
-                    properties:
-                    - !ruby/object:Api::Type::NestedObject
-                      name: localObjectReference
-                      description: The Secret to select from.
-                      properties:
-                      - !ruby/object:Api::Type::String
-                        name: name
-                        description: |-
-                          Name of the referent.
-                          More info:
-                          https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                    - !ruby/object:Api::Type::Boolean
-                      name: optional
-                      description: |-
-                        Specify whether the Secret must be defined
-              - !ruby/object:Api::Type::String
-                name: image
-                required: true
-                description: |-
-                  Docker image name.
-                  More info: https://kubernetes.io/docs/concepts/containers/images
-              - !ruby/object:Api::Type::Array
-                name: command
-                description: |-
-                  Entrypoint array. Not executed within a shell.
-                  The docker image's ENTRYPOINT is used if this is not provided.
-                  Variable references $(VAR_NAME) are expanded using the container's
-                  environment. If a variable cannot be resolved, the reference in the input
-                  string will be unchanged. The $(VAR_NAME) syntax can be escaped with a
-                  double $$, ie: $$(VAR_NAME). Escaped references will never be expanded,
-                  regardless of whether the variable exists or not.
-                  Cannot be updated.
-                  More info:
-                  https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell
-                item_type: Api::Type::String
-              - !ruby/object:Api::Type::Array
-                name: env
-                description: |-
-                  List of environment variables to set in the container.
-                  Cannot be updated.
-                item_type: !ruby/object:Api::Type::NestedObject
+                  The ConfigMap to select from
+                properties:
+                - !ruby/object:Api::Type::Boolean
+                  name: optional
+                  description: |-
+                    Specify whether the ConfigMap must be defined
+                - !ruby/object:Api::Type::NestedObject
+                  name: localObjectReference
+                  description: The ConfigMap to select from.
                   properties:
                   - !ruby/object:Api::Type::String
                     name: name
-                    description: Name of the environment variable. Must be a C_IDENTIFIER.
-                  - !ruby/object:Api::Type::String
-                    name: value
                     description: |-
-                      Variable references $(VAR_NAME) are expanded
-                      using the previous defined environment variables in the container and
-                      any route environment variables. If a variable cannot be resolved,
-                      the reference in the input string will be unchanged. The $(VAR_NAME)
-                      syntax can be escaped with a double $$, ie: $$(VAR_NAME). Escaped
-                      references will never be expanded, regardless of whether the variable
-                      exists or not.
-                      Defaults to "".
+                      Name of the referent.
+                      More info:
+                      https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
               - !ruby/object:Api::Type::NestedObject
-                name: resources
+                name: secretRef
                 description: |-
-                  Compute Resources required by this container. Used to set values such as max memory
-                  More info:
-                  https://kubernetes.io/docs/concepts/storage/persistent-volumes#resources
+                  The Secret to select from
                 properties:
-                - !ruby/object:Api::Type::KeyValuePairs
-                  name: limits
+                - !ruby/object:Api::Type::NestedObject
+                  name: localObjectReference
+                  description: The Secret to select from.
+                  properties:
+                  - !ruby/object:Api::Type::String
+                    name: name
+                    description: |-
+                      Name of the referent.
+                      More info:
+                      https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                - !ruby/object:Api::Type::Boolean
+                  name: optional
                   description: |-
-                    Limits describes the maximum amount of compute resources allowed.
-                    The values of the map is string form of the 'quantity' k8s type:
-                    https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/apimachinery/pkg/api/resource/quantity.go
-                - !ruby/object:Api::Type::KeyValuePairs
-                  name: requests
-                  description: |-
-                    Requests describes the minimum amount of compute resources required.
-                    If Requests is omitted for a container, it defaults to Limits if that is
-                    explicitly specified, otherwise to an implementation-defined value.
-                    The values of the map is string form of the 'quantity' k8s type:
-                    https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/apimachinery/pkg/api/resource/quantity.go
-            - !ruby/object:Api::Type::Integer
-              name: containerConcurrency
+                    Specify whether the Secret must be defined
+          - !ruby/object:Api::Type::String
+            name: image
+            required: true
+            description: |-
+              Docker image name.
+              More info: https://kubernetes.io/docs/concepts/containers/images
+          - !ruby/object:Api::Type::Array
+            name: command
+            description: |-
+              Entrypoint array. Not executed within a shell.
+              The docker image's ENTRYPOINT is used if this is not provided.
+              Variable references $(VAR_NAME) are expanded using the container's
+              environment. If a variable cannot be resolved, the reference in the input
+              string will be unchanged. The $(VAR_NAME) syntax can be escaped with a
+              double $$, ie: $$(VAR_NAME). Escaped references will never be expanded,
+              regardless of whether the variable exists or not.
+              Cannot be updated.
+              More info:
+              https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell
+            item_type: Api::Type::String
+          - !ruby/object:Api::Type::Array
+            name: env
+            description: |-
+              List of environment variables to set in the container.
+              Cannot be updated.
+            item_type: !ruby/object:Api::Type::NestedObject
+              properties:
+              - !ruby/object:Api::Type::String
+                name: name
+                description: Name of the environment variable. Must be a C_IDENTIFIER.
+              - !ruby/object:Api::Type::String
+                name: value
+                description: |-
+                  Variable references $(VAR_NAME) are expanded
+                  using the previous defined environment variables in the container and
+                  any route environment variables. If a variable cannot be resolved,
+                  the reference in the input string will be unchanged. The $(VAR_NAME)
+                  syntax can be escaped with a double $$, ie: $$(VAR_NAME). Escaped
+                  references will never be expanded, regardless of whether the variable
+                  exists or not.
+                  Defaults to "".
+          - !ruby/object:Api::Type::NestedObject
+            name: resources
+            description: |-
+              Compute Resources required by this container. Used to set values such as max memory
+              More info:
+              https://kubernetes.io/docs/concepts/storage/persistent-volumes#resources
+            properties:
+            - !ruby/object:Api::Type::KeyValuePairs
+              name: limits
               description: |-
-                ContainerConcurrency specifies the maximum allowed in-flight (concurrent)
-                requests per container of the Revision. Values are:
-                - `0` thread-safe, the system should manage the max concurrency. This is
-                   the default value.
-                - `1` not-thread-safe. Single concurrency
-                - `2-N` thread-safe, max concurrency of N
-            - !ruby/object:Api::Type::String
-              # Will be added by the cloud run team soon
-              name: serviceAccountName
-              exclude: true
-              description: Not currently used by Cloud Run.
-            - !ruby/object:Api::Type::Enum
-              name: servingState
+                Limits describes the maximum amount of compute resources allowed.
+                The values of the map is string form of the 'quantity' k8s type:
+                https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/apimachinery/pkg/api/resource/quantity.go
+            - !ruby/object:Api::Type::KeyValuePairs
+              name: requests
               description: |-
-                ServingState holds a value describing the state the resources
-                are in for this Revision.
-                Users must not specify this when creating a revision. It is expected
-                that the system will manipulate this based on routability and load.
+                Requests describes the minimum amount of compute resources required.
+                If Requests is omitted for a container, it defaults to Limits if that is
+                explicitly specified, otherwise to an implementation-defined value.
+                The values of the map is string form of the 'quantity' k8s type:
+                https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/apimachinery/pkg/api/resource/quantity.go
+        - !ruby/object:Api::Type::Integer
+          name: containerConcurrency
+          description: |-
+            ContainerConcurrency specifies the maximum allowed in-flight (concurrent)
+            requests per container of the Revision. Values are:
+            - `0` thread-safe, the system should manage the max concurrency. This is
+                the default value.
+            - `1` not-thread-safe. Single concurrency
+            - `2-N` thread-safe, max concurrency of N
+        - !ruby/object:Api::Type::String
+          # Will be added by the cloud run team soon
+          name: serviceAccountName
+          exclude: true
+          description: Not currently used by Cloud Run.
+        - !ruby/object:Api::Type::Enum
+          name: servingState
+          description: |-
+            ServingState holds a value describing the state the resources
+            are in for this Revision.
+            Users must not specify this when creating a revision. It is expected
+            that the system will manipulate this based on routability and load.
 
-                Populated by the system.
-                Read-only.
-              output: true
-              values:
-              - :REVISION_SERVING_STATE_UNSPECIFIED
-              - :ACTIVE
-              - :RESERVE
-              - :RETIRED
+            Populated by the system.
+            Read-only.
+          output: true
+          values:
+          - :REVISION_SERVING_STATE_UNSPECIFIED
+          - :ACTIVE
+          - :RESERVE
+          - :RETIRED
+
+
+
   - !ruby/object:Api::Type::NestedObject
     name: metadata
     required: true
