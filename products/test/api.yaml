@@ -1,0 +1,57 @@
+!ruby/object:Api::Product
+name: Test
+display_name: Test Thing
+versions:
+  - !ruby/object:Api::Product::Version
+    name: ga
+    base_url: http://localhost:5000/
+scopes:
+  - https://www.googleapis.com/auth/cloud-platform
+apis_required:
+  - !ruby/object:Api::Product::ApiReference
+    name: Stackdriver Logging API
+    url: https://console.cloud.google.com/apis/library/logging.googleapis.com/
+objects:
+  - !ruby/object:Api::Resource
+    name: "BasicResource"
+    # create_url: post
+    # update_url: put
+    update_verb: :PATCH
+    base_url: flasky
+    input: true
+    description: |
+      Logs-based metric can also be used to extract values from logs and create a a distribution
+      of the values. The distribution records the statistics of the extracted values along with
+      an optional histogram of the values as specified by the bucket options.
+    properties:
+      - !ruby/object:Api::Type::String
+        name: name
+        update_url: flasky
+        required: true
+        description: name
+      - !ruby/object:Api::Type::NestedObject
+        name: one
+        update_url: flasky2
+        description: first depth
+        properties:
+          - !ruby/object:Api::Type::NestedObject
+            name: two2
+            description: second depth2
+            properties:
+            - !ruby/object:Api::Type::String
+              name: terminalBranch2
+              description: terminalBranch2
+          - !ruby/object:Api::Type::NestedObject
+            name: two
+            description: second depth
+            properties:
+              - !ruby/object:Api::Type::NestedObject
+                name: three
+                description: third depth
+                properties:
+                  - !ruby/object:Api::Type::String
+                    name: terminal
+                    description: terminal node
+                  - !ruby/object:Api::Type::String
+                    name: terminal2
+                    description: terminal node2
