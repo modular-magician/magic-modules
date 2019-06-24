@@ -83,6 +83,7 @@ func Provider() terraform.ResourceProvider {
 			BinaryAuthorizationCustomEndpointEntryKey: BinaryAuthorizationCustomEndpointEntry,
 			ContainerAnalysisCustomEndpointEntryKey:   ContainerAnalysisCustomEndpointEntry,
 			SecurityScannerCustomEndpointEntryKey:     SecurityScannerCustomEndpointEntry,
+			CloudrunCustomEndpointEntryKey:     CloudrunCustomEndpointEntry,
 			// end beta-only products
 			<% end -%>
 			AccessContextManagerCustomEndpointEntryKey: AccessContextManagerCustomEndpointEntry,
@@ -204,6 +205,7 @@ func ResourceMapWithErrors() (map[string]*schema.Resource, error) {
 			GeneratedBinaryAuthorizationResourcesMap,
 			GeneratedContainerAnalysisResourcesMap,
 			GeneratedSecurityScannerResourcesMap,
+			GeneratedCloudrunResourcesMap,
 			// end beta-only products
 			<% end -%>
 			GeneratedAccessContextManagerResourcesMap,
@@ -378,6 +380,7 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	config.BinaryAuthorizationBasePath = d.Get(BinaryAuthorizationCustomEndpointEntryKey).(string)
 	config.ContainerAnalysisBasePath = d.Get(ContainerAnalysisCustomEndpointEntryKey).(string)
 	config.SecurityScannerBasePath = d.Get(SecurityScannerCustomEndpointEntryKey).(string)
+	config.CloudrunBasePath = d.Get(CloudrunCustomEndpointEntryKey).(string)
 	<% end -%>
 
 	config.AccessContextManagerBasePath = d.Get(AccessContextManagerCustomEndpointEntryKey).(string)
@@ -442,6 +445,7 @@ func ConfigureBasePaths(c *Config) {
 	c.BinaryAuthorizationBasePath = BinaryAuthorizationDefaultBasePath
 	c.ContainerAnalysisBasePath = ContainerAnalysisDefaultBasePath
 	c.SecurityScannerBasePath = SecurityScannerDefaultBasePath
+	c.CloudrunBasePath = CloudrunDefaultBasePath
 	// end beta-only products
 	<% end -%>
 	c.AccessContextManagerBasePath = AccessContextManagerDefaultBasePath
