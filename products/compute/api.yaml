@@ -20,7 +20,6 @@ versions:
   - !ruby/object:Api::Product::Version
     name: ga
     base_url: https://www.googleapis.com/compute/v1/
-    default: true
   - !ruby/object:Api::Product::Version
     name: beta
     base_url: https://www.googleapis.com/compute/beta/
@@ -602,7 +601,7 @@ objects:
       - !ruby/object:Api::Type::Array
         name: 'backends'
         description: |
-          The list of backends that serve this BackendService.
+          The set of backends that serve this BackendService.
         item_type: !ruby/object:Api::Type::NestedObject
           properties:
             - !ruby/object:Api::Type::Enum
@@ -657,7 +656,6 @@ objects:
                 partial URL.
             - !ruby/object:Api::Type::Integer
               name: 'maxConnections'
-              send_empty_value: true
               description: |
                 The max number of simultaneous connections for the group. Can
                 be used with either CONNECTION or UTILIZATION balancing modes.
@@ -667,7 +665,6 @@ objects:
                 as appropriate for group type, must be set.
             - !ruby/object:Api::Type::Integer
               name: 'maxConnectionsPerInstance'
-              send_empty_value: true
               description: |
                 The max number of simultaneous connections that a single
                 backend instance can handle. This is used to calculate the
@@ -678,7 +675,6 @@ objects:
                 maxConnectionsPerInstance must be set.
             - !ruby/object:Api::Type::Integer
               name: 'maxConnectionsPerEndpoint'
-              send_empty_value: true
               description: |
                 The max number of simultaneous connections that a single backend
                 network endpoint can handle. This is used to calculate the
@@ -689,7 +685,6 @@ objects:
                 maxConnections or maxConnectionsPerEndpoint must be set.
             - !ruby/object:Api::Type::Integer
               name: 'maxRate'
-              send_empty_value: true
               description: |
                 The max requests per second (RPS) of the group.
 
@@ -699,7 +694,6 @@ objects:
                 group type, must be set.
             - !ruby/object:Api::Type::Double
               name: 'maxRatePerInstance'
-              send_empty_value: true
               description: |
                 The max requests per second (RPS) that a single backend
                 instance can handle. This is used to calculate the capacity of
@@ -707,7 +701,6 @@ objects:
                 either maxRate or maxRatePerInstance must be set.
             - !ruby/object:Api::Type::Double
               name: 'maxRatePerEndpoint'
-              send_empty_value: true
               description: |
                 The max requests per second (RPS) that a single backend network
                 endpoint can handle. This is used to calculate the capacity of
@@ -825,7 +818,7 @@ objects:
         min_size: 1
         max_size: 1
         description: |
-           The list of URLs to the HttpHealthCheck or HttpsHealthCheck resource
+           The set of URLs to the HttpHealthCheck or HttpsHealthCheck resource
            for health checking this BackendService. Currently at most one health
            check can be specified, and a health check is required.
 
@@ -1323,7 +1316,7 @@ objects:
         # Larger disks were timing out at creation. Bumping up to 5 minutes.
         # https://github.com/terraform-providers/terraform-provider-google/issues/703
         timeouts: !ruby/object:Api::Timeouts
-          insert_sec: 300 # 5 minutes
+          insert_minutes: 5
       result: !ruby/object:Api::Async::Result
         path: 'targetLink'
       status: !ruby/object:Api::Async::Status
@@ -3699,9 +3692,9 @@ objects:
         # Users were experiencing timeouts. Bumping up to 6 minutes.
         # https://github.com/terraform-providers/terraform-provider-google/issues/852
         timeouts: !ruby/object:Api::Timeouts
-          insert_sec: 360 # 6 minutes
-          update_sec: 360 # 6 minutes
-          delete_sec: 360 # 6 minutes
+          insert_minutes: 6
+          update_minutes: 6
+          delete_minutes: 6
       result: !ruby/object:Api::Async::Result
         path: 'targetLink'
       status: !ruby/object:Api::Async::Status
@@ -5746,7 +5739,7 @@ objects:
         base_url: 'projects/{{project}}/regions/{{region}}/operations/{{op_id}}'
         wait_ms: 1000
         timeouts: !ruby/object:Api::Timeouts
-          insert_sec: 300 # 5 minutes
+          insert_minutes: 5
       result: !ruby/object:Api::Async::Result
         path: 'targetLink'
       status: !ruby/object:Api::Async::Status
@@ -6430,9 +6423,9 @@ objects:
         base_url: 'projects/{{project}}/global/operations/{{op_id}}'
         wait_ms: 1000
         timeouts: !ruby/object:Api::Timeouts
-          insert_sec: 300 # 5 minutes
-          update_sec: 300 # 5 minutes
-          delete_sec: 300 # 5 minutes
+          insert_minutes: 5
+          update_minutes: 5
+          delete_minutes: 5
       result: !ruby/object:Api::Async::Result
         path: 'targetLink'
       status: !ruby/object:Api::Async::Status
@@ -6664,11 +6657,11 @@ objects:
         base_url: 'projects/{{project}}/global/operations/{{op_id}}'
         wait_ms: 1000
         timeouts: !ruby/object:Api::Timeouts
-          insert_sec: 360 # 6 minutes
-          update_sec: 360 # 6 minutes
+          insert_minutes: 6
+          update_minutes: 6
           # Deletes can take 20-30 minutes to complete, since they depend
           # on the provisioning process either succeeding or failing completely.
-          delete_sec: 1800 # 30 minutes
+          delete_minutes: 30
       result: !ruby/object:Api::Async::Result
         path: 'targetLink'
       status: !ruby/object:Api::Async::Status
@@ -6890,9 +6883,9 @@ objects:
         # Users were experiencing timeout. Bumping up to 6 minutes.
         # https://github.com/terraform-providers/terraform-provider-google/issues/718
         timeouts: !ruby/object:Api::Timeouts
-          insert_sec: 360 # 6 minutes
-          update_sec: 360 # 6 minutes
-          delete_sec: 360 # 6 minutes
+          insert_minutes: 6
+          update_minutes: 6
+          delete_minutes: 6
       result: !ruby/object:Api::Async::Result
         path: 'targetLink'
       status: !ruby/object:Api::Async::Status

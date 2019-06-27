@@ -16,13 +16,14 @@ image_resource:
         tag: '1.0'
 
 inputs:
-    - name: mm-approved-prs
+    - name: magic-modules
+    - name: mm-initial-pr
 
 params:
     GITHUB_TOKEN: ""
     DOWNSTREAM_REPOS: ""
 
 run:
-    path: mm-approved-prs/.ci/magic-modules/downstream_changelog_metadata.py
+    path: magic-modules/.ci/magic-modules/downstream_changelog_metadata.py
     args:
-        - mm-approved-prs/.git/id
+        - mm-initial-pr/.git/id
