@@ -13,6 +13,10 @@ pushd magic-modules-branched
 # Choose the author of the most recent commit as the downstream author
 COMMIT_AUTHOR="$(git log --pretty="%an <%ae>" -n1 HEAD)"
 
+# Remove all modules so that old files are removed in process.
+rm build/ansible/lib/ansible/modules/cloud/google/gcp_*
+rm -r build/ansible/test/integration/targets/gcp_*
+
 for i in $(find products/ -name 'ansible.yaml' -printf '%h\n');
 do
   bundle exec compiler -p $i -e ansible -o "build/ansible/"
