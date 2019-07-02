@@ -17,6 +17,7 @@ overrides: !ruby/object:Overrides::ResourceOverrides
     examples:
       - !ruby/object:Provider::Terraform::Examples
         name: "cloudrun_service_basic"
+        min_version: 'beta'
         primary_resource_id: "default"
         vars:
           cloudrun_service_name: "tftest-cloudrun"
