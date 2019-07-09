@@ -64,3 +64,540 @@ objects:
           - UNSPECIFIED_ACTION
           - ALLOW
           - DENY
+  - !ruby/object:Api::Resource
+    name: 'Service'
+    description: |
+      A Service resource is a logical component of an application that can share state and communicate in a secure fashion with other services. 
+      For example, an application that handles customer requests might include separate services to handle tasks such as backend data analysis or API requests from mobile devices. 
+      Each service has a collection of versions that define a specific set of code used to implement the functionality of that service.
+    base_url: 'apps/{{project}}/services'
+    self_link: 'apps/{{project}}/services/{{id}}'
+    references: !ruby/object:Api::Resource::ReferenceLinks
+      guides:
+        'Official Documentation':
+          'https://cloud.google.com/appengine/docs/admin-api/deploying-overview'
+      api: 'https://cloud.google.com/appengine/docs/admin-api/reference/rest/v1/apps.services'
+    properties:
+      - !ruby/object:Api::Type::String
+        name: 'name'
+        output: true
+        description: |
+          Full path to the Service resource in the API. Example apps/myapp/services/default.
+          This field is used in responses only. Any value specified here in a request is ignored.
+      - !ruby/object:Api::Type::String
+        name: 'id'
+        output: true
+        description: |
+           Relative name of the service within the application. Example default.
+  - !ruby/object:Api::Resource
+    name: 'StandardAppVersion'
+    description: |
+      Standard App Version resource to create a new version of standard GAE Application.
+      Currently supporting Zip and File Containers.
+      Currently does not support async operation checking.
+    base_url: 'apps/{{project}}/services/{{service}}/versions'
+    self_link: 'apps/{{project}}/services/{{service}}/versions/{{versionId}}'
+    update_verb: :PATCH
+    update_mask: true
+    references: !ruby/object:Api::Resource::ReferenceLinks
+      guides:
+        'Official Documentation':
+          'https://cloud.google.com/appengine/docs/admin-api/deploying-overview'
+      api: 'https://cloud.google.com/appengine/docs/admin-api/reference/rest/v1/apps.services.versions'
+    parameters:
+      - !ruby/object:Api::Type::ResourceRef
+        name: 'service'
+        url_param_only: true
+        resource: 'Service'
+        imports: 'id'
+        description: |
+          Service
+    properties:
+      - !ruby/object:Api::Type::String
+        name: 'name'
+        output: true
+        description: |
+          Full path to the Version resource in the API. Example, "v1".
+      - !ruby/object:Api::Type::String
+        name: 'id'
+        description: |
+          Relative name of the version within the service. Example v1. Version names can contain only lowercase letters, numbers, or hyphens. Reserved names,"default", "latest", and any name with the prefix "ah-". 
+      - !ruby/object:Api::Type::Enum
+        name: 'inboundServices'
+        description: |
+          Before an application can receive email or XMPP messages, the application must be configured to enable the service.
+        values:
+          - :INBOUND_SERVICE_UNSPECIFIED
+          - :INBOUND_SERVICE_MAIL
+          - :INBOUND_SERVICE_MAIL_BOUNCE	
+          - :INBOUND_SERVICE_XMPP_ERROR
+          - :INBOUND_SERVICE_XMPP_MESSAGE	
+          - :INBOUND_SERVICE_XMPP_SUBSCRIBE
+          - :INBOUND_SERVICE_XMPP_PRESENCE
+          - :INBOUND_SERVICE_CHANNEL_PRESENCE
+          - :INBOUND_SERVICE_WARMUP     
+      - !ruby/object:Api::Type::String
+        name: 'instanceClass'
+        description: |
+          Instance class that is used to run this version. Valid values are
+          AutomaticScaling F1, F2, F4, F4_1G
+          ManualScaling or BasicScaling B1, B2, B4, B8, B4_1G
+          Defaults to F1 for AutomaticScaling and B1 for ManualScaling or BasicScaling.
+        required: false        
+      - !ruby/object:Api::Type::Array
+        name: 'zones'
+        item_type: Api::Type::String
+        description: 'The Google Compute Engine zones that are supported by this version in the App Engine flexible environment.'
+      - !ruby/object:Api::Type::NestedObject
+        name: 'resources'
+        description: 'Machine resources for this version. Only applicable in the App Engine flexible environment.'
+        required: false
+        properties:
+          - !ruby/object:Api::Type::Integer
+            name: 'cpu'  
+            description: 'cpu'
+          - !ruby/object:Api::Type::Integer
+            name: 'diskGb'
+            description: 'disk in gb'
+          - !ruby/object:Api::Type::Integer
+            name: 'memoryGb'
+            description: 'memoryGb in gb'
+          - !ruby/object:Api::Type::NestedObject
+            name: 'volumes'
+            description: 'volumes'
+            properties:
+              - !ruby/object:Api::Type::String
+                name: 'name'
+                description: 'name'
+              - !ruby/object:Api::Type::String
+                name: 'volumeType'
+                description: 'volumeType'
+              - !ruby/object:Api::Type::Integer
+                name: 'sizeGb'
+                description: 'sizeGb'
+      - !ruby/object:Api::Type::String
+        name: 'runtime'
+        description: 'Desired runtime. Example: python27.'
+        required: true        
+      - !ruby/object:Api::Type::String
+        name: 'runtimeChannel'
+        description: 'The channel of the runtime to use. Only available for some runtimes. Defaults to the default channel.'
+        required: false        
+      - !ruby/object:Api::Type::Boolean
+        name: 'threadsafe'
+        description: 'Whether multiple requests can be dispatched to this version at once.'
+        required: false        
+      - !ruby/object:Api::Type::Boolean
+        name: 'vm'
+        description: 'Whether to deploy this version in a container on a virtual machine.'
+        required: false        
+      - !ruby/object:Api::Type::Map
+        name: 'betaSettings'
+        description: |
+          Metadata settings that are supplied to this version to enable beta runtime features.
+        required: false
+        key_name: 'key'
+        key_description: 'key'
+        value_type: !ruby/object:Api::Type::NestedObject
+          properties:
+            - !ruby/object:Api::Type::String
+              name: 'value'
+              description: 'value'    
+      - !ruby/object:Api::Type::String
+        name: 'env'
+        description: 'App Engine execution environment for this version. Defaults to standard.'
+        required: false        
+      - !ruby/object:Api::Type::Enum
+        name: 'servingStatus'
+        description: |
+          Current serving status of this version. Only the versions with a SERVING status create instances and can be billed.
+          SERVING_STATUS_UNSPECIFIED is an invalid value. Defaults to SERVING.
+        values:
+          - :SERVING_STATUS_UNSPECIFIED
+          - :SERVING
+          - :STOPPED
+      - !ruby/object:Api::Type::String
+        name: 'runtimeApiVersion'
+        description: 'The version of the API in the given runtime environment. Please see the app.yaml reference for valid values at https://cloud.google.com/appengine/docs/standard//config/appref'
+      - !ruby/object:Api::Type::Array
+        name: 'handlers'
+        description: 'An ordered list of URL-matching patterns that should be applied to incoming requests. The first matching URL handles the request and other request handlers are not attempted. Only returned in GET requests if view=FULL is set.'
+        item_type: !ruby/object:Api::Type::NestedObject
+          properties:
+          - !ruby/object:Api::Type::String
+            name: 'urlRegex'
+            description: 'url regex'
+          - !ruby/object:Api::Type::Enum
+            name: 'securityLevel'
+            description: 'Security Level'
+            values:
+              - :SECURE_UNSPECIFIED
+              - :SECURE_DEFAULT
+              - :SECURE_NEVER
+              - :SECURE_OPTIONAL
+              - :SECURE_ALWAYS
+          - !ruby/object:Api::Type::Enum
+            name: 'login'
+            description: 'Login'
+            values:
+              - :LOGIN_UNSPECIFIED
+              - :LOGIN_OPTIONAL
+              - :LOGIN_ADMIN
+              - :LOGIN_REQUIRED
+          - !ruby/object:Api::Type::Enum
+            name: 'authFailAction'
+            description: 'authFailAction'
+            values:
+              - :AUTH_FAIL_ACTION_UNSPECIFIED
+              - :AUTH_FAIL_ACTION_REDIRECT
+              - :AUTH_FAIL_ACTION_UNAUTHORIZED
+          - !ruby/object:Api::Type::Enum
+            name: 'redirectHttpResponseCode'
+            description: 'redirectHttpResponseCode'
+            values:
+              - :REDIRECT_HTTP_RESPONSE_CODE_UNSPECIFIED
+              - :REDIRECT_HTTP_RESPONSE_CODE_301
+              - :REDIRECT_HTTP_RESPONSE_CODE_302
+              - :REDIRECT_HTTP_RESPONSE_CODE_303
+              - :REDIRECT_HTTP_RESPONSE_CODE_307
+          - !ruby/object:Api::Type::NestedObject
+            name: 'staticFiles'
+            description: 'staticFiles'
+            properties:
+              - !ruby/object:Api::Type::String
+                name: 'path'
+                description: 'path'
+              - !ruby/object:Api::Type::String
+                name: 'uploadPathRegex'
+                description: 'uploadPathRegex'
+              - !ruby/object:Api::Type::Map
+                name: 'httpHeaders'
+                description: 'httpHeaders'
+                key_name: 'key'
+                key_description: 'key'
+                value_type: !ruby/object:Api::Type::NestedObject
+                  properties:
+                  - !ruby/object:Api::Type::String
+                    name: 'value'
+                    description: 'value'
+              - !ruby/object:Api::Type::String
+                name: 'mimeType'
+                description: 'mimeType'
+              - !ruby/object:Api::Type::String
+                name: 'expiration'
+                description: 'expiration'
+              - !ruby/object:Api::Type::Boolean
+                name: 'requireMatchingFile'
+                description: 'requireMatchingFile'
+              - !ruby/object:Api::Type::Boolean
+                name: 'applicationReadable'
+                description: 'applicationReadable'
+          - !ruby/object:Api::Type::NestedObject
+            name: 'script'
+            description: 'script'
+            properties:
+            - !ruby/object:Api::Type::String
+              name: 'scriptPath'
+              description: 'script paths'
+          - !ruby/object:Api::Type::NestedObject
+            name: 'apiEndpoint'
+            description: 'apiEndpoint'
+            properties:
+            - !ruby/object:Api::Type::String
+              name: 'scriptPath'
+              description: 'script path'  
+      - !ruby/object:Api::Type::Array
+        name: 'errorHandlers'
+        description: 'Custom static error pages. Limited to 10KB per page.'
+        item_type: !ruby/object:Api::Type::NestedObject
+          properties:
+          - !ruby/object:Api::Type::Enum
+            name: 'errorCode'
+            description: 'errorCode'
+            values:
+              - :ERROR_CODE_UNSPECIFIED
+              - :ERROR_CODE_DEFAULT
+              - :ERROR_CODE_OVER_QUOTA
+              - :ERROR_CODE_DOS_API_DENIAL
+              - :ERROR_CODE_TIMEOUT
+          - !ruby/object:Api::Type::String
+            name: 'staticFile'
+            description: 'staticFile'
+          - !ruby/object:Api::Type::String
+            name: 'mimeType'
+            description: 'mimeType'
+      - !ruby/object:Api::Type::Array
+        name: 'libraries'
+        description: 'Configuration for third-party Python runtime libraries that are required by the application.'
+        item_type: !ruby/object:Api::Type::NestedObject
+          properties:
+          - !ruby/object:Api::Type::String
+            name: 'name'
+            description: 'name'
+          - !ruby/object:Api::Type::String
+            name: 'version'
+            description: 'version'
+      - !ruby/object:Api::Type::NestedObject
+        name: 'apiConfig'
+        description: 'Serving configuration for Google Cloud Endpoints.'
+        required: true
+        properties:
+          - !ruby/object:Api::Type::Enum
+            name: 'authFailAction'
+            description: 'authFailAction'
+            values:
+              - :AUTH_FAIL_ACTION_UNSPECIFIED
+              - :AUTH_FAIL_ACTION_REDIRECT
+              - :AUTH_FAIL_ACTION_UNAUTHORIZED  
+          - !ruby/object:Api::Type::Enum
+            name: 'login'
+            description: 'login'
+            values:
+              - :LOGIN_UNSPECIFIED
+              - :LOGIN_OPTIONAL
+              - :LOGIN_ADMIN
+              - :LOGIN_REQUIRED  
+          - !ruby/object:Api::Type::String
+            name: 'script'
+            description: 'script'
+          - !ruby/object:Api::Type::Enum
+            name: 'securityLevel'
+            description: 'securityLevel'
+            values:
+              - :SECURE_UNSPECIFIED
+              - :SECURE_DEFAULT
+              - :SECURE_NEVER
+              - :SECURE_OPTIONAL
+              - :SECURE_ALWAYS  
+          - !ruby/object:Api::Type::String
+            name: 'url'
+            description: 'url'
+      - !ruby/object:Api::Type::KeyValuePairs
+        name: 'envVariables'
+        description: |
+          Map of environment variables
+          An object containing a list of "key": value pairs.
+          Example: { "name": "wrench", "mass": "1.3kg", "count": "3" }.
+      - !ruby/object:Api::Type::String
+        name: 'defaultExpiration'
+        description: 'Duration that static files should be cached by web proxies and browsers. Only applicable if the corresponding StaticFilesHandler does not specify its own expiration time.'
+      - !ruby/object:Api::Type::NestedObject
+        name: 'healthCheck'
+        description: 'Configures health checking for instances. Unhealthy instances are stopped and replaced with new instances. Only applicable in the App Engine flexible environment.'
+        required: false
+        properties:
+          - !ruby/object:Api::Type::Boolean
+            name: 'disableHealthCheck'
+            description: 'disableHealthCheck'
+          - !ruby/object:Api::Type::String
+            name: 'host'
+            description: 'host'
+          - !ruby/object:Api::Type::Integer
+            name: 'healthyThreshold'
+            description: 'healthyThreshold'
+          - !ruby/object:Api::Type::Integer
+            name: 'unhealthyThreshold'
+            description: 'unhealthyThreshold'
+          - !ruby/object:Api::Type::Integer
+            name: 'restartThreshold'
+            description: 'restartThreshold'
+          - !ruby/object:Api::Type::String
+            name: 'checkInterval'
+            description: 'checkInterval'
+          - !ruby/object:Api::Type::String
+            name: 'timeout'
+            description: 'timeout'
+      - !ruby/object:Api::Type::NestedObject
+        name: 'readinessCheck'
+        description: 'Configures readiness health checking for instances. Unhealthy instances are not put into the backend traffic rotation.'
+        required: false
+        properties:
+          - !ruby/object:Api::Type::String
+            name: 'path'
+            description: 'path'
+          - !ruby/object:Api::Type::String
+            name: 'host'
+            description: 'host'
+          - !ruby/object:Api::Type::Integer
+            name: 'failureThreshold'
+            description: 'failureThreshold'
+          - !ruby/object:Api::Type::Integer
+            name: 'successThreshold'
+            description: 'successThreshold'
+          - !ruby/object:Api::Type::String
+            name: 'checkInterval'
+            description: 'checkInterval'
+          - !ruby/object:Api::Type::String
+            name: 'timeout'
+            description: 'timeout'
+          - !ruby/object:Api::Type::String
+            name: 'appStartTimeout'
+            description: 'appStartTimeout'
+      - !ruby/object:Api::Type::NestedObject
+        name: 'livenessCheck'
+        description: 'Configures liveness health checking for instances. Unhealthy instances are stopped and replaced with new instances'
+        required: false
+        properties:
+          - !ruby/object:Api::Type::String
+            name: 'path'
+            description: 'path'
+          - !ruby/object:Api::Type::String
+            name: 'host'
+            description: 'host'
+          - !ruby/object:Api::Type::Integer
+            name: 'failureThreshold'
+            description: 'failureThreshold'
+          - !ruby/object:Api::Type::Integer
+            name: 'successThreshold'
+            description: 'successThreshold'
+          - !ruby/object:Api::Type::String
+            name: 'checkInterval'
+            description: 'checkInterval'
+          - !ruby/object:Api::Type::String
+            name: 'timeout'
+            description: 'timeout'
+          - !ruby/object:Api::Type::String
+            name: 'initialDelay'
+            description: 'initialDelay'
+      - !ruby/object:Api::Type::String
+        name: 'nobuildFilesRegex'
+        description: 'Files that match this pattern will not be built into this version. Only applicable for Go runtimes.'
+      - !ruby/object:Api::Type::NestedObject
+        name: 'deployment'
+        description: 'Code and application artifacts that make up this version.'
+        required: false
+        properties:      
+          - !ruby/object:Api::Type::Map
+            name: 'files'
+            description: 'files'
+            required: false
+            key_name: 'name'
+            key_description: 'name of file'
+            value_type: !ruby/object:Api::Type::NestedObject
+              properties:
+                - !ruby/object:Api::Type::String
+                  name: 'sha1Sum'
+                  description: 'sha1Sum'
+                - !ruby/object:Api::Type::String
+                  name: 'sourceUrl'
+                  description: 'sourceUrl'
+          - !ruby/object:Api::Type::NestedObject
+            name: 'zip'
+            description: 'Zip File'
+            required: false
+            properties:
+              - !ruby/object:Api::Type::String
+                name: 'sourceUrl'
+                description: 'Source URL'
+              - !ruby/object:Api::Type::Integer
+                name: 'filesCount'
+                description: 'files count'
+                required: false
+      - !ruby/object:Api::Type::NestedObject
+        name: 'endpointsApiService'
+        description: 'Cloud Endpoints configuration. If endpointsApiService is set, the Cloud Endpoints Extensible Service Proxy will be provided to serve the API implemented by the app.'
+        required: true
+        properties:
+          - !ruby/object:Api::Type::String
+            name: 'name'
+            description: 'name'
+          - !ruby/object:Api::Type::String
+            name: 'configId'
+            description: 'configId'
+          - !ruby/object:Api::Type::Enum
+            name: 'rolloutStrategy'
+            description: 'rolloutStrategy'
+            values:
+              - :UNSPECIFIED_ROLLOUT_STRATEGY
+              - :FIXED
+              - :MANAGED
+      - !ruby/object:Api::Type::NestedObject
+        name: 'entrypoint'
+        description: 'The entrypoint for the application.'
+        required: true
+        properties:
+          - !ruby/object:Api::Type::String
+            name: 'shell'
+            description: 'shell'
+      - !ruby/object:Api::Type::NestedObject
+        name: 'automaticScaling'
+        description: 'Automatic scaling is based on request rate, response latencies, and other application metrics.'
+        required: false
+        properties:
+          - !ruby/object:Api::Type::String
+            name: 'coolDownPeriod'
+            description: 'coolDownPeriod'
+          - !ruby/object:Api::Type::NestedObject
+            name: 'cpuUtilization'
+            description: 'cpuUtilization'
+            properties:
+              - !ruby/object:Api::Type::String
+                name: 'aggregationWindowLength'
+                description: 'aggregationWindowLength'
+              - !ruby/object:Api::Type::String
+                name: 'targetUtilization'
+                description: 'targetUtilization'
+          - !ruby/object:Api::Type::Integer
+            name: 'maxConcurrentRequests'
+            description: 'maxConcurrentRequests'
+          - !ruby/object:Api::Type::Integer
+            name: 'maxIdleInstances'
+            description: 'maxIdleInstances'
+          - !ruby/object:Api::Type::Integer
+            name: 'maxTotalInstances'
+            description: 'maxTotalInstances'
+          - !ruby/object:Api::Type::String
+            name: 'maxPendingLatency'
+            description: 'maxPendingLatency'
+          - !ruby/object:Api::Type::Integer
+            name: 'minIdleInstances'
+            description: 'minIdleInstances'
+          - !ruby/object:Api::Type::Integer
+            name: 'minTotalInstances'
+            description: 'minTotalInstances'
+          - !ruby/object:Api::Type::String
+            name: 'minPendingLatency'
+            description: 'minPendingLatency'
+          - !ruby/object:Api::Type::NestedObject
+            name: 'requestUtilization'
+            description: 'requestUtilization'
+            properties:
+              - !ruby/object:Api::Type::Integer
+                name: 'targetRequestCountPerSecond'
+                description: 'targetRequestCountPerSecond'
+              - !ruby/object:Api::Type::Integer
+                name: 'targetConcurrentRequests'
+                description: 'targetConcurrentRequests'
+          - !ruby/object:Api::Type::NestedObject
+            name: 'networkUtilization'
+            description: 'networkUtilization'
+            properties:
+              - !ruby/object:Api::Type::Integer
+                name: 'targetSentBytesPerSecond'
+                description: 'targetSentBytesPerSecond'
+              - !ruby/object:Api::Type::Integer
+                name: 'targetSentPacketsPerSecond'
+                description: 'targetSentPacketsPerSecond'
+              - !ruby/object:Api::Type::Integer
+                name: 'targetReceivedBytesPerSecond'
+                description: 'targetReceivedBytesPerSecond'
+              - !ruby/object:Api::Type::Integer
+                name: 'targetReceivedPacketsPerSecond'
+                description: 'targetReceivedPacketsPerSecond'
+          - !ruby/object:Api::Type::NestedObject
+            name: 'standardSchedulerSettings'
+            description: 'standardSchedulerSettings'
+            properties:
+              - !ruby/object:Api::Type::Integer
+                name: 'targetCpuUtilization'
+                description: 'targetCpuUtilization'
+              - !ruby/object:Api::Type::Integer
+                name: 'targetThroughputUtilization'
+                description: 'targetThroughputUtilization'
+              - !ruby/object:Api::Type::Integer
+                name: 'minInstances'
+                description: 'minInstances'
+              - !ruby/object:Api::Type::Integer
+                name: 'maxInstances'
+                description: 'maxInstances'
+  
