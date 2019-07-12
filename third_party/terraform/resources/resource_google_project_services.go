@@ -29,6 +29,12 @@ func resourceGoogleProjectServices() *schema.Resource {
 			State: schema.ImportStatePassthrough,
 		},
 
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Read:   schema.DefaultTimeout(10 * time.Minute),
+			Delete: schema.DefaultTimeout(10 * time.Minute),
+		},
+
 		Schema: map[string]*schema.Schema{
 			"project": {
 				Type:     schema.TypeString,
@@ -69,7 +75,7 @@ func resourceGoogleProjectServicesCreateUpdate(d *schema.ResourceData, meta inte
 	}
 
 	log.Printf("[DEBUG]: Enabling Project Services for %s: %+v", d.Id(), services)
-	if err := setServiceUsageProjectEnabledServices(services, project, config); err != nil {
+	if err := setServiceUsageProjectEnabledServices(services, project, d, config); err != nil {
 		return fmt.Errorf("Error authoritatively enabling Project %s Services: %v", project, err)
 	}
 	log.Printf("[DEBUG]: Finished enabling Project Services for %s: %+v", d.Id(), services)
@@ -81,7 +87,7 @@ func resourceGoogleProjectServicesCreateUpdate(d *schema.ResourceData, meta inte
 func resourceGoogleProjectServicesRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
-	enabledSet, err := listCurrentlyEnabledServices(d.Id(), config)
+	enabledSet, err := listCurrentlyEnabledServices(d.Id(), d, config)
 	if err != nil {
 		return err
 	}
@@ -122,8 +128,8 @@ func resourceGoogleProjectServicesDelete(d *schema.ResourceData, meta interface{
 
 // setServiceUsageProjectEnabledServices *authoritatively* sets the enabled
 // services for a set of project services.
-func setServiceUsageProjectEnabledServices(services []string, project string, config *Config) error {
-	currentlyEnabled, err := listCurrentlyEnabledServices(project, config)
+func setServiceUsageProjectEnabledServices(services []string, project string, d *schema.ResourceData, config *Config) error {
+	currentlyEnabled, err := listCurrentlyEnabledServices(project, d, config)
 	if err != nil {
 		return err
 	}
@@ -136,7 +142,7 @@ func setServiceUsageProjectEnabledServices(services []string, project string, co
 		}
 	}
 
-	if err := globalBatchEnableServices(toEnable, project, config); err != nil {
+	if err := globalBatchEnableServices(toEnable, project, d, config); err != nil {
 		return fmt.Errorf("unable to enable Project Services %s (%+v): %s", project, services, err)
 	}
 
@@ -154,8 +160,8 @@ func setServiceUsageProjectEnabledServices(services []string, project string, co
 	return nil
 }
 
-func disableServiceUsageProjectService(service, project string, config *Config, disableDependentServices bool) error {
-	err := retryTime(func() error {
+func disableServiceUsageProjectService(service, project string, d *schema.ResourceData, config *Config, disableDependentServices bool) error {
+	err := retryTimeDuration(func() error {
 		name := fmt.Sprintf("projects/%s/services/%s", project, service)
 		sop, err := config.clientServiceUsage.Services.Disable(name, &serviceusage.DisableServiceRequest{
 			DisableDependentServices: disableDependentServices,
@@ -169,7 +175,7 @@ func disableServiceUsageProjectService(service, project string, config *Config, 
 			return waitErr
 		}
 		return nil
-	}, 10)
+	}, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return fmt.Errorf("Error disabling service %q for project %q: %v", service, project, err)
 	}
@@ -177,7 +183,7 @@ func disableServiceUsageProjectService(service, project string, config *Config, 
 }
 
 // Retrieve a project's services from the API
-func listCurrentlyEnabledServices(project string, config *Config) (map[string]struct{}, error) {
+func listCurrentlyEnabledServices(project string, d *schema.ResourceData, config *Config) (map[string]struct{}, error) {
 	// Verify project for services still exists
 	p, err := config.clientResourceManager.Projects.Get(project).Do()
 	if err != nil {
@@ -193,7 +199,7 @@ func listCurrentlyEnabledServices(project string, config *Config) (map[string]st
 
 	log.Printf("[DEBUG] Listing enabled services for project %s", project)
 	apiServices := make(map[string]struct{})
-	err = retryTime(func() error {
+	err = retryTimeDuration(func() error {
 		ctx := context.Background()
 		return config.clientServiceUsage.Services.
 			List(fmt.Sprintf("projects/%s", project)).
@@ -209,7 +215,7 @@ func listCurrentlyEnabledServices(project string, config *Config) (map[string]st
 				}
 				return nil
 			})
-	}, 10)
+	}, d.Timeout(schema.TimeoutRead))
 	if err != nil {
 		return nil, errwrap.Wrapf(fmt.Sprintf("Failed to list enabled services for project %s: {{err}}", project), err)
 	}
