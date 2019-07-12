@@ -64,3 +64,140 @@ objects:
           - UNSPECIFIED_ACTION
           - ALLOW
           - DENY
+  - !ruby/object:Api::Resource
+    name: 'Service'
+    description: |
+      A Service resource is a logical component of an application that can share state and communicate in a secure fashion with other services. 
+      For example, an application that handles customer requests might include separate services to handle tasks such as backend data analysis or API requests from mobile devices. 
+      Each service has a collection of versions that define a specific set of code used to implement the functionality of that service.
+    base_url: 'apps/{{project}}/services'
+    self_link: 'apps/{{project}}/services/{{id}}'
+    references: !ruby/object:Api::Resource::ReferenceLinks
+      guides:
+        'Official Documentation':
+          'https://cloud.google.com/appengine/docs/admin-api/deploying-overview'
+      api: 'https://cloud.google.com/appengine/docs/admin-api/reference/rest/v1/apps.services'
+    properties:
+      - !ruby/object:Api::Type::String
+        name: 'name'
+        output: true
+        description: |
+          Full path to the Service resource in the API. Example apps/myapp/services/default.
+          This field is used in responses only. Any value specified here in a request is ignored.
+      - !ruby/object:Api::Type::String
+        name: 'id'
+        output: true
+        description: |
+           Relative name of the service within the application. Example default.
+  - !ruby/object:Api::Resource
+    name: 'StandardAppVersion'
+    description: |
+      Standard App Version resource to create a new version of standard GAE Application.
+      Currently supporting Zip and File Containers.
+      Currently does not support async operation checking.
+    base_url: 'apps/{{project}}/services/{{service}}/versions'
+    self_link: 'apps/{{project}}/services/{{service}}/versions/{{versionId}}'
+    update_verb: :PATCH
+    update_mask: true
+    references: !ruby/object:Api::Resource::ReferenceLinks
+      guides:
+        'Official Documentation':
+          'https://cloud.google.com/appengine/docs/admin-api/deploying-overview'
+      api: 'https://cloud.google.com/appengine/docs/admin-api/reference/rest/v1/apps.services.versions'
+    parameters:
+      - !ruby/object:Api::Type::ResourceRef
+        name: 'service'
+        url_param_only: true
+        resource: 'Service'
+        imports: 'id'
+        description: |
+          Service
+    properties:
+      - !ruby/object:Api::Type::String
+        name: 'name'
+        output: true
+        description: |
+          Full path to the Version resource in the API. Example, "v1".
+      - !ruby/object:Api::Type::String
+        name: 'id'
+        description: |
+          Relative name of the version within the service. Example v1. Version names can contain only lowercase letters, numbers, or hyphens. Reserved names,"default", "latest", and any name with the prefix "ah-". 
+      - !ruby/object:Api::Type::String
+        name: 'runtime'
+        description: 'Desired runtime. Example: python27.'
+        required: true        
+      - !ruby/object:Api::Type::Boolean
+        name: 'threadsafe'
+        description: 'Whether multiple requests can be dispatched to this version at once.'
+        required: false        
+      - !ruby/object:Api::Type::String
+        name: 'runtimeApiVersion'
+        description: 'The version of the API in the given runtime environment. Please see the app.yaml reference for valid values at https://cloud.google.com/appengine/docs/standard//config/appref'
+      - !ruby/object:Api::Type::Array
+        name: 'handlers'
+        description: 'An ordered list of URL-matching patterns that should be applied to incoming requests. The first matching URL handles the request and other request handlers are not attempted. Only returned in GET requests if view=FULL is set.'
+        item_type: !ruby/object:Api::Type::NestedObject
+          properties:
+          - !ruby/object:Api::Type::String
+            name: 'urlRegex'
+            description: 'url regex'
+          - !ruby/object:Api::Type::Enum
+            name: 'securityLevel'
+            description: 'Security Level'
+            values:
+              - :SECURE_UNSPECIFIED
+              - :SECURE_DEFAULT
+              - :SECURE_NEVER
+              - :SECURE_OPTIONAL
+              - :SECURE_ALWAYS
+          - !ruby/object:Api::Type::NestedObject
+            name: 'script'
+            description: 'script'
+            properties:
+            - !ruby/object:Api::Type::String
+              name: 'scriptPath'
+              description: 'script paths'
+      - !ruby/object:Api::Type::Array
+        name: 'libraries'
+        description: 'Configuration for third-party Python runtime libraries that are required by the application.'
+        item_type: !ruby/object:Api::Type::NestedObject
+          properties:
+          - !ruby/object:Api::Type::String
+            name: 'name'
+            description: 'name'
+          - !ruby/object:Api::Type::String
+            name: 'version'
+            description: 'version'
+      - !ruby/object:Api::Type::KeyValuePairs
+        name: 'envVariables'
+        description: |
+          Map of environment variables
+          An object containing a list of "key": value pairs.
+          Example: { "name": "wrench", "mass": "1.3kg", "count": "3" }.
+      - !ruby/object:Api::Type::NestedObject
+        name: 'deployment'
+        description: 'Code and application artifacts that make up this version.'
+        required: false
+        properties:      
+          - !ruby/object:Api::Type::Map
+            name: 'files'
+            description: 'files'
+            required: false
+            key_name: 'name'
+            key_description: 'name of file'
+            value_type: !ruby/object:Api::Type::NestedObject
+              properties:
+                - !ruby/object:Api::Type::String
+                  name: 'sha1Sum'
+                  description: 'sha1Sum'
+                - !ruby/object:Api::Type::String
+                  name: 'sourceUrl'
+                  description: 'sourceUrl'
+      - !ruby/object:Api::Type::NestedObject
+        name: 'entrypoint'
+        description: 'The entrypoint for the application.'
+        required: true
+        properties:
+          - !ruby/object:Api::Type::String
+            name: 'shell'
+            description: 'shell'
