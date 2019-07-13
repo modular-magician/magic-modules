@@ -29,6 +29,12 @@ func resourceGoogleProjectServices() *schema.Resource {
 			State: schema.ImportStatePassthrough,
 		},
 
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Read:   schema.DefaultTimeout(10 * time.Minute),
+			Delete: schema.DefaultTimeout(10 * time.Minute),
+		},
+
 		Schema: map[string]*schema.Schema{
 			"project": {
 				Type:     schema.TypeString,
@@ -69,7 +75,7 @@ func resourceGoogleProjectServicesCreateUpdate(d *schema.ResourceData, meta inte
 	}
 
 	log.Printf("[DEBUG]: Enabling Project Services for %s: %+v", d.Id(), services)
-	if err := setServiceUsageProjectEnabledServices(services, project, config); err != nil {
+	if err := setServiceUsageProjectEnabledServices(services, project, d, config); err != nil {
 		return fmt.Errorf("Error authoritatively enabling Project %s Services: %v", project, err)
 	}
 	log.Printf("[DEBUG]: Finished enabling Project Services for %s: %+v", d.Id(), services)
@@ -81,10 +87,11 @@ func resourceGoogleProjectServicesCreateUpdate(d *schema.ResourceData, meta inte
 func resourceGoogleProjectServicesRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
-	services, err := readEnabledServiceUsageProjectServices(d.Id(), config)
+	enabledSet, err := listCurrentlyEnabledServices(d.Id(), config)
 	if err != nil {
 		return err
 	}
+	services := stringSliceFromGolangSet(enabledSet)
 
 	d.Set("project", d.Id())
 	d.Set("services", flattenServiceUsageProjectServicesServices(services, d))
@@ -109,7 +116,7 @@ func resourceGoogleProjectServicesDelete(d *schema.ResourceData, meta interface{
 
 	log.Printf("[DEBUG]: Disabling Project Services %s: %+v", project, services)
 	for _, s := range services {
-		if err := disableServiceUsageProjectService(s, project, config, true); err != nil {
+		if err := disableServiceUsageProjectService(s, project, d, config, true); err != nil {
 			return fmt.Errorf("Unable to destroy google_project_services for %s: %s", d.Id(), err)
 		}
 	}
@@ -121,7 +128,7 @@ func resourceGoogleProjectServicesDelete(d *schema.ResourceData, meta interface{
 
 // setServiceUsageProjectEnabledServices *authoritatively* sets the enabled
 // services for a set of project services.
-func setServiceUsageProjectEnabledServices(services []string, project string, config *Config) error {
+func setServiceUsageProjectEnabledServices(services []string, project string, d *schema.ResourceData, config *Config) error {
 	currentlyEnabled, err := listCurrentlyEnabledServices(project, config)
 	if err != nil {
 		return err
@@ -135,7 +142,7 @@ func setServiceUsageProjectEnabledServices(services []string, project string, co
 		}
 	}
 
-	if err := enableServiceUsageProjectServices(toEnable, project, config); err != nil {
+	if err := globalBatchEnableServices(toEnable, project, d, config); err != nil {
 		return fmt.Errorf("unable to enable Project Services %s (%+v): %s", project, services, err)
 	}
 
@@ -145,16 +152,16 @@ func setServiceUsageProjectEnabledServices(services []string, project string, co
 		// in our list of acceptable services.
 		if _, ok := srvSet[srv]; !ok {
 			log.Printf("[DEBUG] Disabling project %s service %s", project, srv)
-			if err := disableServiceUsageProjectService(srv, project, config, true); err != nil {
-				return fmt.Errorf("unable to enable Project Services %s/%s): %s", project, srv, err)
+			if err := disableServiceUsageProjectService(srv, project, d, config, true); err != nil {
+				return fmt.Errorf("unable to disable unwanted Project Service %s %s): %s", project, srv, err)
 			}
 		}
 	}
 	return nil
 }
 
-func disableServiceUsageProjectService(service, project string, config *Config, disableDependentServices bool) error {
-	err := retryTime(func() error {
+func disableServiceUsageProjectService(service, project string, d *schema.ResourceData, config *Config, disableDependentServices bool) error {
+	err := retryTimeDuration(func() error {
 		name := fmt.Sprintf("projects/%s/services/%s", project, service)
 		sop, err := config.clientServiceUsage.Services.Disable(name, &serviceusage.DisableServiceRequest{
 			DisableDependentServices: disableDependentServices,
@@ -168,20 +175,11 @@ func disableServiceUsageProjectService(service, project string, config *Config, 
 			return waitErr
 		}
 		return nil
-	}, 10)
+	}, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return fmt.Errorf("Error disabling service %q for project %q: %v", service, project, err)
 	}
 	return nil
-}
-
-func readEnabledServiceUsageProjectServices(project string, config *Config) ([]string, error) {
-	log.Printf("[DEBUG] readEnabledServiceUsageProjectServices %s", project)
-	enabledSet, err := listCurrentlyEnabledServices(project, config)
-	if err != nil {
-		return nil, err
-	}
-	return stringSliceFromGolangSet(enabledSet), nil
 }
 
 // Retrieve a project's services from the API
@@ -199,8 +197,9 @@ func listCurrentlyEnabledServices(project string, config *Config) (map[string]st
 		}
 	}
 
+	log.Printf("[DEBUG] Listing enabled services for project %s", project)
 	apiServices := make(map[string]struct{})
-	err = retryTime(func() error {
+	err = retryTimeDuration(func() error {
 		ctx := context.Background()
 		return config.clientServiceUsage.Services.
 			List(fmt.Sprintf("projects/%s", project)).
@@ -223,7 +222,8 @@ func listCurrentlyEnabledServices(project string, config *Config) (map[string]st
 	return apiServices, nil
 }
 
-func enableServiceUsageProjectServices(services []string, project string, config *Config) error {
+// WARNING: Use globalBatchEnableServices for better batching if possible.
+func enableServiceUsageProjectServices(services []string, project string, d *schema.ResourceData, config *Config) error {
 	// ServiceUsage does not allow more than 20 services to be enabled per
 	// batchEnable API call. See
 	// https://cloud.google.com/service-usage/docs/reference/rest/v1/services/batchEnable
@@ -238,20 +238,20 @@ func enableServiceUsageProjectServices(services []string, project string, config
 			return nil
 		}
 
-		if err := sendServiceUsageEnableServicesRequest(nextBatch, project, config); err != nil {
+		if err := doEnableServicesRequest(nextBatch, project, config); err != nil {
 			return err
 		}
 		log.Printf("[DEBUG] Finished enabling next batch of %d project services: %+v", len(nextBatch), nextBatch)
 	}
 
 	log.Printf("[DEBUG] Verifying that all services are enabled")
-	return waitForServiceUsageEnabledServices(services, project, config)
+	return waitForServiceUsageEnabledServices(services, project, d, config)
 }
 
 // waitForServiceUsageEnabledServices doesn't resend enable requests - it just
 // waits for service enablement status to propagate. Essentially, it waits until
 // all services show up as enabled when listing services on the project.
-func waitForServiceUsageEnabledServices(services []string, project string, config *Config) error {
+func waitForServiceUsageEnabledServices(services []string, project string, d *schema.ResourceData, config *Config) error {
 	missing := make([]string, 0, len(services))
 	delay := time.Duration(0)
 	interval := time.Second
@@ -288,7 +288,7 @@ func waitForServiceUsageEnabledServices(services []string, project string, confi
 	return nil
 }
 
-func sendServiceUsageEnableServicesRequest(services []string, project string, config *Config) error {
+func doEnableServicesRequest(services []string, project string, config *Config) error {
 	var op *serviceusage.Operation
 
 	err := retryTime(func() error {
