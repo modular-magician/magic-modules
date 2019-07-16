@@ -1,7 +1,6 @@
-#!/usr/bin/env bash
-
+#!/bin/bash
 set -x
-# Constants + functions
+
 declare -a ignored_modules=(
   gcp_backend_service
   gcp_forwarding_rule
@@ -13,7 +12,7 @@ declare -a ignored_modules=(
 get_all_modules() {
   remote_name=$1
   file_name=$remote_name
-  ssh-agent bash -c "ssh-add ~/github_private_key; git fetch $remote_name"
+  git fetch $remote_name
   git checkout $remote_name/devel
   git ls-files -- lib/ansible/modules/cloud/google/gcp_* | cut -d/ -f 6 | cut -d. -f 1 > $file_name
   
@@ -22,37 +21,25 @@ get_all_modules() {
   done
 }
 
-# Install dependencies for Template Generator
-pushd "magic-modules-gcp"
-bundle install
+if ! which hub; then
+  echo "Please install the hub CLI"
+  exit 1
+fi
 
-# Setup SSH keys.
-
-# Since these creds are going to be managed externally, we need to pass
-# them into the container as an environment variable.  We'll use
-# ssh-agent to ensure that these are the credentials used to update.
-set +x
-echo "$CREDS" > ~/github_private_key
-set -x
-chmod 400 ~/github_private_key
-popd
-
-pushd "magic-modules-gcp/build/ansible"
-
-# Setup Git config and remotes.
-git config --global user.email "magic-modules@google.com"
-git config --global user.name "Modular Magician"
-
-git remote remove origin
-git remote add origin git@github.com:modular-magician/ansible.git
-git remote add upstream git@github.com:ansible/ansible.git
-git remote add magician git@github.com:modular-magician/ansible.git
-echo "Remotes setup properly"
+if ! git remote -v | grep "origin"; then
+  echo "Please set the origin remote"
+  exit 1
+fi
 
 set -e
 
-ssh-agent bash -c "ssh-add ~/github_private_key; git fetch magician devel"
-ssh-agent bash -c "ssh-add ~/github_private_key; git fetch upstream devel"
+git remote add upstream git@github.com:ansible/ansible.git
+
+# Use HTTPS endpoint so we don't have to setup SSH keys.
+git remote add magician git@github.com:modular-magician/ansible.git
+git fetch magician devel
+git fetch upstream devel
+echo "Remotes setup properly"
 
 # Create files with list of modules in a given branch.
 get_all_modules "upstream"
@@ -78,20 +65,15 @@ for filename in mm-bug*; do
   done < $filename
 
   git checkout magician/devel -- "lib/ansible/module_utils/gcp_utils.py"
-  git checkout magician/devel -- "lib/ansible/plugins/doc_fragments/gcp.py"
 
-  # This commit may be empty
-  set +e
   git commit -m "Bug fixes for GCP modules"
 
   # Create a PR message + save to file
   ruby ../../tools/ansible-pr/generate_template.rb > bug_fixes$filename
 
   # Create PR
-  ssh-agent bash -c "ssh-add ~/github_private_key; git push origin bug_fixes$filename --force"
-  hub pull-request -b ansible/ansible:devel -F bug_fixes$filename -f
-  set -e
-
+  git push origin HEAD --force
+  hub pull-request -b ansible/ansible:devel -F bug_fixes$filename
   echo "Bug Fix PR built for $filename"
 done
 
@@ -111,14 +93,11 @@ while read module; do
   git checkout magician/devel -- "lib/ansible/module_utils/gcp_utils.py"
 
   # Create a PR message + save to file
-  set +e
   git commit -m "New Module: $module"
-  ruby ../../tools/ansible-pr/generate_template.rb --new-module-name $module > $module
+  ruby ../../tools/ansible-pr/generate_template.rb --new-module-name $module > bug_fixes$filename
 
   # Create PR
-  ssh-agent bash -c "ssh-add ~/github_private_key; git push origin $module --force"
-  hub pull-request -b ansible/ansible:devel -F $module -f
-  set -e
-
+  git push origin HEAD --force
+  hub pull-request -b ansible/ansible:devel -F bug_fixes$filename
   echo "New Module PR built for $module"
 done < new_modules
