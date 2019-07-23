@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"log"
-	"regexp"
 	"testing"
 	"time"
 
@@ -870,6 +869,7 @@ func TestAccStorageBucket_retentionPolicyLocked(t *testing.T) {
 	t.Parallel()
 
 	var bucket storage.Bucket
+	var newBucket storage.Bucket
 	bucketName := fmt.Sprintf("tf-test-acc-bucket-%d", acctest.RandInt())
 
 	resource.Test(t, resource.TestCase{
@@ -891,8 +891,12 @@ func TestAccStorageBucket_retentionPolicyLocked(t *testing.T) {
 				ImportStateVerify: true,
 			},
 			{
-				Config:      testAccStorageBucket_retentionPolicy(bucketName),
-				ExpectError: regexp.MustCompile("Bucket '" + bucketName + "' has a locked retention policy and cannot be unlocked."),
+				Config: testAccStorageBucket_retentionPolicy(bucketName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckStorageBucketExists(
+						"google_storage_bucket.bucket", bucketName, &newBucket),
+					testAccCheckStorageBucketWasRecreated(&newBucket, &bucket),
+				),
 			},
 		},
 	})
