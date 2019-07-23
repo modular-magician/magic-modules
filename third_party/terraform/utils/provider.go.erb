@@ -77,37 +77,35 @@ func Provider() terraform.ResourceProvider {
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 
+			"batching": {
+				Type:     schema.TypeList,
+				Optional: true,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"send_after": {
+							Type:     schema.TypeString,
+							Optional: true,
+							Default:  "10s",
+							ValidateFunc: validateNonNegativeDuration(),
+						},
+						"enable_batching": {
+							Type:     schema.TypeBool,
+							Optional: true,
+							Default:  true,
+						},
+					},
+				},
+			},
+
 			// Generated Products
-			<% unless version == 'ga' -%>
-			// start beta-only products
-			BinaryAuthorizationCustomEndpointEntryKey: BinaryAuthorizationCustomEndpointEntry,
-			ContainerAnalysisCustomEndpointEntryKey:   ContainerAnalysisCustomEndpointEntry,
-			SecurityScannerCustomEndpointEntryKey:     SecurityScannerCustomEndpointEntry,
-			// end beta-only products
+			<% products.each do |product_name| -%>
+			<%= product_name -%>CustomEndpointEntryKey: <%= product_name -%>CustomEndpointEntry,
 			<% end -%>
-			AccessContextManagerCustomEndpointEntryKey: AccessContextManagerCustomEndpointEntry,
-			AppEngineCustomEndpointEntryKey:            AppEngineCustomEndpointEntry,
-			ComputeCustomEndpointEntryKey:              ComputeCustomEndpointEntry,
-			CloudBuildCustomEndpointEntryKey:           CloudBuildCustomEndpointEntry,
-			CloudSchedulerCustomEndpointEntryKey:       CloudSchedulerCustomEndpointEntry,
-			DnsCustomEndpointEntryKey:                  DnsCustomEndpointEntry,
-			FilestoreCustomEndpointEntryKey:            FilestoreCustomEndpointEntry,
-			FirestoreCustomEndpointEntryKey:            FirestoreCustomEndpointEntry,
-			KmsCustomEndpointEntryKey:                  KmsCustomEndpointEntry,
-			MonitoringCustomEndpointEntryKey:           MonitoringCustomEndpointEntry,
-			PubsubCustomEndpointEntryKey:               PubsubCustomEndpointEntry,
-			RedisCustomEndpointEntryKey:                RedisCustomEndpointEntry,
-			ResourceManagerCustomEndpointEntryKey:      ResourceManagerCustomEndpointEntry,
-			SourceRepoCustomEndpointEntryKey:           SourceRepoCustomEndpointEntry,
-			SpannerCustomEndpointEntryKey:              SpannerCustomEndpointEntry,
-			SqlCustomEndpointEntryKey:                  SqlCustomEndpointEntry,
-			StorageCustomEndpointEntryKey:              StorageCustomEndpointEntry,
-			TpuCustomEndpointEntryKey:                  TpuCustomEndpointEntry,
 
 			// Handwritten Products / Versioned / Atypical Entries
 			<% unless version == 'ga' -%>
 			// start beta-only products
-			HealthcareCustomEndpointEntryKey: HealthcareCustomEndpointEntry,
 			IAPCustomEndpointEntryKey: IAPCustomEndpointEntry,
 			// end beta-only products
 			<% end -%>
@@ -121,7 +119,6 @@ func Provider() terraform.ResourceProvider {
 			DataflowCustomEndpointEntryKey:               DataflowCustomEndpointEntry,
 			DnsBetaCustomEndpointEntryKey:                DnsBetaCustomEndpointEntry,
 			IamCredentialsCustomEndpointEntryKey:         IamCredentialsCustomEndpointEntry,
-			LoggingCustomEndpointEntryKey:                LoggingCustomEndpointEntry,
 			ResourceManagerV2Beta1CustomEndpointEntryKey: ResourceManagerV2Beta1CustomEndpointEntry,
 			RuntimeconfigCustomEndpointEntryKey:          RuntimeconfigCustomEndpointEntry,
 			IAMCustomEndpointEntryKey:                    IAMCustomEndpointEntry,
@@ -132,6 +129,7 @@ func Provider() terraform.ResourceProvider {
 			CloudFunctionsCustomEndpointEntryKey:         CloudFunctionsCustomEndpointEntry,
 			CloudIoTCustomEndpointEntryKey:               CloudIoTCustomEndpointEntry,
 			StorageTransferCustomEndpointEntryKey:        StorageTransferCustomEndpointEntry,
+			BigtableAdminCustomEndpointEntryKey:          BigtableAdminCustomEndpointEntry,
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
@@ -200,37 +198,17 @@ func ResourceMap() map[string]*schema.Resource {
 
 func ResourceMapWithErrors() (map[string]*schema.Resource, error) {
 	return mergeResourceMaps(
-			<% unless version == 'ga' -%>
-			// start beta-only products
-			GeneratedBinaryAuthorizationResourcesMap,
-			GeneratedContainerAnalysisResourcesMap,
-			GeneratedSecurityScannerResourcesMap,
-			GeneratedHealthcareResourcesMap,
-			// end beta-only products
+			<% products.each do |product_name| -%>
+			Generated<%= product_name -%>ResourcesMap,
 			<% end -%>
-			GeneratedAccessContextManagerResourcesMap,
-			GeneratedAppEngineResourcesMap,
-			GeneratedComputeResourcesMap,
-			GeneratedCloudBuildResourcesMap,
-			GeneratedCloudSchedulerResourcesMap,
-			GeneratedDnsResourcesMap,
-			GeneratedFilestoreResourcesMap,
-			GeneratedFirestoreResourcesMap,
-			GeneratedKmsResourcesMap,
-			GeneratedPubsubResourcesMap,
-			GeneratedRedisResourcesMap,
-			GeneratedResourceManagerResourcesMap,
-			GeneratedSourceRepoResourcesMap,
-			GeneratedSpannerResourcesMap,
-			GeneratedSqlResourcesMap,
-			GeneratedStorageResourcesMap,
-			GeneratedTpuResourcesMap,
-			GeneratedMonitoringResourcesMap,
 			map[string]*schema.Resource{
 				"google_app_engine_application":                resourceAppEngineApplication(),
 				"google_bigquery_dataset":                      resourceBigQueryDataset(),
 				"google_bigquery_table":                        resourceBigQueryTable(),
 				"google_bigtable_instance":                     resourceBigtableInstance(),
+				"google_bigtable_instance_iam_binding":         ResourceIamBindingWithImport(IamBigtableInstanceSchema, NewBigtableInstanceUpdater, BigtableInstanceIdParseFunc),
+				"google_bigtable_instance_iam_member":          ResourceIamMemberWithImport(IamBigtableInstanceSchema, NewBigtableInstanceUpdater, BigtableInstanceIdParseFunc),
+				"google_bigtable_instance_iam_policy":          ResourceIamPolicyWithImport(IamBigtableInstanceSchema, NewBigtableInstanceUpdater, BigtableInstanceIdParseFunc),
 				"google_bigtable_table":                        resourceBigtableTable(),
 				"google_billing_account_iam_binding":           ResourceIamBindingWithImport(IamBillingAccountSchema, NewBillingAccountIamUpdater, BillingAccountIdParseFunc),
 				"google_billing_account_iam_member":            ResourceIamMemberWithImport(IamBillingAccountSchema, NewBillingAccountIamUpdater, BillingAccountIdParseFunc),
@@ -299,7 +277,6 @@ func ResourceMapWithErrors() (map[string]*schema.Resource, error) {
 <% end -%>
 				"google_logging_billing_account_sink":          resourceLoggingBillingAccountSink(),
 				"google_logging_billing_account_exclusion":     ResourceLoggingExclusion(BillingAccountLoggingExclusionSchema, NewBillingAccountLoggingExclusionUpdater, billingAccountLoggingExclusionIdParseFunc),
-				"google_logging_metric":                        resourceLoggingMetric(),
 				"google_logging_organization_sink":             resourceLoggingOrganizationSink(),
 				"google_logging_organization_exclusion":        ResourceLoggingExclusion(OrganizationLoggingExclusionSchema, NewOrganizationLoggingExclusionUpdater, organizationLoggingExclusionIdParseFunc),
 				"google_logging_folder_sink":                   resourceLoggingFolderSink(),
@@ -336,9 +313,6 @@ func ResourceMapWithErrors() (map[string]*schema.Resource, error) {
 				"google_project_organization_policy":           resourceGoogleProjectOrganizationPolicy(),
 				"google_project_usage_export_bucket":           resourceProjectUsageBucket(),
 				"google_project_services":                      resourceGoogleProjectServices(),
-				"google_pubsub_topic_iam_binding":              ResourceIamBindingWithImport(IamPubsubTopicSchema, NewPubsubTopicIamUpdater, PubsubTopicIdParseFunc),
-				"google_pubsub_topic_iam_member":               ResourceIamMemberWithImport(IamPubsubTopicSchema, NewPubsubTopicIamUpdater, PubsubTopicIdParseFunc),
-				"google_pubsub_topic_iam_policy":               ResourceIamPolicyWithImport(IamPubsubTopicSchema, NewPubsubTopicIamUpdater, PubsubTopicIdParseFunc),
 				"google_pubsub_subscription_iam_binding":       ResourceIamBindingWithImport(IamPubsubSubscriptionSchema, NewPubsubSubscriptionIamUpdater, PubsubSubscriptionIdParseFunc),
 				"google_pubsub_subscription_iam_member":        ResourceIamMemberWithImport(IamPubsubSubscriptionSchema, NewPubsubSubscriptionIamUpdater, PubsubSubscriptionIdParseFunc),
 				"google_pubsub_subscription_iam_policy":        ResourceIamPolicyWithImport(IamPubsubSubscriptionSchema, NewPubsubSubscriptionIamUpdater, PubsubSubscriptionIdParseFunc),
@@ -388,36 +362,22 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 		config.Scopes[i] = scope.(string)
 	}
 
-	<% unless version == 'ga' -%>
-	config.BinaryAuthorizationBasePath = d.Get(BinaryAuthorizationCustomEndpointEntryKey).(string)
-	config.ContainerAnalysisBasePath = d.Get(ContainerAnalysisCustomEndpointEntryKey).(string)
-	config.SecurityScannerBasePath = d.Get(SecurityScannerCustomEndpointEntryKey).(string)
+	batchCfg, err := expandProviderBatchingConfig(d.Get("batching"))
+	if err != nil {
+		return nil, err
+	}
+	config.BatchingConfig = batchCfg
+
+	// Generated products
+	<% products.each do |product_name| -%>
+	config.<%= product_name -%>BasePath = d.Get(<%= product_name -%>CustomEndpointEntryKey).(string)
 	<% end -%>
 
-	config.AccessContextManagerBasePath = d.Get(AccessContextManagerCustomEndpointEntryKey).(string)
-	config.CloudSchedulerBasePath = d.Get(CloudSchedulerCustomEndpointEntryKey).(string)
-	config.FirestoreBasePath = d.Get(FirestoreCustomEndpointEntryKey).(string)
-
-	config.AppEngineBasePath = d.Get(AppEngineCustomEndpointEntryKey).(string)
-	config.ComputeBasePath = d.Get(ComputeCustomEndpointEntryKey).(string)
-	config.CloudBuildBasePath = d.Get(CloudBuildCustomEndpointEntryKey).(string)
-	config.DnsBasePath = d.Get(DnsCustomEndpointEntryKey).(string)
-	config.FilestoreBasePath = d.Get(FilestoreCustomEndpointEntryKey).(string)
-	config.KmsBasePath = d.Get(KmsCustomEndpointEntryKey).(string)
-	config.MonitoringBasePath = d.Get(MonitoringCustomEndpointEntryKey).(string)
-	config.PubsubBasePath = d.Get(PubsubCustomEndpointEntryKey).(string)
-	config.RedisBasePath = d.Get(RedisCustomEndpointEntryKey).(string)
-	config.ResourceManagerBasePath = d.Get(ResourceManagerCustomEndpointEntryKey).(string)
-	config.SourceRepoBasePath = d.Get(SourceRepoCustomEndpointEntryKey).(string)
-	config.SpannerBasePath = d.Get(SpannerCustomEndpointEntryKey).(string)
-	config.SqlBasePath = d.Get(SqlCustomEndpointEntryKey).(string)
-	config.StorageBasePath = d.Get(StorageCustomEndpointEntryKey).(string)
-	config.TpuBasePath = d.Get(TpuCustomEndpointEntryKey).(string)
-
+	// Handwritten Products / Versioned / Atypical Entries
 	<% unless version == 'ga' -%>
-	config.HealthcareBasePath = d.Get(HealthcareCustomEndpointEntryKey).(string)
 	config.IAPBasePath = d.Get(IAPCustomEndpointEntryKey).(string)
 	<% end -%>
+
 	config.CloudBillingBasePath = d.Get(CloudBillingCustomEndpointEntryKey).(string)
 	config.ComposerBasePath = d.Get(ComposerCustomEndpointEntryKey).(string)
 	config.ComputeBetaBasePath = d.Get(ComputeBetaCustomEndpointEntryKey).(string)
@@ -428,7 +388,6 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	config.DataflowBasePath = d.Get(DataflowCustomEndpointEntryKey).(string)
 	config.DnsBetaBasePath = d.Get(DnsBetaCustomEndpointEntryKey).(string)
 	config.IamCredentialsBasePath = d.Get(IamCredentialsCustomEndpointEntryKey).(string)
-	config.LoggingBasePath = d.Get(LoggingCustomEndpointEntryKey).(string)
 	config.ResourceManagerV2Beta1BasePath = d.Get(ResourceManagerV2Beta1CustomEndpointEntryKey).(string)
 	config.RuntimeconfigBasePath = d.Get(RuntimeconfigCustomEndpointEntryKey).(string)
 	config.IAMBasePath = d.Get(IAMCustomEndpointEntryKey).(string)
@@ -439,6 +398,7 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	config.CloudFunctionsBasePath = d.Get(CloudFunctionsCustomEndpointEntryKey).(string)
 	config.CloudIoTBasePath = d.Get(CloudIoTCustomEndpointEntryKey).(string)
 	config.StorageTransferBasePath = d.Get(StorageTransferCustomEndpointEntryKey).(string)
+	config.BigtableAdminBasePath = d.Get(BigtableAdminCustomEndpointEntryKey).(string)
 
 	if err := config.LoadAndValidate(); err != nil {
 		return nil, err
@@ -452,31 +412,9 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 // values to a default. After using this, you should call config.LoadAndValidate.
 func ConfigureBasePaths(c *Config) {
 	// Generated Products
-	<% unless version == 'ga' -%>
-	// start beta-only products
-	c.BinaryAuthorizationBasePath = BinaryAuthorizationDefaultBasePath
-	c.ContainerAnalysisBasePath = ContainerAnalysisDefaultBasePath
-	c.SecurityScannerBasePath = SecurityScannerDefaultBasePath
-	// end beta-only products
+	<% products.each do |product_name| -%>
+	c.<%= product_name -%>BasePath = <%= product_name -%>DefaultBasePath
 	<% end -%>
-	c.AccessContextManagerBasePath = AccessContextManagerDefaultBasePath
-	c.AppEngineBasePath = AppEngineDefaultBasePath
-	c.ComputeBasePath = ComputeDefaultBasePath
-	c.CloudBuildBasePath = CloudBuildDefaultBasePath
-	c.CloudSchedulerBasePath = CloudSchedulerDefaultBasePath
-	c.DnsBasePath = DnsDefaultBasePath
-	c.FilestoreBasePath = FilestoreDefaultBasePath
-	c.FirestoreBasePath = FirestoreDefaultBasePath
-	c.KmsBasePath = KmsDefaultBasePath
-	c.MonitoringBasePath = MonitoringDefaultBasePath
-	c.PubsubBasePath = PubsubDefaultBasePath
-	c.RedisBasePath = RedisDefaultBasePath
-	c.ResourceManagerBasePath = ResourceManagerDefaultBasePath
-	c.SourceRepoBasePath = SourceRepoDefaultBasePath
-	c.SpannerBasePath = SpannerDefaultBasePath
-	c.SqlBasePath = SqlDefaultBasePath
-	c.StorageBasePath = StorageDefaultBasePath
-	c.TpuBasePath = TpuDefaultBasePath
 
 	// Handwritten Products / Versioned / Atypical Entries
 	<% unless version == 'ga' -%>
@@ -493,7 +431,6 @@ func ConfigureBasePaths(c *Config) {
 	c.DataflowBasePath = DataflowDefaultBasePath
 	c.DnsBetaBasePath = DnsBetaDefaultBasePath
 	c.IamCredentialsBasePath = IamCredentialsDefaultBasePath
-	c.LoggingBasePath = LoggingDefaultBasePath
 	c.ResourceManagerV2Beta1BasePath = ResourceManagerV2Beta1DefaultBasePath
 	c.RuntimeconfigBasePath = RuntimeconfigDefaultBasePath
 	c.IAMBasePath = IAMDefaultBasePath
@@ -504,6 +441,7 @@ func ConfigureBasePaths(c *Config) {
 	c.CloudFunctionsBasePath = CloudFunctionsDefaultBasePath
 	c.CloudIoTBasePath = CloudIoTDefaultBasePath
 	c.StorageTransferBasePath = StorageTransferDefaultBasePath
+	c.BigtableAdminBasePath = BigtableAdminDefaultBasePath
 }
 
 func validateCredentials(v interface{}, k string) (warnings []string, errors []error) {

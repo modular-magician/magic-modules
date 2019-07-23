@@ -86,22 +86,18 @@ module Api
       # within the collection (list) json. Will default to the
       # camelcase pluralize name of the resource.
       attr_reader :collection_url_key
-      # [Optional] This is an array with items that uniquely identify the
-      # resource.
-      # This is useful in case an API returns a list result and we need
-      # to fetch the particular resource we're interested in from that
-      # list.  Otherwise, it's safe to leave empty.
-      # If empty, we assume that `name` is the identifier.
+      # [Optional] An ordered list of names of parameters that uniquely identify
+      # the resource.
+      # Generally, it's safe to leave empty, in which case it defaults to `name`.
+      # Other values are normally useful in cases where an object has a parent
+      # and is identified by some non-name value, such as an ip+port pair.
+      # If you're writing a fine-grained resource (eg with nested_query) a value
+      # must be set.
       attr_reader :identity
       # [Optional] (Api::Resource::NestedQuery) This is useful in case you need
       # to change the query made for GET requests only. In particular, this is
       # often used to extract an object from a parent object or a collection.
       attr_reader :nested_query
-
-      # [Optional] If a resource requires a partial URL when sending the name
-      # in the API request, this is the pattern that maps a name to a
-      # partial URL.
-      attr_reader :name_pattern
 
       # ====================
       # IAM Configuration
@@ -159,7 +155,6 @@ module Api
       check :read_verb, type: Symbol, default: :GET, allowed: %i[GET POST]
       check :delete_verb, type: Symbol, default: :DELETE, allowed: %i[POST PUT PATCH DELETE]
       check :update_verb, type: Symbol, default: :PUT, allowed: %i[POST PUT PATCH]
-      check :name_pattern, type: String
 
       check :input, type: :boolean
       check :min_version, type: String
@@ -252,7 +247,7 @@ module Api
       if @identity.nil?
         props.select { |p| p.name == Api::Type::String::NAME.name }
       else
-        props.select { |p| @identity.include?(p.name) }
+        props.select { |p| @identity.include?(p.name) }.sort_by { |p| @identity.index p.name }
       end
     end
 

@@ -22,6 +22,9 @@ module Api
     attr_reader :status
     attr_reader :error
 
+    # The list of methods where operations are used.
+    attr_reader :actions
+
     def validate
       super
 
@@ -29,6 +32,11 @@ module Api
       check :result, type: Result, required: true
       check :status, type: Status, required: true
       check :error, type: Error, required: true
+      check :actions, default: %w[create delete update], type: ::Array, item_type: ::String
+    end
+
+    def allow?(method)
+      @actions.include?(method.downcase)
     end
 
     # Represents the operations (requests) issues to watch for completion
@@ -39,13 +47,20 @@ module Api
       attr_reader :wait_ms
       attr_reader :timeouts
 
+      # Use this if the resource includes the full operation url.
+      attr_reader :full_url
+
       def validate
         super
 
         check :kind, type: String
         check :path, type: String, required: true
-        check :base_url, type: String, required: true
+        check :base_url, type: String
         check :wait_ms, type: Integer, required: true
+
+        check :full_url, type: String
+
+        conflicts %i[base_url full_url]
       end
     end
 

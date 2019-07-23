@@ -1,4 +1,4 @@
-# Copyright 2017 Google Inc.
+# Copyright 2019 Google Inc.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,13 +11,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-def decode_request(response, module):
-    if 'name' in response:
-        response['name'] = response['name'].split('/')[-1]
-    return response
+# Sets this version as default.
+def set_default(module):
+    res = {'project': module.params['project'], 'model': replace_resource_dict(module.params['model'], 'name'), 'name': module.params['name']}
+    link = "https://ml.googleapis.com/v1/projects/{project}/models/{model}/versions/{name}:setDefault".format(**res)
 
-
-def encode_request(request, module):
-    request['name'] = '/'.join(['projects', module.params['project'],
-                                'topics', module.params['name']])
-    return request
+    auth = GcpSession(module, 'mlengine')
+    return_if_object(module, auth.post(link))

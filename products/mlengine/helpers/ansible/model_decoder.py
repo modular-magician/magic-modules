@@ -1,4 +1,4 @@
-# Copyright 2017 Google Inc.
+# Copyright 2019 Google Inc.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,20 +11,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-def decode_request(response, module):
-    if 'name' in response:
+# Short names are given (and expected) by the API
+# but are returned as full names.
+def decode_response(response, module):
+    if 'name' in response and 'metadata' not in response:
         response['name'] = response['name'].split('/')[-1]
-
-    if 'topic' in response:
-        response['topic'] = response['topic'].split('/')[-1]
-
     return response
-
-
-def encode_request(request, module):
-    request['topic'] = '/'.join(['projects', module.params['project'],
-                                 'topics', replace_resource_dict(request['topic'], 'name')])
-    request['name'] = '/'.join(['projects', module.params['project'],
-                                'subscriptions', module.params['name']])
-
-    return request
