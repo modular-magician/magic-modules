@@ -842,7 +842,7 @@ func TestAccStorageBucket_retentionPolicy(t *testing.T) {
 
 	var bucket storage.Bucket
 	bucketName := fmt.Sprintf("tf-test-acc-bucket-%d", acctest.RandInt())
-
+  
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
@@ -858,6 +858,28 @@ func TestAccStorageBucket_retentionPolicy(t *testing.T) {
 			},
 			{
 				ResourceName:      "google_storage_bucket.bucket",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccStorageBucket_website(t *testing.T) {
+	t.Parallel()
+
+	bucketSuffix := acctest.RandomWithPrefix("tf-website-test")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccStorageBucketDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccStorageBucket_website(bucketSuffix),
+			},
+			{
+				ResourceName:      "google_storage_bucket.website",
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
@@ -1462,5 +1484,20 @@ resource "google_storage_bucket" "bucket" {
       retention_period = 10
     }
 }
+`, bucketName)
+}
+
+func testAccStorageBucket_website(bucketName string) string {
+	return fmt.Sprintf(`
+resource "google_storage_bucket" "website" {
+	name     = "%s.gcp.tfacc.hashicorptest.com"
+	location = "US"
+	storage_class = "MULTI_REGIONAL"
+
+	website {
+	  main_page_suffix = "index.html"
+	  not_found_page   = "404.html"
+	}
+  }
 `, bucketName)
 }
