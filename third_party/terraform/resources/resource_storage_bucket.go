@@ -403,6 +403,7 @@ func resourceStorageBucketCreate(d *schema.ResourceData, meta interface{}) error
 		return err
 	}
 
+	log.Printf("[DEBUG] Created bucket %v at location %v\n\n", res.Name, res.SelfLink)
 	d.SetId(res.Id)
 
 	if v, ok := d.GetOk("retention_policy"); ok {
@@ -417,10 +418,10 @@ func resourceStorageBucketCreate(d *schema.ResourceData, meta interface{}) error
 			if err != nil {
 				return err
 			}
+
+			log.Printf("[DEBUG] Locked bucket %v at location %v\n\n", res.Name, res.SelfLink)
 		}
 	}
-
-	log.Printf("[DEBUG] Created bucket %v at location %v\n\n", res.Name, res.SelfLink)
 
 	return resourceStorageBucketRead(d, meta)
 }
