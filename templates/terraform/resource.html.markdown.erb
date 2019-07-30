@@ -124,11 +124,11 @@ The following arguments are supported:
     If it is not provided, the provider project is used.
 <% end -%>
 
-<% properties.reject(&:required).reject(&:output).each do |prop| -%>
-<%= lines(build_nested_property_documentation(prop)) -%>
-<% end -%>
 <%- unless object.docs.optional_properties.nil? -%>
 <%= "\n" + object.docs.optional_properties -%>
+<% end -%>
+<% properties.reject(&:required).reject(&:output).each do |prop| -%>
+<%= lines(build_nested_property_documentation(prop)) -%>
 <% end -%>
 
 <% unless properties.select(&:output).empty? && object.docs.attributes.nil? -%>
