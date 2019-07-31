@@ -1566,6 +1566,15 @@ objects:
 
           global/images/family/my-private-family
         input: true
+      - !ruby/object:Api::Type::Array
+        name: 'resourcePolicies'
+        min_version: beta
+        description: 'Resource policies applied to this disk for automatic snapshot creations.'
+        item_type: !ruby/object:Api::Type::ResourceRef
+          name: 'resourcePolicy'
+          resource: 'ResourcePolicy'
+          imports: 'selfLink'
+          description: 'A resource policy applied to this disk for automatic snapshot creations.'
   - !ruby/object:Api::Resource
     name: 'Firewall'
     kind: 'compute#firewall'
@@ -5007,9 +5016,9 @@ objects:
     read_verb: :POST
     self_link: projects/{{project}}/zones/{{zone}}/networkEndpointGroups/{{network_endpoint_group}}/listNetworkEndpoints
     identity:
+      - instance
       - ipAddress
       - port
-      - instance
     nested_query: !ruby/object:Api::Resource::NestedQuery
       keys:
         - items
@@ -6505,7 +6514,7 @@ objects:
       operation: !ruby/object:Api::Async::Operation
         kind: 'compute#operation'
         path: 'name'
-        base_url: 'projects/{{project}}/global/operations/{{op_id}}'
+        full_url: 'selfLink'
         wait_ms: 1000
         timeouts: !ruby/object:Api::Timeouts
           insert_minutes: 5

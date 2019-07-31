@@ -86,12 +86,13 @@ module Api
       # within the collection (list) json. Will default to the
       # camelcase pluralize name of the resource.
       attr_reader :collection_url_key
-      # [Optional] This is an array with items that uniquely identify the
-      # resource.
-      # This is useful in case an API returns a list result and we need
-      # to fetch the particular resource we're interested in from that
-      # list.  Otherwise, it's safe to leave empty.
-      # If empty, we assume that `name` is the identifier.
+      # [Optional] An ordered list of names of parameters that uniquely identify
+      # the resource.
+      # Generally, it's safe to leave empty, in which case it defaults to `name`.
+      # Other values are normally useful in cases where an object has a parent
+      # and is identified by some non-name value, such as an ip+port pair.
+      # If you're writing a fine-grained resource (eg with nested_query) a value
+      # must be set.
       attr_reader :identity
       # [Optional] (Api::Resource::NestedQuery) This is useful in case you need
       # to change the query made for GET requests only. In particular, this is
@@ -191,7 +192,8 @@ module Api
     end
 
     # Return the user-facing properties in client tools; this ends up meaning
-    # both properties and parameters.
+    # both properties and parameters but without any that are excluded due to
+    # version mismatches or manual exclusion
     def all_user_properties
       properties + parameters
     end
@@ -222,7 +224,7 @@ module Api
     # Returns the list of top-level properties once any nested objects with flatten_object
     # set to true have been collapsed
     def root_properties
-      properties.flat_map do |p|
+      all_user_properties.flat_map do |p|
         if p.flatten_object
           p.root_properties
         else
@@ -246,7 +248,7 @@ module Api
       if @identity.nil?
         props.select { |p| p.name == Api::Type::String::NAME.name }
       else
-        props.select { |p| @identity.include?(p.name) }
+        props.select { |p| @identity.include?(p.name) }.sort_by { |p| @identity.index p.name }
       end
     end
 
