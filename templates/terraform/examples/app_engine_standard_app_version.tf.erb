@@ -10,14 +10,20 @@ resource "google_app_engine_application" "app" {
 }
 
 
-resource "google_app_engine_app_version" "<%= ctx[:primary_resource_id] %>" {
-  version_id = "v31"
-  project = "${google_app_engine_application.app.project}"
+resource "google_app_engine_standard_app_version" "<%= ctx[:primary_resource_id] %>" {
+  version_id = "v34"
   service = "default"
   runtime = "nodejs10"
-  api_config = {}
-  endpoints_api_service = {}
   entrypoint {
     shell = "node index.js"
   }
+  deployment {
+    zip {
+      source_url = "https://storage.googleapis.com/sample.zip"
+    }  
+  }
+  env_variables = {
+    port = "8080"
+  } 
+
 }
