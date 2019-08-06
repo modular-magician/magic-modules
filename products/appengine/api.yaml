@@ -98,7 +98,7 @@ objects:
       Currently supporting Zip and File Containers.
       Currently does not support async operation checking.
     base_url: 'apps/{{project}}/services/{{service}}/versions'
-    self_link: 'apps/{{project}}/services/{{service}}/versions/{{versionId}}'
+    self_link: 'apps/{{project}}/services/{{service}}/versions/{{id}}'
     update_verb: :PATCH
     update_mask: true
     references: !ruby/object:Api::Resource::ReferenceLinks
@@ -194,6 +194,18 @@ objects:
            Code and application artifacts that make up this version.
         required: false
         properties:      
+          - !ruby/object:Api::Type::NestedObject
+            name: 'zip'
+            description: 'Zip File'
+            required: false
+            properties:
+              - !ruby/object:Api::Type::String
+                name: 'sourceUrl'
+                description: 'Source URL'
+              - !ruby/object:Api::Type::Integer
+                name: 'filesCount'
+                description: 'files count'
+                required: false
           - !ruby/object:Api::Type::Map
             name: 'files'
             description: |
