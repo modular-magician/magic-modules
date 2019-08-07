@@ -100,7 +100,7 @@ objects:
     base_url: 'apps/{{project}}/services/{{service}}/versions'
     delete_url: 'apps/{{project}}/services/{{service}}/versions/{{version_id}}'
     delete_verb: :DELETE
-    update_url: 'apps/{{project}}/services/{{service}}'
+    update_url: 'apps/{{project}}/services/{{service}}/versions'
     update_verb: :POST
     update_mask: false
     self_link: 'apps/{{project}}/services/{{service}}/versions/{{version_id}}'
