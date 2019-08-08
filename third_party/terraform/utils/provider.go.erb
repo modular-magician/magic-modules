@@ -375,6 +375,7 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	config.<%= product_name -%>BasePath = d.Get(<%= product_name -%>CustomEndpointEntryKey).(string)
 	<% end -%>
 
+	// Handwritten Products / Versioned / Atypical Entries
 	<% unless version == 'ga' -%>
 	config.IAPBasePath = d.Get(IAPCustomEndpointEntryKey).(string)
 	<% end -%>
