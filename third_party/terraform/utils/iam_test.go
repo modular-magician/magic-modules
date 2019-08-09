@@ -749,7 +749,7 @@ func TestIamRemoveAllAuditConfigsWithService(t *testing.T) {
 					},
 				},
 			},
-			expected: []*cloudresourcemanager.AuditConfig{},
+			expect: []*cloudresourcemanager.AuditConfig{},
 		},
 		// Multiple removal/merge
 		{
