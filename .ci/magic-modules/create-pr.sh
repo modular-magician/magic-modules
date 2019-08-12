@@ -43,9 +43,6 @@ MESSAGE="${MESSAGE}${NEWLINE}## Pull request statuses"
 DEPENDENCIES=""
 LABELS=""
 
-## Some files may need non-generatable changes added to alternative Terraform repos
-VALIDATOR_WARN_FILES=$(git diff --name-only HEAD^1 | grep -Ff ".ci/magic-modules/vars/validator_handwritten_files.txt" | sed 's/^/* /')
-
 # There is no existing PR - this is the first pass through the pipeline and
 # we will need to create a PR using 'hub'.
 
@@ -187,6 +184,8 @@ else
   MESSAGE="${MESSAGE}${NEWLINE}${DEPENDENCIES}"
 fi
 
+## Some files may need non-generatable changes added to alternative Terraform repos
+VALIDATOR_WARN_FILES=$(git diff --name-only HEAD^1 | grep -Ff ".ci/magic-modules/vars/validator_handwritten_files.txt" | sed 's/^/* /')
 if [ -n "${VALIDATOR_WARN_FILES}" ]; then
   MESSAGE="${MESSAGE}${NEWLINE}**WARNING**: The following files may need corresponding changes in third_party/validator:"
   MESSAGE="${MESSAGE}${NEWLINE}${VALIDATOR_WARN_FILES}${NEWLINE}"
