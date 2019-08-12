@@ -9,6 +9,15 @@ resource "google_app_engine_application" "app" {
   location_id = "us-central"
 }
 
+resource "google_storage_bucket" "bucket" {
+	name = "<%= ctx[:vars]['bucket_name'] %>"
+}
+
+resource "google_storage_bucket_object" "object" {
+	name   = "sample.zip"
+	bucket = "${google_storage_bucket.bucket.name}"
+	source = "../static/appengine/sample.zip"
+}
 
 resource "google_app_engine_standard_app_version" "<%= ctx[:primary_resource_id] %>" {
   version_id = "v34"
@@ -19,7 +28,7 @@ resource "google_app_engine_standard_app_version" "<%= ctx[:primary_resource_id]
   }
   deployment {
     zip {
-      source_url = "https://storage.googleapis.com/sample.zip"
+      source_url = "https://storage.googleapis.com/${google_storage_bucket.bucket.name}/sample.zip"
     }  
   }
   env_variables = {
