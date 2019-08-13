@@ -41,10 +41,7 @@ end
 func TestAcc<%= resource_name -%>IamBindingGenerated(t *testing.T) {
 	t.Parallel()
 
-	context := map[string]interface{}{
-		"random_suffix": acctest.RandString(10),
-		"role":          "<%= object.iam_policy.allowed_iam_role -%>",
-	}
+<%= lines(compile('templates/terraform/iam/iam_context.go.erb')) -%>
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -76,10 +73,7 @@ func TestAcc<%= resource_name -%>IamBindingGenerated(t *testing.T) {
 func TestAcc<%= resource_name -%>IamMemberGenerated(t *testing.T) {
 	t.Parallel()
 
-	context := map[string]interface{}{
-		"random_suffix": acctest.RandString(10),
-		"role": "<%= object.iam_policy.allowed_iam_role -%>",
-	}
+<%= lines(compile('templates/terraform/iam/iam_context.go.erb')) -%>
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
@@ -102,10 +96,7 @@ func TestAcc<%= resource_name -%>IamMemberGenerated(t *testing.T) {
 func TestAcc<%= resource_name -%>IamPolicyGenerated(t *testing.T) {
 	t.Parallel()
 
-	context := map[string]interface{}{
-		"random_suffix": acctest.RandString(10),
-		"role": "<%= object.iam_policy.allowed_iam_role -%>",
-	}
+<%= lines(compile('templates/terraform/iam/iam_context.go.erb')) -%>
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
