@@ -46,8 +46,18 @@ LABELS=""
 
 # Check the files between this commit and HEAD
 # If they're only contained in third_party, add the third_party label.
-if [ ! git diff --name-only HEAD^1 | grep -v "third_party" | grep -v ".gitmodules" | grep -r "build/" ]; then
+if [ -z "$(git diff --name-only HEAD^1 | grep -v "third_party" | grep -v ".gitmodules" | grep -r "build/")" ]; then
   LABELS="${LABELS}only_third_party,"
+fi
+
+git log -n 2
+echo "LAST USER COMMIT: $(git diff --name-only "${LAST_USER_COMMIT}")"
+echo "HEAD^1: $(git diff --name-only HEAD^1)"
+
+VALIDATOR_WARN_FILES="$(git diff --name-only HEAD~1^2 | grep -v ".gitmodules" | grep -v "build/" | grep -Ff '.ci/magic-modules/vars/validator_handwritten_files.txt' | sed 's/^/* /')"
+if [ -n "${VALIDATOR_WARN_FILES}" ]; then
+  MESSAGE="${MESSAGE}${NEWLINE}**WARNING**: The following files may need corresponding changes in third_party/validator:"
+  MESSAGE="${MESSAGE}${NEWLINE}${VALIDATOR_WARN_FILES}${NEWLINE}"
 fi
 
 # Terraform
