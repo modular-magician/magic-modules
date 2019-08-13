@@ -30,6 +30,7 @@ git checkout -b "$BRANCH_NAME"
 NEWLINE=$'\n'
 MESSAGE="Hi!  I'm the modular magician, I work on Magic Modules.$NEWLINE"
 LAST_USER_COMMIT="$(git rev-parse HEAD~1^2)"
+# Check if handwritten Terraform changes need to be made in third_party/validator as well.
 
 if [ "$BRANCH_NAME" = "$ORIGINAL_PR_BRANCH" ]; then
   MESSAGE="${MESSAGE}This PR seems not to have generated downstream PRs before, as of $LAST_USER_COMMIT. "
@@ -41,6 +42,7 @@ fi
 MESSAGE="${MESSAGE}${NEWLINE}## Pull request statuses"
 DEPENDENCIES=""
 LABELS=""
+
 # There is no existing PR - this is the first pass through the pipeline and
 # we will need to create a PR using 'hub'.
 
@@ -180,6 +182,16 @@ else
   MESSAGE="${MESSAGE}${NEWLINE}I built this PR into one or more new PRs on other repositories, "
   MESSAGE="${MESSAGE}and when those are closed, this PR will also be merged and closed."
   MESSAGE="${MESSAGE}${NEWLINE}${DEPENDENCIES}"
+fi
+
+## Some files may need non-generatable changes added to alternative Terraform repos
+echo "$(git diff --name-only HEAD^1)"
+echo "$(git diff --name-only HEAD^1 |  grep -Ff '.ci/magic-modules/vars/validator_handwritten_files.txt')"
+
+VALIDATOR_WARN_FILES=$(git diff --name-only HEAD^1 | grep -Ff ".ci/magic-modules/vars/validator_handwritten_files.txt" | sed 's/^/* /')
+if [ -n "${VALIDATOR_WARN_FILES}" ]; then
+  MESSAGE="${MESSAGE}${NEWLINE}**WARNING**: The following files may need corresponding changes in third_party/validator:"
+  MESSAGE="${MESSAGE}${NEWLINE}${VALIDATOR_WARN_FILES}${NEWLINE}"
 fi
 
 echo "$MESSAGE" > ./pr_comment
