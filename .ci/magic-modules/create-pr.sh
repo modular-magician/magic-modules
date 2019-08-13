@@ -41,15 +41,24 @@ fi
 MESSAGE="${MESSAGE}${NEWLINE}## Pull request statuses"
 DEPENDENCIES=""
 LABELS=""
-# There is no existing PR - this is the first pass through the pipeline and
-# we will need to create a PR using 'hub'.
 
 # Check the files between this commit and HEAD
 # If they're only contained in third_party, add the third_party label.
-if [ ! git diff --name-only HEAD^1 | grep -v "third_party" | grep -v ".gitmodules" | grep -r "build/" ]; then
+if [[ ! git diff --name-only HEAD^1 | grep -v "third_party" | grep -v ".gitmodules" | grep -r "build/" ]]; then
   LABELS="${LABELS}only_third_party,"
 fi
 
+# Add a warning if changes were made to Terraform third_party/validator.
+echo "Files changed: $(git diff --name-only HEAD^1)"
+# echo "$(git diff --name-only HEAD^1 |  grep -Ff '.ci/magic-modules/vars/validator_handwritten_files.txt')"
+
+VALIDATOR_WARN_FILES="$(git diff --name-only HEAD^1 | grep -Ff ".ci/magic-modules/vars/validator_handwritten_files.txt" | sed 's/^/* /')"
+if [ -n "${VALIDATOR_WARN_FILES}" ]; then
+  MESSAGE="${MESSAGE}${NEWLINE}**WARNING**: The following files may need corresponding changes in third_party/validator:"
+  MESSAGE="${MESSAGE}${NEWLINE}${VALIDATOR_WARN_FILES}${NEWLINE}"
+fi
+
+# If there is no existing PR per downstream, we will need to create PRs using 'hub'.
 # Terraform
 if [ -n "$TERRAFORM_VERSIONS" ]; then
   for VERSION in "${TERRAFORM_VERSIONS[@]}"; do
