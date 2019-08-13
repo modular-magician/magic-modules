@@ -185,6 +185,9 @@ else
 fi
 
 ## Some files may need non-generatable changes added to alternative Terraform repos
+echo "$(git diff --name-only HEAD^1)"
+echo "$(git diff --name-only HEAD^1 |  grep -Ff '.ci/magic-modules/vars/validator_handwritten_files.txt')"
+
 VALIDATOR_WARN_FILES=$(git diff --name-only HEAD^1 | grep -Ff ".ci/magic-modules/vars/validator_handwritten_files.txt" | sed 's/^/* /')
 if [ -n "${VALIDATOR_WARN_FILES}" ]; then
   MESSAGE="${MESSAGE}${NEWLINE}**WARNING**: The following files may need corresponding changes in third_party/validator:"
