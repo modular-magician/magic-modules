@@ -24,7 +24,7 @@ resource "google_app_engine_standard_app_version" "<%= ctx[:primary_resource_id]
   service = "default"
   runtime = "nodejs10"
   entrypoint {
-    shell = "node index.js"
+    shell = "node ./app.js"
   }
   deployment {
     zip {
