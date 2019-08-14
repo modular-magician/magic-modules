@@ -40,6 +40,7 @@ overrides: !ruby/object:Overrides::ResourceOverrides
         primary_resource_id: "version_id"
         vars:
           project_id: "test-project"
+          bucket_name: "appengine-static-content"
         test_env_vars:
           org_id: :ORG_ID
   Service: !ruby/object:Overrides::Terraform::ResourceOverride
