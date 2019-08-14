@@ -22,7 +22,7 @@ resource "google_storage_bucket_object" "object" {
 resource "google_app_engine_standard_app_version" "<%= ctx[:primary_resource_id] %>" {
   project = "${google_app_engine_application.app.project}"
   version_id = "v1"
-  service = "<%= ctx[:vars]['service_name'] %>"
+  service = "default"
   runtime = "nodejs10"
   entrypoint {
     shell = "node ./app.js"
