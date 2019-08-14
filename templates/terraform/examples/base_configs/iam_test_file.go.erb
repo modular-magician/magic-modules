@@ -17,7 +17,7 @@ import (
 <% resource_name = product_ns + object.name -%>
 <% 
 individual_url = object.self_link_url
-params = individual_url.scan(/({{)(\w+)(}})/).map { |arr| arr[1] }
+params = individual_url.gsub('{{name}}', "{{#{object.name.underscore}}}").scan(/({{)(\w+)(}})/).map { |arr| arr[1] }
 -%>
 <% 
 if @config.legacy_name.nil?
@@ -29,34 +29,33 @@ end
 <% import_url = individual_url.gsub(/({{)(\w+)(}})/, '%s').gsub(object.__product.base_url, '') -%>
 <% import_str = Array.new(params.length, '%s').join('/') -%>
 <% import_qualifiers = [] -%>
-<% params.each do |param| -%>
+<% params.each_with_index do |param, i| -%>
 	<% if param == 'project' -%>
-		<% import_qualifiers.push('getTestProjectFromEnv()') -%>
+		<% if i != params.size - 1 -%>
+			<%# If the last parameter is project then we want to create a new project to use for the test, so don't default from the environment -%>
+			<% import_qualifiers.push('getTestProjectFromEnv()') -%>
+		<% end -%>
 	<% elsif param == 'zone' -%>
-		<% import_qualifiers.push('getTestZoneFromEnv(t)') -%>
+		<% import_qualifiers.push('getTestZoneFromEnv()') -%>
 	<% elsif param == 'region' || param == 'location' -%>
-		<% import_qualifiers.push('getTestRegionFromEnv(t)') -%>
+		<% import_qualifiers.push('getTestRegionFromEnv()') -%>
 	<% end -%>
 <% end -%>
 func TestAcc<%= resource_name -%>IamBindingGenerated(t *testing.T) {
 	t.Parallel()
 
-	context := map[string]interface{}{
-		"random_suffix": acctest.RandString(10),
-		"role":          "roles/editor",
-	}
+<%= lines(compile('templates/terraform/iam/iam_context.go.erb')) -%>
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheck<%= resource_name -%>Destroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAcc<%= resource_name -%>IamBinding_basicGenerated(context),
 			},
 			{
 				ResourceName:      "<%= terraform_name -%>_iam_binding.foo",
-				ImportStateId:     fmt.Sprintf("<%= import_url -%> roles/editor", <%= import_qualifiers.join(', ') -%>, <%= example.primary_resource_name -%>),
+				ImportStateId:     fmt.Sprintf("<%= import_url -%> <%= object.iam_policy.allowed_iam_role -%>"<% unless import_qualifiers.empty? -%>, <% end -%><%= import_qualifiers.join(', ') -%>, <%= example.primary_resource_name -%>),
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
@@ -66,7 +65,7 @@ func TestAcc<%= resource_name -%>IamBindingGenerated(t *testing.T) {
 			},
 			{
 				ResourceName:      "<%= terraform_name -%>_iam_binding.foo",
-				ImportStateId:     fmt.Sprintf("<%= import_url -%> roles/editor", <%= import_qualifiers.join(', ') -%>, <%= example.primary_resource_name -%>),
+				ImportStateId:     fmt.Sprintf("<%= import_url -%> <%= object.iam_policy.allowed_iam_role -%>"<% unless import_qualifiers.empty? -%>, <% end -%><%= import_qualifiers.join(', ') -%>, <%= example.primary_resource_name -%>),
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
@@ -77,15 +76,11 @@ func TestAcc<%= resource_name -%>IamBindingGenerated(t *testing.T) {
 func TestAcc<%= resource_name -%>IamMemberGenerated(t *testing.T) {
 	t.Parallel()
 
-	context := map[string]interface{}{
-		"random_suffix": acctest.RandString(10),
-		"role": "roles/editor",
-	}
+<%= lines(compile('templates/terraform/iam/iam_context.go.erb')) -%>
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
-		CheckDestroy: testAccCheck<%= resource_name -%>Destroy,
 		Steps: []resource.TestStep{
 			{
 				// Test Iam Member creation (no update for member, no need to test)
@@ -93,7 +88,7 @@ func TestAcc<%= resource_name -%>IamMemberGenerated(t *testing.T) {
 			},
 			{
 				ResourceName:      "<%= terraform_name -%>_iam_member.foo",
-				ImportStateId:     fmt.Sprintf("<%= import_url -%> roles/editor user:admin@hashicorptest.com", <%= import_qualifiers.join(', ') -%>, <%= example.primary_resource_name -%>),
+				ImportStateId:     fmt.Sprintf("<%= import_url -%> <%= object.iam_policy.allowed_iam_role -%> user:admin@hashicorptest.com"<% unless import_qualifiers.empty? -%>, <% end -%><%= import_qualifiers.join(', ') -%>, <%= example.primary_resource_name -%>),
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
@@ -104,35 +99,32 @@ func TestAcc<%= resource_name -%>IamMemberGenerated(t *testing.T) {
 func TestAcc<%= resource_name -%>IamPolicyGenerated(t *testing.T) {
 	t.Parallel()
 
-	context := map[string]interface{}{
-		"random_suffix": acctest.RandString(10),
-		"role": "roles/editor",
-	}
+<%= lines(compile('templates/terraform/iam/iam_context.go.erb')) -%>
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
-		CheckDestroy: testAccCheck<%= resource_name -%>Destroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAcc<%= resource_name -%>IamPolicy_basicGenerated(context),
 			},
 			{
 				ResourceName:      "<%= terraform_name -%>_iam_policy.foo",
-				ImportStateId:     fmt.Sprintf("<%= import_url -%>", <%= import_qualifiers.join(', ') -%>, <%= example.primary_resource_name -%>),
+				ImportStateId:     fmt.Sprintf("<%= import_url -%>"<% unless import_qualifiers.empty? -%>, <% end -%><%= import_qualifiers.join(', ') -%>, <%= example.primary_resource_name -%>),
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
 		},
 	})
 }
+<% parent_resource_type_type = object.iam_policy.parent_resource_type || terraform_name -%>
 
 func testAcc<%= resource_name -%>IamMember_basicGenerated(context map[string]interface{}) string {
 	return Nprintf(`
 <%= example.config_test_body -%>
 
 resource "<%= terraform_name -%>_iam_member" "foo" {
-	<%= object.name.underscore -%> = "${<%= terraform_name -%>.<%= example.primary_resource_id -%>.id}"
+	<%= params.last -%> = "${<%= parent_resource_type_type -%>.<%= example.primary_resource_id -%>.<%= object.iam_policy.parent_resource_attribute -%>}"
 	role          = "%{role}"
 	member        = "user:admin@hashicorptest.com"
 }
@@ -151,7 +143,7 @@ data "google_iam_policy" "foo" {
 }
 
 resource "<%= terraform_name -%>_iam_policy" "foo" {
-	<%= object.name.underscore -%> = "${<%= terraform_name -%>.<%= example.primary_resource_id -%>.id}"
+	<%= params.last -%> = "${<%= parent_resource_type_type -%>.<%= example.primary_resource_id -%>.<%= object.iam_policy.parent_resource_attribute -%>}"
 	policy_data   = "${data.google_iam_policy.foo.policy_data}"
 }
 `, context)
@@ -162,7 +154,7 @@ func testAcc<%= resource_name -%>IamBinding_basicGenerated(context map[string]in
 <%= example.config_test_body -%>
 
 resource "<%= terraform_name -%>_iam_binding" "foo" {
-	<%= object.name.underscore -%> = "${<%= terraform_name -%>.<%= example.primary_resource_id -%>.id}"
+	<%= params.last -%> = "${<%= parent_resource_type_type -%>.<%= example.primary_resource_id -%>.<%= object.iam_policy.parent_resource_attribute -%>}"
 	role          = "%{role}"
 	members       = ["user:admin@hashicorptest.com"]
 }
@@ -174,7 +166,7 @@ func testAcc<%= resource_name -%>IamBinding_updateGenerated(context map[string]i
 <%= example.config_test_body -%>
 
 resource "<%= terraform_name -%>_iam_binding" "foo" {
-	<%= object.name.underscore -%> = "${<%= terraform_name -%>.<%= example.primary_resource_id -%>.id}"
+	<%= params.last -%> = "${<%= parent_resource_type_type -%>.<%= example.primary_resource_id -%>.<%= object.iam_policy.parent_resource_attribute -%>}"
 	role          = "%{role}"
 	members       = ["user:admin@hashicorptest.com", "user:paddy@hashicorp.com"]
 }
