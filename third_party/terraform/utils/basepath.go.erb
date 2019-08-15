@@ -1,0 +1,6 @@
+<% autogen_exception -%>
+package google
+
+<% products.each do |product| -%>
+var <%= product.name -%>DefaultBasePath = "<%= product.base_url -%>"
+<% end -%>
