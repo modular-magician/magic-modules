@@ -97,6 +97,11 @@ authenticate HTTP requests to GCP APIs. This is an alternative to `credentials`,
 and ignores the `scopes` field. If both are specified, `access_token` will be
 used over the `credentials` field.
 
+* `user_project_override` - (Optional) Defaults to false. If true, uses the
+resource project for preconditions, quota, and billing, instead of the project
+the credentials belong to. Not all resources support this- see the
+documentation for each resource to learn whether it does.
+
 * `{{service}}_custom_endpoint` - (Optional) The endpoint for a service's APIs,
 such as `compute_custom_endpoint`. Defaults to the production GCP endpoint for
 the service. This can be used to configure the Google provider to communicate
@@ -258,6 +263,7 @@ be used for configuration are below:
 * `resource_manager_custom_endpoint` (`GOOGLE_RESOURCE_MANAGER_CUSTOM_ENDPOINT`) - `https://cloudresourcemanager.googleapis.com/v1/`
 * `resource_manager_v2beta1_custom_endpoint` (`GOOGLE_RESOURCE_MANAGER_V2BETA1_CUSTOM_ENDPOINT`) - `https://cloudresourcemanager.googleapis.com/v2beta1/`
 * `runtimeconfig_custom_endpoint` (`GOOGLE_RUNTIMECONFIG_CUSTOM_ENDPOINT`) - `https://runtimeconfig.googleapis.com/v1beta1/`
+* `security_center_custom_endpoints` (`GOOGLE_SECURITY_CENTER_CUSTOM_ENDPOINT`) - `https://securitycenter.googleapis.com/v1/`
 * `service_management_custom_endpoint` (`GOOGLE_SERVICE_MANAGEMENT_CUSTOM_ENDPOINT`) - `https://servicemanagement.googleapis.com/v1/`
 * `service_networking_custom_endpoint` (`GOOGLE_SERVICE_NETWORKING_CUSTOM_ENDPOINT`) - `https://servicenetworking.googleapis.com/v1/`
 * `service_usage_custom_endpoint` (`GOOGLE_SERVICE_USAGE_CUSTOM_ENDPOINT`) - `https://serviceusage.googleapis.com/v1/`
@@ -324,3 +330,20 @@ Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 
 * `disable_batching` - (Optional) Defaults to false. If true, disables global
 batching and each request is sent normally.
+
+---
+
+* `user_project_override` - (Optional) Defaults to false. If true, uses the
+resource project for preconditions, quota, and billing, instead of the project
+the credentials belong to. Not all resources support this- see the
+documentation for each resource to learn whether it does.
+
+When set to false, the project the credentials belong to will be billed for the
+request, and quota / API enablement checks will be done against that project.
+For service account credentials, this is the project the service account was
+created in. For credentials that come from the gcloud tool, this is a project
+owned by Google. In order to properly use credentials that come from gcloud
+with Terraform, it is recommended to set this property to true.
+
+When set to true, the caller must have `serviceusage.services.use` permission
+on the resource project.
