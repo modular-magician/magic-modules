@@ -641,7 +641,7 @@ func removeBasePathVersion(url string) string {
 // values to a default. After using this, you should call config.LoadAndValidate.
 func ConfigureBasePaths(c *Config) {
 	// Generated Products
-	<% products.each do |product_name| -%>
+	<% products.map(&:name).each do |product_name| -%>
 	c.<%= product_name -%>BasePath = <%= product_name -%>DefaultBasePath
 	<% end -%>
 
@@ -672,3 +672,4 @@ func ConfigureBasePaths(c *Config) {
 	c.StorageTransferBasePath = StorageTransferDefaultBasePath
 	c.BigtableAdminBasePath = BigtableAdminDefaultBasePath
 }
+
