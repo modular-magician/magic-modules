@@ -75,7 +75,7 @@ See [Provider Versions](https://terraform.io/docs/providers/google/provider_vers
 ```hcl
 data "google_iam_policy" "admin" {
   binding {
-    role    = "roles/editor"
+    role    = "<%= object.iam_policy.allowed_iam_role -%>"
     members = [
       "user:jane@example.com",
     ]
@@ -93,7 +93,7 @@ resource "<%= terraform_name -%>_policy" "editor" {
 ```hcl
 resource "<%= terraform_name -%>_binding" "editor" {
   <%= object.name.underscore -%>   = "<%= object.id_format.gsub('{{name}}', "{{#{object.name.underscore}}}")-%>"
-  role    = "roles/editor"
+  role    = "<%= object.iam_policy.allowed_iam_role -%>"
   members = [
     "user:jane@example.com",
   ]
@@ -105,7 +105,7 @@ resource "<%= terraform_name -%>_binding" "editor" {
 ```hcl
 resource "<%= terraform_name -%>_member" "editor" {
   <%= object.name.underscore -%>  = "<%= object.id_format.gsub('{{name}}', "{{#{object.name.underscore}}}")-%>"
-  role   = "roles/editor"
+  role   = "<%= object.iam_policy.allowed_iam_role -%>"
   member = "user:jane@example.com"
 }
 ```
@@ -114,7 +114,8 @@ resource "<%= terraform_name -%>_member" "editor" {
 
 The following arguments are supported:
 
-* `<%= object.name.downcase -%>` - (Required) The <%= object.name.downcase -%> name or id to bind to attach IAM policy to.
+* `<%= object.name.downcase -%>` - (Required) The <%= object.name.downcase -%> name to bind to attach 
+IAM policy to.
 
 * `project` - (Optional) The project in which the resource belongs. If it
     is not provided, the provider project is used.
@@ -149,9 +150,9 @@ exported:
 ```
 $ terraform import <%= terraform_name -%>_policy.editor <%= object.id_format.gsub('{{name}}', "{{#{object.name.underscore}}}") -%>
 
-$ terraform import <%= terraform_name -%>_binding.editor "<%= object.id_format.gsub('{{name}}', "{{#{object.name.underscore}}}") -%> roles/editor"
+$ terraform import <%= terraform_name -%>_binding.editor "<%= object.id_format.gsub('{{name}}', "{{#{object.name.underscore}}}") -%> <%= object.iam_policy.allowed_iam_role -%>"
 
-$ terraform import <%= terraform_name -%>_member.editor "<%= object.id_format.gsub('{{name}}', "{{#{object.name.underscore}}}") -%> roles/editor jane@example.com"
+$ terraform import <%= terraform_name -%>_member.editor "<%= object.id_format.gsub('{{name}}', "{{#{object.name.underscore}}}") -%> <%= object.iam_policy.allowed_iam_role -%> jane@example.com"
 ```
 
 -> If you're importing a resource with beta features, make sure to include `-provider=google-beta`
