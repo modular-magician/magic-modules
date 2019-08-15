@@ -24,6 +24,16 @@ overrides: !ruby/object:Overrides::ResourceOverrides
           project_id: "test-project"
         test_env_vars:
           org_id: :ORG_ID
+  DomainMapping: !ruby/object:Overrides::Terraform::ResourceOverride
+    examples:
+      - !ruby/object:Provider::Terraform::Examples
+        name: "app_engine_domain_mapping_basic"
+        primary_resource_id: "domain_mapping"
+        vars:
+          domain: "dm-test"
+    properties:
+      id: !ruby/object:Overrides::Terraform::PropertyOverride
+        name: 'domainName'
 
 # This is for copying files over
 files: !ruby/object:Provider::Config::Files
