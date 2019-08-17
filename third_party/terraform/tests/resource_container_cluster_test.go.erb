@@ -1330,6 +1330,33 @@ func TestAccContainerCluster_withWorkloadIdentityConfig(t *testing.T) {
 				ImportState:         true,
 				ImportStateVerify:   true,
 			},
+			{
+				Config: testAccContainerCluster_updateWorkloadMetadataConfig(pid, clusterName, "SECURE"),
+			},
+			{
+				ResourceName:        "google_container_cluster.with_workload_identity_config",
+				ImportStateIdPrefix: "us-central1-a/",
+				ImportState:         true,
+				ImportStateVerify:   true,
+			},
+			{
+				Config: testAccContainerCluster_updateWorkloadIdentityConfig(pid, clusterName, false),
+			},
+			{
+				ResourceName:        "google_container_cluster.with_workload_identity_config",
+				ImportStateIdPrefix: "us-central1-a/",
+				ImportState:         true,
+				ImportStateVerify:   true,
+			},
+			{
+				Config: testAccContainerCluster_updateWorkloadIdentityConfig(pid, clusterName, true),
+			},
+			{
+				ResourceName:        "google_container_cluster.with_workload_identity_config",
+				ImportStateIdPrefix: "us-central1-a/",
+				ImportState:         true,
+				ImportStateVerify:   true,
+			},
 		},
 	})
 
@@ -2232,7 +2259,6 @@ resource "google_container_cluster" "with_workload_metadata_config" {
   zone				 = "us-central1-a"
   initial_node_count = 1
   min_master_version = "${data.google_container_engine_versions.central1a.latest_master_version}"
-  node_version		 = "${data.google_container_engine_versions.central1a.latest_node_version}"
 
   node_config {
 		oauth_scopes = [
@@ -2248,6 +2274,30 @@ resource "google_container_cluster" "with_workload_metadata_config" {
 `, acctest.RandString(10))
 }
 
+func testAccContainerCluster_updateWorkloadMetadataConfig(projectID string, clusterName string, workloadMetadataConfig string) string {
+	return fmt.Sprintf(`
+data "google_project" "project" {
+	project_id = "%s"
+}
+
+resource "google_container_cluster" "with_workload_identity_config" {
+	name = "%s"
+	zone = "us-central1-a"
+	initial_node_count = 1
+
+  node_config {
+		oauth_scopes = [
+			"https://www.googleapis.com/auth/logging.write",
+			"https://www.googleapis.com/auth/monitoring"
+		]
+
+		workload_metadata_config {
+			node_metadata = "%s"
+		}
+  }
+}`, projectID, clusterName, workloadMetadataConfig)
+}
+
 func testAccContainerCluster_withSandboxConfig() string {
 	return fmt.Sprintf(`
 data "google_container_engine_versions" "central1a" {
@@ -2259,7 +2309,6 @@ resource "google_container_cluster" "with_sandbox_config" {
   zone				 = "us-central1-a"
   initial_node_count = 1
   min_master_version = "${data.google_container_engine_versions.central1a.latest_master_version}"
-  node_version		 = "${data.google_container_engine_versions.central1a.latest_node_version}"
 
   node_config {
 		oauth_scopes = [
@@ -2444,8 +2493,7 @@ data "google_container_engine_versions" "central1a" {
 resource "google_container_cluster" "with_autoprovisioning" {
 	name = "%s"
 	zone = "us-central1-a"
-  min_master_version = "${data.google_container_engine_versions.central1a.latest_master_version}"
-  node_version		 = "${data.google_container_engine_versions.central1a.latest_node_version}"
+	min_master_version = "${data.google_container_engine_versions.central1a.latest_master_version}"
 	initial_node_count = 1
 `, cluster)
 	if autoprovisioning {
@@ -2971,6 +3019,28 @@ resource "google_container_cluster" "with_workload_identity_config" {
 	}
 }
 `, projectID, clusterName)
+}
+
+func testAccContainerCluster_updateWorkloadIdentityConfig(projectID string, clusterName string, enable bool) string {
+	workloadIdentityConfig := ""
+	if enable {
+		workloadIdentityConfig = `
+			workload_identity_config {
+			identity_namespace = "${data.google_project.project.project_id}.svc.id.goog"
+		}`
+	}
+	return fmt.Sprintf(`
+data "google_project" "project" {
+	project_id = "%s"
+}
+
+resource "google_container_cluster" "with_workload_identity_config" {
+	name = "%s"
+	zone = "us-central1-a"
+	initial_node_count = 1
+
+	%s
+}`, projectID, clusterName, workloadIdentityConfig)
 }
 
 func testAccContainerCluster_withBinaryAuthorization(clusterName string, enabled bool) string {

@@ -74,6 +74,10 @@ def main():
                                    '<%= object.nested_query.keys.first -%>')
 <% end # object.nested_query.nil? -%>
     changed = False
+<% if object.pre_action -%>
+
+<%= lines(indent(object.pre_action, 4)) -%>
+<% end # if object.pre_action -%>
 
     if fetch:
         if state == 'present':
@@ -259,7 +263,9 @@ def update_fields(module, request, response):
 
 
 <% update_props.each do |key, props| -%>
-def <%= props.first.name.underscore -%>_update(module, request, response):
+<% func_name = "#{props.first.name.underscore}_update" -%>
+<% unless object.hidden.include?(func_name) -%>
+def <%= func_name -%>(module, request, response):
     auth = GcpSession(module, <%= quote_string(prod_name) -%>)
     auth.<%= key[:update_verb].downcase -%>(
         ''.join([
@@ -269,7 +275,7 @@ def <%= props.first.name.underscore -%>_update(module, request, response):
 <%= lines(python_literal(request_properties(props), use_hash_brackets: true)) -%>
     )
 
-
+<% end # unless object.hidden.include? -%>
 <% end -%>
 <% end # unless update_props.empty? -%>
 <% if object.update_mask -%>
@@ -314,12 +320,16 @@ def resource_to_request(module):
 <% if object.encoder? -%>
     request = <%= object.transport.encoder -%>(request, module)
 <% end -%>
+<% if !object.transport or object&.transport&.remove_nones_post_encoder -%>
     return_vals = {}
     for k, v in request.items():
         if v or v is False:
             return_vals[k] = v
 
     return return_vals
+<% else -%>
+    return request
+<% end -%>
 <% if object.unwrap_resource -%>
 <%
   urf_code = [

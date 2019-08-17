@@ -23,6 +23,15 @@ overrides: !ruby/object:Overrides::ResourceOverrides
       vars:
         attestor_name: "test-attestor"
         note_name: "test-attestor-note"
+     - !ruby/object:Provider::Terraform::Examples
+      name: "binary_authorization_attestor_kms"
+      primary_resource_id: "attestor"
+      skip_test: true
+      vars:
+        attestor_name: "test-attestor"
+        note_name: "test-attestor-note"
+        key_name: "test-attestor-key"
+        keyring_name: "test-attestor-key-ring"
     custom_code: !ruby/object:Provider::Terraform::CustomCode
       encoder: templates/terraform/encoders/binauth_attestor_note_field_name.go.erb
       decoder: templates/terraform/decoders/binauth_attestor_note_field_name.go.erb
@@ -40,6 +49,8 @@ overrides: !ruby/object:Overrides::ResourceOverrides
           An attestation by this attestor is stored as a Container Analysis
           ATTESTATION_AUTHORITY Occurrence that names a container image
           and that links to this Note.
+      attestationAuthorityNote.publicKeys.id: !ruby/object:Overrides::Terraform::PropertyOverride
+        default_from_api: true
   Policy: !ruby/object:Overrides::Terraform::ResourceOverride
     id_format: "{{project}}"
     import_format: ["projects/{{project}}"]
@@ -54,7 +65,16 @@ overrides: !ruby/object:Overrides::ResourceOverrides
       vars:
         attestor_name: "test-attestor"
         note_name: "test-attestor-note"
+     - !ruby/object:Provider::Terraform::Examples
+      name: "binary_authorization_policy_global_evaluation"
+      primary_resource_id: "policy"
+      skip_test: true
+      vars:
+        attestor_name: "test-attestor"
+        note_name: "test-attestor-note"
     properties:
+      globalPolicyEvaluationMode: !ruby/object:Overrides::Terraform::PropertyOverride
+        default_from_api: true
       clusterAdmissionRules: !ruby/object:Overrides::Terraform::PropertyOverride
         is_set: true
         set_hash_func: |-

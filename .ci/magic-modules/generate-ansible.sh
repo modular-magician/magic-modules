@@ -11,12 +11,15 @@ PATCH_DIR="$(pwd)/patches"
 pushd magic-modules-branched
 
 # Choose the author of the most recent commit as the downstream author
+# Note that we don't use the last submitted commit, we use the primary GH email
+# of the GH PR submitted. If they've enabled a private email, we'll actually
+# use their GH noreply email which isn't compatible with CLAs.
 COMMIT_AUTHOR="$(git log --pretty="%an <%ae>" -n1 HEAD)"
 
-for i in $(find products/ -name 'ansible.yaml' -printf '%h\n');
-do
-  bundle exec compiler -p $i -e ansible -o "build/ansible/"
-done
+# Remove all modules so that old files are removed in process.
+rm build/ansible/lib/ansible/modules/cloud/google/gcp_*
+
+bundle exec compiler -a -e ansible -o "build/ansible/"
 
 ANSIBLE_COMMIT_MSG="$(cat .git/title)"
 

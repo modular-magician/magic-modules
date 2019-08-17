@@ -55,7 +55,7 @@ func TestAcc<%= test_slug -%>(t *testing.T) {
 		<% elsif var_type == :CREDENTIALS -%>
 			"<%= var_name -%>": getTestCredsFromEnv(t),
 		<% elsif var_type == :REGION -%>
-			"<%= var_name -%>": getTestRegionFromEnv(t),
+			"<%= var_name -%>": getTestRegionFromEnv(),
 		<% elsif var_type == :ORG_TARGET -%>
 			"<%= var_name -%>": getTestOrgTargetFromEnv(t),
 		<% elsif var_type == :BILLING_ACCT -%>
@@ -63,7 +63,7 @@ func TestAcc<%= test_slug -%>(t *testing.T) {
 		<% elsif var_type == :SERVICE_ACCT -%>
 			"<%= var_name -%>": getTestServiceAccountFromEnv(t),
 		<% elsif var_type == :PROJECT_NAME -%>
-			"<%= var_name -%>": getTestProjectFromEnv(t),
+			"<%= var_name -%>": getTestProjectFromEnv(),
 		<% elsif var_type == :FIRESTORE_PROJECT_NAME -%>
 			"<%= var_name -%>": getTestFirestoreProjectFromEnv(t),
 		<% end -%>
@@ -71,9 +71,10 @@ func TestAcc<%= test_slug -%>(t *testing.T) {
 			"random_suffix": acctest.RandString(10),
 	}
 
+<% versioned_provider = !example_version.nil? && example_version != 'ga' -%>
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
-		<% if example_version == 'ga' -%>
+		<% unless versioned_provider -%>
 		Providers:    testAccProviders,
 		<% else -%>
 		Providers:    testAccProvidersOiCS,
@@ -84,7 +85,7 @@ func TestAcc<%= test_slug -%>(t *testing.T) {
 				Config: testAcc<%= test_slug -%>(context),
 			},
 		<%#- The Terraform test runner doesn't let us import resources with aliased providers (yet) -%>
-		<% if example_version == 'ga' -%>
+		<% unless versioned_provider -%>
 			{
 				ResourceName:      "<%= terraform_name -%>.<%= example.primary_resource_id -%>",
 				ImportState:       true,
@@ -112,6 +113,9 @@ func testAccCheck<%= resource_name -%>Destroy(s *terraform.State) error {
 			continue
 		}
 
+	<% if object.custom_code.test_check_destroy -%>
+<%= lines(compile(object.custom_code.test_check_destroy)) -%>
+	<% else -%>
 	config := testAccProvider.Meta().(*Config)
 
 	url, err := replaceVarsForTest(config, rs, "<%= "{{#{object.__product.name}BasePath}}#{object.self_link_uri}" -%>")
@@ -119,10 +123,11 @@ func testAccCheck<%= resource_name -%>Destroy(s *terraform.State) error {
 		return err
 	}
 
-	_, err = sendRequest(config, "<%= object.read_verb.to_s.upcase -%>", url, nil)
+	_, err = sendRequest(config, "<%= object.read_verb.to_s.upcase -%>", "", url, nil)
 	if err == nil {
 			return fmt.Errorf("<%= resource_name -%> still exists at %s", url)
 		}
+	<% end -%>
 	}
 
 	return nil

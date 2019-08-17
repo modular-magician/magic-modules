@@ -11,12 +11,12 @@ PATCH_DIR="$(pwd)/patches"
 pushd magic-modules-branched
 
 # Choose the author of the most recent commit as the downstream author
+# Note that we don't use the last submitted commit, we use the primary GH email
+# of the GH PR submitted. If they've enabled a private email, we'll actually
+# use their GH noreply email which isn't compatible with CLAs.
 COMMIT_AUTHOR="$(git log --pretty="%an <%ae>" -n1 HEAD)"
 
-for i in $(find products/ -name 'inspec.yaml' -printf '%h\n');
-do
-  bundle exec compiler -p $i -e inspec -o "build/inspec/"
-done
+bundle exec compiler -a -e inspec -o "build/inspec/"
 
 INSPEC_COMMIT_MSG="$(cat .git/title)"
 

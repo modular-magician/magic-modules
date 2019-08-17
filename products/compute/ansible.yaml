@@ -14,15 +14,13 @@
 --- !ruby/object:Provider::Ansible::Config
 # This is where custom code would be defined eventually.
 datasources: !ruby/object:Overrides::ResourceOverrides
-  Autoscaler: !ruby/object:Overrides::Ansible::ResourceOverride
-    exclude: true
   BackendBucketSignedUrlKey: !ruby/object:Overrides::Ansible::ResourceOverride
     exclude: true
   BackendServiceSignedUrlKey: !ruby/object:Overrides::Ansible::ResourceOverride
     exclude: true
-  Snapshot: !ruby/object:Overrides::Ansible::ResourceOverride
-    exclude: true
   ManagedSslCertificate: !ruby/object:Overrides::Ansible::ResourceOverride
+    exclude: true
+  RegionAutoscaler: !ruby/object:Overrides::Ansible::ResourceOverride
     exclude: true
   # Readonly resources.
   DiskType: !ruby/object:Overrides::Ansible::ResourceOverride
@@ -39,8 +37,6 @@ datasources: !ruby/object:Overrides::ResourceOverrides
     exclude: true
   NodeTemplate: !ruby/object:Overrides::Ansible::ResourceOverride
     exclude: true
-  RegionAutoscaler: !ruby/object:Overrides::Ansible::ResourceOverride
-    exclude: true
   RegionBackendService: !ruby/object:Overrides::Ansible::ResourceOverride
     exclude: true
   Region: !ruby/object:Overrides::Ansible::ResourceOverride
@@ -54,6 +50,26 @@ datasources: !ruby/object:Overrides::ResourceOverrides
   Zone: !ruby/object:Overrides::Ansible::ResourceOverride
     exclude: true
 overrides: !ruby/object:Overrides::ResourceOverrides
+  Autoscaler: !ruby/object:Overrides::Ansible::ResourceOverride
+    properties:
+      autoscalingPolicy.minNumReplicas: !ruby/object:Overrides::Ansible::PropertyOverride
+        aliases: ['minReplicas']
+      autoscalingPolicy.maxNumReplicas: !ruby/object:Overrides::Ansible::PropertyOverride
+        aliases: ['maxReplicas']
+      autoscalingPolicy.coolDownPeriodSec: !ruby/object:Overrides::Ansible::PropertyOverride
+        aliases: ['cooldownPeriod']
+      autoscalingPolicy.cpuUtilization.utilizationTarget: !ruby/object:Overrides::Ansible::PropertyOverride
+        aliases: ['target']
+      autoscalingPolicy.customMetricUtilizations: !ruby/object:Overrides::Ansible::PropertyOverride
+        aliases: ['metric']
+      autoscalingPolicy.customMetricUtilizations.metric: !ruby/object:Overrides::Ansible::PropertyOverride
+        aliases: ['name']
+      autoscalingPolicy.customMetricUtilizations.utilizationTarget: !ruby/object:Overrides::Ansible::PropertyOverride
+        aliases: ['target']
+      autoscalingPolicy.customMetricUtilizations.utilizationTargetType: !ruby/object:Overrides::Ansible::PropertyOverride
+        aliases: ['type']
+      autoscalingPolicy.loadBalancingUtilization.utilizationTarget: !ruby/object:Overrides::Ansible::PropertyOverride
+        aliases: ['target']
   BackendService: !ruby/object:Overrides::Ansible::ResourceOverride
     properties:
       timeoutSec: !ruby/object:Overrides::Ansible::PropertyOverride
@@ -185,6 +201,9 @@ overrides: !ruby/object:Overrides::ResourceOverrides
     transport: !ruby/object:Overrides::Ansible::Transport
       encoder: encode_request
       decoder: decode_response
+    hidden:
+      - deletion_protection_update
+      - shielded_instance_config_update
     post_action: |
       if fetch:
           instance = InstancePower(module, fetch.get('status'))
@@ -195,11 +214,17 @@ overrides: !ruby/object:Overrides::ResourceOverrides
       - 'products/compute/helpers/python/provider_instance.py'
       - 'products/compute/helpers/python/instance_metadata.py'
       - 'products/compute/helpers/python/instance_start.py'
+      - 'products/compute/helpers/python/instance_update_methods.py'
     properties:
       canIpForward: !ruby/object:Overrides::Ansible::PropertyOverride
         aliases: ["ip_forward"]
       disks.initializeParams.sourceImage: !ruby/object:Overrides::Ansible::PropertyOverride
         aliases: ["image", "image_family"]
+      networkInterfaces.network: !ruby/object:Overrides::Ansible::PropertyOverride
+        description: |
+          Specifies the title of an existing network. Not setting the network
+          title will select the default network interface, which could have
+          SSH already configured
   InstanceTemplate: !ruby/object:Overrides::Ansible::ResourceOverride
     transport: !ruby/object:Overrides::Ansible::Transport
       encoder: encode_request
@@ -236,15 +261,11 @@ overrides: !ruby/object:Overrides::ResourceOverrides
   TargetVpnGateway: !ruby/object:Overrides::Ansible::ResourceOverride
     exclude: false
   # Not yet implemented.
-  Autoscaler: !ruby/object:Overrides::Ansible::ResourceOverride
-    exclude: true
   BackendBucketSignedUrlKey: !ruby/object:Overrides::Ansible::ResourceOverride
     exclude: true
   BackendServiceSignedUrlKey: !ruby/object:Overrides::Ansible::ResourceOverride
     exclude: true
   RegionAutoscaler: !ruby/object:Overrides::Ansible::ResourceOverride
-    exclude: true
-  Snapshot: !ruby/object:Overrides::Ansible::ResourceOverride
     exclude: true
   # Ansible tasks must alter infrastructure.
   # This means that virtual objects are a poor fit.

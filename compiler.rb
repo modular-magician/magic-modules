@@ -34,7 +34,7 @@ require 'provider/terraform_oics'
 require 'provider/terraform_object_library'
 require 'pp' if ENV['COMPILER_DEBUG']
 
-product_names = nil
+products_to_compile = nil
 all_products = false
 yaml_dump = false
 output_path = nil
@@ -50,7 +50,7 @@ Google::LOGGER.level = Logger::INFO
 # rubocop:disable Metrics/BlockLength
 OptionParser.new do |opt|
   opt.on('-p', '--product PRODUCT', Array, 'Folder[,Folder...] with product catalog') do |p|
-    product_names = p
+    products_to_compile = p
   end
   opt.on('-a', '--all', 'Build all products. Cannot be used with --product.') do
     all_products = true
@@ -86,32 +86,37 @@ OptionParser.new do |opt|
 end.parse!
 # rubocop:enable Metrics/BlockLength
 
-raise 'Cannot use -p/--products and -a/--all simultaneously' if product_names && all_products
-raise 'Either -p/--products OR -a/--all must be present' if product_names.nil? && !all_products
+raise 'Cannot use -p/--products and -a/--all simultaneously' \
+  if products_to_compile && all_products
+raise 'Either -p/--products OR -a/--all must be present' \
+  if products_to_compile.nil? && !all_products
 raise 'Option -o/--output is a required parameter' if output_path.nil?
 raise 'Option -e/--engine is a required parameter' if provider_name.nil?
 
-if all_products
-  product_names = []
-  Dir['products/**/api.yaml'].each do |file_path|
-    product_names.push(File.dirname(file_path))
-  end
-
-  if override_dir
-    Dir["#{override_dir}/products/**/api.yaml"].each do |file_path|
-      product = File.dirname(Pathname.new(file_path).relative_path_from(override_dir))
-      product_names.push(product) unless product_names.include? product
-    end
-  end
-
-  raise 'No api.yaml files found. Check provider/engine name.' if product_names.empty?
+all_product_files = []
+Dir['products/**/api.yaml'].each do |file_path|
+  all_product_files.push(File.dirname(file_path))
 end
+
+if override_dir
+  Dir["#{override_dir}/products/**/api.yaml"].each do |file_path|
+    product = File.dirname(Pathname.new(file_path).relative_path_from(override_dir))
+    all_product_files.push(product) unless all_product_files.include? product
+  end
+end
+
+products_to_compile = all_product_files if all_products
+
+raise 'No api.yaml files found. Check provider/engine name.' if products_to_compile.empty?
 
 start_time = Time.now
 
+# products_for_version entries are a hash of product definitions (:definitions)
+# and provider config (:overrides) for the product
+products_for_version = []
 provider = nil
 # rubocop:disable Metrics/BlockLength
-product_names.each do |product_name|
+all_product_files.each do |product_name|
   product_override_path = ''
   provider_override_path = ''
   product_override_path = File.join(override_dir, product_name, 'api.yaml') if override_dir
@@ -143,9 +148,7 @@ product_names.each do |product_name|
   raise "Output path '#{output_path}' does not exist or is not a directory" \
     unless Dir.exist?(output_path)
 
-  Google::LOGGER.info "Compiling '#{product_name}' (at #{version}) output to '#{output_path}'"
-  Google::LOGGER.info \
-    "Generating types: #{types_to_generate.empty? ? 'ALL' : types_to_generate}"
+  Google::LOGGER.info "Loading '#{product_name}' (at #{version})'"
 
   product_api = Api::Compiler.new(product_yaml).run
   product_api.validate
@@ -166,6 +169,16 @@ product_names.each do |product_name|
     product_api, provider_config, = \
       Provider::Config.parse(provider_override_path, product_api, version, override_dir)
   end
+  products_for_version.push(definitions: product_api, overrides: provider_config)
+
+  unless products_to_compile.include?(product_name)
+    Google::LOGGER.info "Skipping product '#{product_name}' as it was not specified to be compiled"
+    next
+  end
+
+  Google::LOGGER.info "Compiling '#{product_name}' (at #{version}) output to '#{output_path}'"
+  Google::LOGGER.info \
+    "Generating types: #{types_to_generate.empty? ? 'ALL' : types_to_generate}"
 
   pp provider_config if ENV['COMPILER_DEBUG']
 
@@ -179,8 +192,10 @@ product_names.each do |product_name|
     }
 
     provider_class = override_providers[force_provider]
-    raise "Invalid force provider option #{force_provider}" \
-      if provider_class.nil?
+    if provider_class.nil?
+      raise "Invalid force provider option #{force_provider}." \
+        + "\nPossible values #{override_providers} "
+    end
 
     provider = \
       override_providers[force_provider].new(provider_config, product_api, start_time)
@@ -193,6 +208,23 @@ end
 # of the products loop. This will get called with the provider from the final iteration
 # of the loop
 provider&.copy_common_files(output_path, version)
-provider&.compile_common_files(output_path, version)
-
+Google::LOGGER.info "Compiling common files for #{provider_name}"
+common_compile_file = "provider/#{provider_name}/common~compile.yaml"
+provider&.compile_common_files(
+  output_path,
+  version,
+  products_for_version.sort_by { |p| p[:definitions].name },
+  common_compile_file
+)
+if override_dir
+  Google::LOGGER.info "Compiling override common files for #{provider_name}"
+  common_compile_file = "#{override_dir}/common~compile.yaml"
+  provider&.compile_common_files(
+    output_path,
+    version,
+    products_for_version.sort_by { |p| p[:definitions].name },
+    common_compile_file,
+    override_dir
+  )
+end
 # rubocop:enable Metrics/BlockLength

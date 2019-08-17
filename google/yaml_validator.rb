@@ -47,7 +47,7 @@ module Google
     # :default   - the default value for this variable if its nil
     # :type      - the allowed types (single or array) that this value can be
     # :item_type - the allowed types that all values in this array should be
-    #              (impllied that type == array)
+    #              (implied that type == array)
     # :allowed   - the allowed values that this non-array variable should be.
     # :required  - is the variable required? (defaults: false)
     def check(variable, **opts)
@@ -80,6 +80,16 @@ module Google
       return unless opts[:allowed]
       raise "#{value} on #{variable} should be one of #{opts[:allowed]}" \
         unless opts[:allowed].include?(value)
+    end
+
+    def conflicts(list)
+      value_checked = false
+      list.each do |item|
+        next if instance_variable_get("@#{item}").nil?
+        raise "#{list.join(',')} cannot be set at the same time" if value_checked
+
+        value_checked = true
+      end
     end
 
     private

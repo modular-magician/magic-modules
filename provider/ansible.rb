@@ -48,8 +48,8 @@ module Provider
       include Provider::Ansible::Request
       include Provider::Ansible::VersionAdded
 
-      # FileTemplate with Ansible specific fields
-      class AnsibleFileTemplate < Provider::FileTemplate
+      # ProductFileTemplate with Ansible specific fields
+      class AnsibleProductFileTemplate < Provider::ProductFileTemplate
         # The Ansible example object.
         attr_accessor :example
       end
@@ -83,7 +83,9 @@ module Provider
       end
 
       def build_url(url)
-        "\"#{url.gsub('{{', '{').gsub('}}', '}')}\""
+        # Return a quoted string, with single pairs of {} brackets and all
+        # requested strings are underscored (as they come from the Ansible configs)
+        "\"#{url.gsub(/{{\w+}}/) { |param| "{#{param[2..-3].underscore}}" }}\""
       end
 
       # Returns the name of the module according to Ansible naming standards.
@@ -94,8 +96,8 @@ module Provider
       end
 
       def build_object_data(object, output_folder, version)
-        # Method is overriden to add Ansible example objects to the data object.
-        data = AnsibleFileTemplate.file_for_resource(
+        # Method is overridden to add Ansible example objects to the data object.
+        data = AnsibleProductFileTemplate.file_for_resource(
           output_folder,
           object,
           version,
@@ -278,11 +280,20 @@ module Provider
 
       def compile_datasource(data)
         target_folder = data.output_folder
-        name = "#{module_name(data.object)}_facts"
+        name = module_name(data.object)
         data.generate('templates/ansible/facts.erb',
                       File.join(target_folder,
-                                "lib/ansible/modules/cloud/google/#{name}.py"),
+                                "lib/ansible/modules/cloud/google/#{name}_info.py"),
                       self)
+
+        # Generate symlink for old `facts` modules.
+        return if version_added(data.object, :facts) >= '2.9'
+
+        deprecated_facts_path = File.join(target_folder,
+                                          "lib/ansible/modules/cloud/google/_#{name}_facts.py")
+        return if File.exist?(deprecated_facts_path)
+
+        File.symlink "#{name}_info.py", deprecated_facts_path
       end
 
       def generate_objects(output_folder, types, version_name)
@@ -337,7 +348,18 @@ module Provider
                      .map { |k, v| [k % module_name(data.object), v] }
                      .to_h
 
-      compile_file_list(data.output_folder, files)
+      file_template = ProductFileTemplate.new(
+        data.output_folder,
+        data.name,
+        @api,
+        data.version,
+        build_env
+      )
+      compile_file_list(data.output_folder, files, file_template)
+    end
+
+    def copy_common_files(output_folder, version_name = 'ga', provider_name = 'ansible')
+      super(output_folder, version_name, provider_name)
     end
   end
 end
