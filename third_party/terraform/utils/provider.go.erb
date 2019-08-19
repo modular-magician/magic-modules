@@ -98,9 +98,21 @@ func Provider() terraform.ResourceProvider {
 				},
 			},
 
+			"user_project_override": {
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
+
 			// Generated Products
-			<% products.each do |product_name| -%>
-			<%= product_name -%>CustomEndpointEntryKey: <%= product_name -%>CustomEndpointEntry,
+			<% products.each do |product| -%>
+			"<%= product[:definitions].name.underscore -%>_custom_endpoint": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validateCustomEndpoint,
+				DefaultFunc: schema.MultiEnvDefaultFunc([]string{
+					"GOOGLE_<%= product[:definitions].name.underscore.upcase -%>_CUSTOM_ENDPOINT",
+				}, <%= product[:definitions].name -%>DefaultBasePath),
+			},
 			<% end -%>
 
 			// Handwritten Products / Versioned / Atypical Entries
@@ -193,6 +205,23 @@ func Provider() terraform.ResourceProvider {
 	}
 }
 
+<%
+resource_count = 0
+iam_resource_count = 0
+products.each do |product|
+  product_definition = product[:definitions]
+  product_definition.objects.reject { |r| r.exclude || r.not_in_version?(product_definition.version_obj_or_closest(version)) }.each do |object|
+    resource_count += 1
+    iam_policy = object&.iam_policy
+    unless iam_policy.nil? || iam_policy.exclude
+      iam_resource_count += 3
+    end
+  end
+end
+-%>
+// Generated resources: <%= resource_count %>
+// Generated IAM resources: <%= iam_resource_count %>
+// Total generated resources: <%= resource_count + iam_resource_count %>
 func ResourceMap() map[string]*schema.Resource {
 	resourceMap, _ := ResourceMapWithErrors()
 	return resourceMap
@@ -200,9 +229,33 @@ func ResourceMap() map[string]*schema.Resource {
 
 func ResourceMapWithErrors() (map[string]*schema.Resource, error) {
 	return mergeResourceMaps(
-			<% products.each do |product_name| -%>
-			Generated<%= product_name -%>ResourcesMap,
-			<% end -%>
+			map[string]*schema.Resource{
+<%
+products.each do |product|
+  product_definition = product[:definitions]
+  config = product[:overrides]
+  product_definition.objects.reject { |r| r.exclude || r.not_in_version?(product_definition.version_obj_or_closest(version)) }.each do |object|
+    if config.legacy_name.nil?
+     terraform_name = "google_" + (product_definition.name + object.name).underscore
+    else
+     terraform_name = "google_" + config.legacy_name + '_' + object.name.underscore
+    end
+-%>
+	"<%= terraform_name -%>": resource<%= product_definition.name + object.name -%>(),
+<%
+    iam_policy = object&.iam_policy
+    unless iam_policy.nil? || iam_policy.exclude
+      iam_class_name = product_definition.name + object.name
+-%>
+	"<%= terraform_name -%>_iam_binding":              ResourceIamBinding(<%= iam_class_name -%>IamSchema, <%= iam_class_name -%>IamUpdaterProducer, <%= iam_class_name -%>IdParseFunc),
+	"<%= terraform_name -%>_iam_member":               ResourceIamMember(<%= iam_class_name -%>IamSchema, <%= iam_class_name -%>IamUpdaterProducer, <%= iam_class_name -%>IdParseFunc),
+	"<%= terraform_name -%>_iam_policy":               ResourceIamPolicy(<%= iam_class_name -%>IamSchema, <%= iam_class_name -%>IamUpdaterProducer, <%= iam_class_name -%>IdParseFunc),
+<%
+    end
+  end
+end
+-%>
+			},
 			map[string]*schema.Resource{
 				"google_app_engine_application":                resourceAppEngineApplication(),
 				"google_bigquery_dataset":                      resourceBigQueryDataset(),
@@ -307,9 +360,9 @@ func ResourceMapWithErrors() (map[string]*schema.Resource, error) {
 				"google_organization_policy":                   resourceGoogleOrganizationPolicy(),
 				"google_project":                               resourceGoogleProject(),
 				"google_project_iam_policy":                    resourceGoogleProjectIamPolicy(),
-				"google_project_iam_binding":                   ResourceIamBinding(IamProjectSchema, NewProjectIamUpdater, ProjectIdParseFunc),
-				"google_project_iam_member":                    ResourceIamMember(IamProjectSchema, NewProjectIamUpdater, ProjectIdParseFunc),
-				"google_project_iam_audit_config":              ResourceIamAuditConfig(IamProjectSchema, NewProjectIamUpdater, ProjectIdParseFunc),
+				"google_project_iam_binding":                   ResourceIamBindingWithBatching(IamProjectSchema, NewProjectIamUpdater, ProjectIdParseFunc, IamBatchingEnabled),
+				"google_project_iam_member":                    ResourceIamMemberWithBatching(IamProjectSchema, NewProjectIamUpdater, ProjectIdParseFunc, IamBatchingEnabled),
+				"google_project_iam_audit_config":              ResourceIamAuditConfigWithBatching(IamProjectSchema, NewProjectIamUpdater, ProjectIdParseFunc, IamBatchingEnabled),
 				"google_project_service":                       resourceGoogleProjectService(),
 				"google_project_iam_custom_role":               resourceGoogleProjectIamCustomRole(),
 				"google_project_organization_policy":           resourceGoogleProjectOrganizationPolicy(),
@@ -344,9 +397,10 @@ func ResourceMapWithErrors() (map[string]*schema.Resource, error) {
 
 func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	config := Config{
-		Project: d.Get("project").(string),
-		Region:  d.Get("region").(string),
-		Zone:    d.Get("zone").(string),
+		Project:             d.Get("project").(string),
+		Region:              d.Get("region").(string),
+		Zone:                d.Get("zone").(string),
+		UserProjectOverride: d.Get("user_project_override").(bool),
 	}
 
 	// Add credential source
@@ -371,8 +425,8 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	config.BatchingConfig = batchCfg
 
 	// Generated products
-	<% products.each do |product_name| -%>
-	config.<%= product_name -%>BasePath = d.Get(<%= product_name -%>CustomEndpointEntryKey).(string)
+	<% products.map.each do |product| -%>
+	config.<%= product[:definitions].name -%>BasePath = d.Get("<%= product[:definitions].name.underscore -%>_custom_endpoint").(string)
 	<% end -%>
 
 	// Handwritten Products / Versioned / Atypical Entries
@@ -414,8 +468,8 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 // values to a default. After using this, you should call config.LoadAndValidate.
 func ConfigureBasePaths(c *Config) {
 	// Generated Products
-	<% products.each do |product_name| -%>
-	c.<%= product_name -%>BasePath = <%= product_name -%>DefaultBasePath
+	<% products.map.each do |product| -%>
+	c.<%= product[:definitions].name -%>BasePath = <%= product[:definitions].name -%>DefaultBasePath
 	<% end -%>
 
 	// Handwritten Products / Versioned / Atypical Entries

@@ -61,21 +61,22 @@ import (
 // Config is the configuration structure used to instantiate the Google
 // provider.
 type Config struct {
-	Credentials 	 string
-	AccessToken 	 string
-	Project     	 string
-	Region      	 string
-	Zone        	 string
-	Scopes         []string
-	BatchingConfig *batchingConfig
+	Credentials 	 	string
+	AccessToken 	 	string
+	Project     	 	string
+	Region      	 	string
+	Zone        	 	string
+	Scopes         		[]string
+	BatchingConfig		*batchingConfig
+	UserProjectOverride bool
 
 	client    *http.Client
 	userAgent string
 
 	tokenSource oauth2.TokenSource
 
-	<% products.each do |product_name| -%>
-	<%= product_name -%>BasePath string
+	<% products.each do |product| -%>
+	<%= product[:definitions].name -%>BasePath string
 	<% end -%>
 
 	CloudBillingBasePath string
@@ -153,7 +154,6 @@ type Config struct {
 
 	ServiceUsageBasePath       string
 	clientServiceUsage         *serviceusage.Service
-	requestBatcherServiceUsage *RequestBatcher
 
 	BigQueryBasePath string
 	clientBigQuery   *bigquery.Service
@@ -180,7 +180,15 @@ type Config struct {
 	// we expose those directly instead of providing the `Service` object
 	// as a factory.
 	clientBigtableProjectsInstances *bigtableadmin.ProjectsInstancesService
+
+	requestBatcherServiceUsage *RequestBatcher
+	requestBatcherIam          *RequestBatcher
 }
+
+// Generated product base paths
+<% products.each do |product| -%>
+var <%= product[:definitions].name -%>DefaultBasePath = "<%= product[:definitions].base_url -%>"
+<% end -%>
 
 var defaultClientScopes = []string{
 	"https://www.googleapis.com/auth/compute",
@@ -408,7 +416,6 @@ func (c *Config) LoadAndValidate() error {
 	}
 	c.clientServiceUsage.UserAgent = userAgent
 	c.clientServiceUsage.BasePath = serviceUsageClientBasePath
-	c.requestBatcherServiceUsage = NewRequestBatcher("Service Usage", context, c.BatchingConfig)
 
 	cloudBillingClientBasePath := removeBasePathVersion(c.CloudBillingBasePath)
 	log.Printf("[INFO] Instantiating Google Cloud Billing client for path %s", cloudBillingClientBasePath)
@@ -565,6 +572,10 @@ func (c *Config) LoadAndValidate() error {
 	<% end -%>
 
 	c.Region = GetRegionFromRegionSelfLink(c.Region)
+
+	c.requestBatcherServiceUsage = NewRequestBatcher("Service Usage", context, c.BatchingConfig)
+	c.requestBatcherIam = NewRequestBatcher("IAM", context, c.BatchingConfig)
+
 	return nil
 }
 
