@@ -37,7 +37,9 @@ overrides: !ruby/object:Overrides::ResourceOverrides
       deployment: !ruby/object:Overrides::Terraform::PropertyOverride
         ignore_read: true
       entrypoint: !ruby/object:Overrides::Terraform::PropertyOverride
-        ignore_read: true    
+        ignore_read: true
+      envVariables: !ruby/object:Overrides::Terraform::PropertyOverride
+        ignore_read: true
     examples:
       - !ruby/object:Provider::Terraform::Examples
         name: "app_engine_standard_app_version"
