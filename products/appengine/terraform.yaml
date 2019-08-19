@@ -24,7 +24,36 @@ overrides: !ruby/object:Overrides::ResourceOverrides
           project_id: "test-project"
         test_env_vars:
           org_id: :ORG_ID
-
+  StandardAppVersion: !ruby/object:Overrides::Terraform::ResourceOverride
+    id_format: "apps/{{project}}/services/{{service}}/versions/{{version_id}}"
+    import_format: ["apps/{{project}}/services/{{service}}/versions/{{version_id}}"]
+    parameters:
+      service: !ruby/object:Overrides::Terraform::PropertyOverride
+        default_from_api: true
+        required: false
+    properties:
+      id: !ruby/object:Overrides::Terraform::PropertyOverride
+        name: 'version_id'
+      deployment: !ruby/object:Overrides::Terraform::PropertyOverride
+        ignore_read: true
+      entrypoint: !ruby/object:Overrides::Terraform::PropertyOverride
+        ignore_read: true
+      envVariables: !ruby/object:Overrides::Terraform::PropertyOverride
+        ignore_read: true
+      threadsafe: !ruby/object:Overrides::Terraform::PropertyOverride
+        ignore_read: true
+    examples:
+      - !ruby/object:Provider::Terraform::Examples
+        name: "app_engine_standard_app_version"
+        primary_resource_id: "version_id"
+        vars:
+          project_id: "test-project"
+          bucket_name: "appengine-static-content"
+          service_name: "tf-test-service"
+        test_env_vars:
+          org_id: :ORG_ID
+  Service: !ruby/object:Overrides::Terraform::ResourceOverride
+    exclude: true
 # This is for copying files over
 files: !ruby/object:Provider::Config::Files
   # These files have templating (ERB) code that will be run.
