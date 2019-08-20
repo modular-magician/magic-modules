@@ -329,7 +329,7 @@ module Provider
         parts = url.scan(/\{\{(.*?)\}\}/).flatten
         parts << 'name'
         parts.delete('project')
-        parts.map { |pt| object.all_user_properties.select { |p| p.name == pt }[0] }
+        parts.map { |pt| object.all_user_properties.select { |p| p.out_name == pt }[0] }
       end.flatten
     end
 
