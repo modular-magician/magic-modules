@@ -24,17 +24,19 @@ func TestAccBigQueryDataset_basic(t *testing.T) {
 				Config: testAccBigQueryDataset(datasetID),
 			},
 			{
-				ResourceName:      "google_bigquery_dataset.test",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            "google_bigquery_dataset.test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"delete_contents_on_destroy"},
 			},
 			{
 				Config: testAccBigQueryDatasetUpdated(datasetID),
 			},
 			{
-				ResourceName:      "google_bigquery_dataset.test",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            "google_bigquery_dataset.test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"delete_contents_on_destroy"},
 			},
 		},
 	})
@@ -81,33 +83,37 @@ func TestAccBigQueryDataset_access(t *testing.T) {
 				Config: testAccBigQueryDatasetWithOneAccess(datasetID),
 			},
 			{
-				ResourceName:      "google_bigquery_dataset.access_test",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            "google_bigquery_dataset.access_test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"delete_contents_on_destroy"},
 			},
 			{
 				Config: testAccBigQueryDatasetWithTwoAccess(datasetID),
 			},
 			{
-				ResourceName:      "google_bigquery_dataset.access_test",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            "google_bigquery_dataset.access_test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"delete_contents_on_destroy"},
 			},
 			{
 				Config: testAccBigQueryDatasetWithOneAccess(datasetID),
 			},
 			{
-				ResourceName:      "google_bigquery_dataset.access_test",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            "google_bigquery_dataset.access_test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"delete_contents_on_destroy"},
 			},
 			{
 				Config: testAccBigQueryDatasetWithViewAccess(datasetID, otherDatasetID, otherTableID),
 			},
 			{
-				ResourceName:      "google_bigquery_dataset.access_test",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            "google_bigquery_dataset.access_test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"delete_contents_on_destroy"},
 			},
 		},
 	})
@@ -127,29 +133,13 @@ func TestAccBigQueryDataset_regionalLocation(t *testing.T) {
 				Config: testAccBigQueryRegionalDataset(datasetID1, "asia-south1"),
 			},
 			{
-				ResourceName:      "google_bigquery_dataset.test",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            "google_bigquery_dataset.test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"delete_contents_on_destroy"},
 			},
 		},
 	})
-}
-
-func testAccCheckBigQueryDatasetDestroy(s *terraform.State) error {
-	config := testAccProvider.Meta().(*Config)
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "google_bigquery_dataset" {
-			continue
-		}
-
-		_, err := config.clientBigQuery.Datasets.Get(config.Project, rs.Primary.Attributes["dataset_id"]).Do()
-		if err == nil {
-			return fmt.Errorf("Dataset still exists")
-		}
-	}
-
-	return nil
 }
 
 func testAccAddTable(datasetID string, tableID string) resource.TestCheckFunc {
