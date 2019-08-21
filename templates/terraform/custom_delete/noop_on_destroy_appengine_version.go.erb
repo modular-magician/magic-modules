@@ -1,4 +1,4 @@
-if d.Get("noop_on_destroy") != "true" {	
+if d.Get("noop_on_destroy") == false {	
 	config := meta.(*Config)
 
 	project, err := getProject(d, config)
