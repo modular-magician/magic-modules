@@ -32,6 +32,13 @@ overrides: !ruby/object:Overrides::ResourceOverrides
       service: !ruby/object:Overrides::Terraform::PropertyOverride
         default_from_api: true
         required: false
+    virtual_fields:
+      - !ruby/object:Provider::Terraform::VirtualFields
+        name: 'noop_on_destroy'
+        description: |
+          If set to `true`, the application version will not be deleted.
+    custom_code: !ruby/object:Provider::Terraform::CustomCode
+      custom_delete: templates/terraform/custom_delete/noop_on_destroy_appengine_version.go.erb
     properties:
       id: !ruby/object:Overrides::Terraform::PropertyOverride
         name: 'version_id'
