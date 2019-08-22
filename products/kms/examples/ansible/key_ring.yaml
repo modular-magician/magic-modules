@@ -10,16 +10,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
---- !ruby/object:Provider::Inspec::Config
-overrides: !ruby/object:Overrides::ResourceOverrides
-  Lien: !ruby/object:Overrides::Inspec::ResourceOverride
-    exclude: true
-  Project: !ruby/object:Overrides::Inspec::ResourceOverride
-    exclude: true
-  Organization: !ruby/object:Overrides::Inspec::ResourceOverride
-    exclude: true
-  Folder: !ruby/object:Overrides::Inspec::ResourceOverride
-    product_url: https://cloudresourcemanager.googleapis.com/v2/
-    # Creating and viewing folders requires organization level privileges
-    privileged: true
+--- !ruby/object:Provider::Ansible::Example
+task: !ruby/object:Provider::Ansible::Task
+  name: gcp_kms_key_ring
+  code:
+    name: <%= ctx[:name] %>
+    location: 'us-central1'
+    project: <%= ctx[:project] %>
+    auth_kind: <%= ctx[:auth_kind] %>
+    service_account_file: <%= ctx[:service_account_file] %>

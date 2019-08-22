@@ -1,4 +1,4 @@
-# Copyright 2018 Google Inc.
+# Copyright 2019 Google Inc.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -10,8 +10,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-'libraries/google/iam/property/iam_policy_audit_configs.rb': 'templates/inspec/iam_policy/properties/iam_policy_audit_configs.rb'
-'libraries/google/iam/property/iam_policy_audit_configs_audit_log_configs.rb': 'templates/inspec/iam_policy/properties/iam_policy_audit_configs_audit_log_configs.rb'
-'libraries/google/iam/property/iam_policy_bindings.rb': 'templates/inspec/iam_policy/properties/iam_policy_bindings.rb'
-'Gemfile': 'provider/inspec/Gemfile'
+def decode_response(response, module):
+    if 'name' in response:
+        response['name'] = response['name'].split('/')[-1]
+    return response
