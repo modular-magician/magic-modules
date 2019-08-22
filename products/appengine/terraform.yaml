@@ -39,6 +39,7 @@ overrides: !ruby/object:Overrides::ResourceOverrides
           If set to `true`, the application version will not be deleted.
     custom_code: !ruby/object:Provider::Terraform::CustomCode
       custom_delete: templates/terraform/custom_delete/noop_on_destroy_appengine_version.go.erb
+      test_check_destroy: templates/terraform/custom_check_destroy/appengine_version.go.erb
     properties:
       id: !ruby/object:Overrides::Terraform::PropertyOverride
         name: 'version_id'
@@ -54,6 +55,8 @@ overrides: !ruby/object:Overrides::ResourceOverrides
       - !ruby/object:Provider::Terraform::Examples
         name: "app_engine_standard_app_version"
         primary_resource_id: "version_id"
+        ignore_read_extra:
+          - "noop_on_destroy"
         vars:
           project_id: "test-project"
           bucket_name: "appengine-static-content"
