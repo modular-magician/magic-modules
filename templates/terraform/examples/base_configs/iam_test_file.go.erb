@@ -129,7 +129,7 @@ func testAcc<%= resource_name -%>IamMember_basicGenerated(context map[string]int
 <%= example.config_test_body -%>
 
 resource "<%= terraform_name -%>_iam_member" "foo" {
-<%= lines(compile('templates/terraform/iam/iam_attributes.go/erb')) -%>
+<%= lines(compile('templates/terraform/iam/iam_attributes.go.erb')) -%>
 	role = "%{role}"
 	member = "user:admin@hashicorptest.com"
 }
@@ -148,7 +148,7 @@ data "google_iam_policy" "foo" {
 }
 
 resource "<%= terraform_name -%>_iam_policy" "foo" {
-<%= lines(compile('templates/terraform/iam/iam_attributes.go/erb')) -%>
+<%= lines(compile('templates/terraform/iam/iam_attributes.go.erb')) -%>
 	policy_data = "${data.google_iam_policy.foo.policy_data}"
 }
 `, context)
@@ -159,7 +159,7 @@ func testAcc<%= resource_name -%>IamBinding_basicGenerated(context map[string]in
 <%= example.config_test_body -%>
 
 resource "<%= terraform_name -%>_iam_binding" "foo" {
-<%= lines(compile('templates/terraform/iam/iam_attributes.go/erb')) -%>
+<%= lines(compile('templates/terraform/iam/iam_attributes.go.erb')) -%>
 	role = "%{role}"
 	members = ["user:admin@hashicorptest.com"]
 }
@@ -171,7 +171,7 @@ func testAcc<%= resource_name -%>IamBinding_updateGenerated(context map[string]i
 <%= example.config_test_body -%>
 
 resource "<%= terraform_name -%>_iam_binding" "foo" {
-<%= lines(compile('templates/terraform/iam/iam_attributes.go/erb')) -%>
+<%= lines(compile('templates/terraform/iam/iam_attributes.go.erb')) -%>
 	role = "%{role}"
 	members = ["user:admin@hashicorptest.com", "user:paddy@hashicorp.com"]
 }
