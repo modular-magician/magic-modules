@@ -145,6 +145,10 @@ variable "org_sink" {
   type = "map"
 }
 
+variable "standardappversion" {
+  type = "map"
+}
+
 resource "google_compute_ssl_policy" "custom-ssl-policy" {
   name            = "${var.ssl_policy["name"]}"
   min_tls_version = "${var.ssl_policy["min_tls_version"]}"
@@ -568,4 +572,22 @@ resource "google_logging_organization_sink" "my-sink" {
 
   # Log all WARN or higher severity messages relating to instances
   filter      = "${var.org_sink.filter}"
+}
+
+resource "google_app_engine_standard_app_version" "default" {
+  version_id      = "${var.standardappversion["id"]}"
+  service         = "${var.standardappversion["service"]}"
+  runtime         = "${var.standardappversion["runtime"]}"
+  noop_on_destroy = true
+  entrypoint      = "${var.standardappversion["entrypoint"]}"
+
+  deployment {
+    zip {
+      source_url = "https://storage.googleapis.com/${google_storage_bucket.generic-storage-bucket.name}/hello-world.zip"
+    }
+  }
+
+  env_variables = {
+    MY_ENV_VAR = "${var.standardappversion["env_var_value"]}"
+  }
 }
