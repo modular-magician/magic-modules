@@ -244,5 +244,9 @@ module Provider
         build_env
       )
     end
+
+    def extract_identifiers(url)
+      url.scan(/\{\{(\w+)\}\}/).flatten
+    end
   end
 end
