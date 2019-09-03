@@ -361,6 +361,14 @@ module Api
 
         super
       end
+
+      def item_type_class
+        if @item_type.class == Class
+          return @item_type
+        end
+
+        return Object.const_get(@item_type)
+      end
     end
 
     # Represents an enum, and store is valid values
