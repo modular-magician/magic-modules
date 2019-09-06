@@ -225,3 +225,10 @@ regional_node_pool:
 org_sink:
   name: inspec-gcp-org-sink
   filter: resource.type = gce_instance
+
+ml_model:
+  name: ml_model
+  region: us-central1
+  description: My awesome ML model
+  online_prediction_logging: true
+  online_prediction_console_logging: true
