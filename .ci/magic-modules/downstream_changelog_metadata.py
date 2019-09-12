@@ -46,6 +46,7 @@ def downstream_changelog_info(gh, upstream_pr_num, changelog_repos):
   print "Labels: %s" % labels_to_add
 
   parsed_urls = downstreams.get_parsed_downstream_urls(gh, upstream_pr.number)
+  print parsed_urls
   if not parsed_urls:
     print "No downstreams found for upstream PR %d, returning!" % (
       upstream_pr.number)
@@ -99,9 +100,4 @@ if __name__ == '__main__':
   assert len(sys.argv) == 2, "expected id filename as argument"
   with open(sys.argv[1]) as f:
     pr_num = int(f.read())
-
-    try:
-      downstream_changelog_info(gh, pr_num, downstream_repos)
-    except github.GithubException.GithubException as e:
-      print "Error while trying to downstream changelog info: %s", e
-      raise e
+    downstream_changelog_info(gh, pr_num, downstream_repos)

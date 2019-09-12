@@ -85,4 +85,5 @@ def get_downstream_urls(client, pr_num):
   pr = client.get_repo(UPSTREAM_REPO).get_pull(pr_num)
   for comment in pr.get_issue_comments():
     urls = urls + find_dependency_urls_in_comment(comment.body)
+  print "Found downstream URLs: %s" % urls
   return urls
