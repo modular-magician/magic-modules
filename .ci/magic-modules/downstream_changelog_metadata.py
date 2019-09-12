@@ -11,7 +11,7 @@ upstream PR, release notes will be removed from downstreams and labels
 unset.
 """
 from pyutils import strutils, downstreams
-from github import Github
+import github
 import os
 import sys
 import argparse
@@ -53,13 +53,13 @@ def downstream_changelog_info(gh, upstream_pr_num, changelog_repos):
 
   for repo_name, pulls in parsed_urls:
     print "Found downstream PR for repo %s" % repo_name
-    
+
     if repo_name not in changelog_repos:
       print "[DEBUG] skipping repo %s with no CHANGELOG" % repo_name
       continue
 
     print "Generating changelog for pull requests in %s" % repo_name
-    
+
     print "Fetching repo %s" % repo_name
     ghrepo = gh.get_repo(repo_name)
 
@@ -95,9 +95,13 @@ if __name__ == '__main__':
     print "Skipping, no downstreams repos given to downstream changelog info for"
     sys.exit(0)
 
-  gh = Github(os.environ.get('GITHUB_TOKEN'))
-
+  gh = github.Github(os.environ.get('GITHUB_TOKEN'))
   assert len(sys.argv) == 2, "expected id filename as argument"
   with open(sys.argv[1]) as f:
     pr_num = int(f.read())
-    downstream_changelog_info(gh, pr_num, downstream_repos)
+
+    try:
+      downstream_changelog_info(gh, pr_num, downstream_repos)
+    except github.GithubException.GithubException as e:
+      print "Error while trying to downstream changelog info: %s", e
+      raise e
