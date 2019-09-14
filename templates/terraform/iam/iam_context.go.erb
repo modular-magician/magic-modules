@@ -8,6 +8,9 @@ context := map[string]interface{}{
 <% if var_type == :ORG_ID  -%>
 	"<%= var_name -%>": getTestOrgFromEnv(t),
 <% end -%>
+<% if var_type == :PROJECT_NAME  -%>
+	"<%= var_name -%>": getTestProjectFromEnv(),
+<% end -%>
 <% end -%>
 <% unless example.test_custom_context.nil? -%>
 <% example.test_custom_context.each do |var_name, custom_val| -%>
