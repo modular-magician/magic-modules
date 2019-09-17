@@ -254,8 +254,7 @@ dataproc_cluster:
     worker_config:
       num_instances: 2
       machine_type: n1-standard-1
-      min_cpu_platform: Intel Skylake
-      boot_disk_size_gb: 10
+      boot_disk_size_gb: 20
       num_local_ssds: 1
     preemptible_worker_config:
       num_instances: 0

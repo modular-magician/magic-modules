@@ -154,7 +154,7 @@ variable "ml_model" {
 }
 
 variable "dataproc_cluster" {
-  type = "map"
+  type = any
 }
 
 resource "google_compute_ssl_policy" "custom-ssl-policy" {
@@ -629,11 +629,11 @@ resource "google_dataproc_cluster" "mycluster" {
   name    = var.dataproc_cluster["name"]
 
   labels = {
-    var.dataproc_cluster["label_key"] = var.dataproc_cluster["label_value"]
+    "${var.dataproc_cluster["label_key"]}" = "${var.dataproc_cluster["label_value"]}"
   }
 
   cluster_config {
-    staging_bucket = var.dataproc_cluster["config"]["staging_bucket"]
+    staging_bucket = inspec-gcp-static-${var.gcp_project_id}
 
     master_config {
       num_instances = var.dataproc_cluster["config"]["master_config"]["num_instances"]
@@ -647,7 +647,6 @@ resource "google_dataproc_cluster" "mycluster" {
     worker_config {
       num_instances    = var.dataproc_cluster["config"]["worker_config"]["num_instances"]
       machine_type     = var.dataproc_cluster["config"]["worker_config"]["machine_type"]
-      min_cpu_platform = var.dataproc_cluster["config"]["worker_config"]["min_cpu_platform"]
       disk_config {
         boot_disk_size_gb = var.dataproc_cluster["config"]["worker_config"]["boot_disk_size_gb"]
         num_local_ssds    = var.dataproc_cluster["config"]["worker_config"]["num_local_ssds"]
@@ -662,12 +661,12 @@ resource "google_dataproc_cluster" "mycluster" {
     software_config {
       image_version       = var.dataproc_cluster["config"]["software_config"]["image_version"]
       override_properties = {
-        var.dataproc_cluster["config"]["software_config"]["prop_key"] = var.dataproc_cluster["config"]["software_config"]["prop_value"]
+        "${var.dataproc_cluster["config"]["software_config"]["prop_key"]}" = "${var.dataproc_cluster["config"]["software_config"]["prop_value"]}"
       }
     }
 
-    gce_config {
-      tags    = [var.dataproc_cluster["config"]["gce_config"]["tag"]]
+    gce_cluster_config {
+      tags    = [var.dataproc_cluster["config"]["gce_cluster_config"]["tag"]]
     }
 
     initialization_action {
