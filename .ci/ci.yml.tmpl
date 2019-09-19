@@ -385,7 +385,7 @@ jobs:
                 skip_clone: true
           # Downstream changelog metadata
           - task: downstream-changelog-metadata
-            file: magic-modules/.ci/magic-modules/downstream-changelog-metadata.yml
+            file: magic-modules-with-comment/.ci/magic-modules/downstream-changelog-metadata.yml
             params:
               GITHUB_TOKEN: ((github-account.password))
               DOWNSTREAM_REPOS: "{{','.join(vars.downstreams_with_changelogs)}}"
