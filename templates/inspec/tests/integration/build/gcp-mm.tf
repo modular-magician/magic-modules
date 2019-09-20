@@ -583,8 +583,9 @@ resource "google_logging_organization_sink" "my-sink" {
 }
 
 resource "google_storage_bucket" "bucket" {
-  name    = "inspec-gcp-static-${var.gcp_project_id}"
-  project = var.gcp_project_id
+  name          = "inspec-gcp-static-${var.gcp_project_id}"
+  project       = var.gcp_project_id
+  force_destroy = true
 }
 
 resource "google_storage_bucket_object" "object" {
@@ -633,8 +634,6 @@ resource "google_dataproc_cluster" "mycluster" {
   }
 
   cluster_config {
-    staging_bucket = inspec-gcp-static-${var.gcp_project_id}
-
     master_config {
       num_instances = var.dataproc_cluster["config"]["master_config"]["num_instances"]
       machine_type  = var.dataproc_cluster["config"]["master_config"]["machine_type"]
@@ -653,13 +652,8 @@ resource "google_dataproc_cluster" "mycluster" {
       }
     }
 
-    preemptible_worker_config {
-      num_instances = var.dataproc_cluster["config"]["preemptible_worker_config"]["num_instances"]
-    }
-
     # Override or set some custom properties
     software_config {
-      image_version       = var.dataproc_cluster["config"]["software_config"]["image_version"]
       override_properties = {
         "${var.dataproc_cluster["config"]["software_config"]["prop_key"]}" = "${var.dataproc_cluster["config"]["software_config"]["prop_value"]}"
       }
@@ -667,11 +661,6 @@ resource "google_dataproc_cluster" "mycluster" {
 
     gce_cluster_config {
       tags    = [var.dataproc_cluster["config"]["gce_cluster_config"]["tag"]]
-    }
-
-    initialization_action {
-      script      = var.dataproc_cluster["config"]["initialization_action"]["script"]
-      timeout_sec = var.dataproc_cluster["config"]["initialization_action"]["timeout_sec"]
     }
   }
 }

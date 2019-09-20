@@ -268,7 +268,10 @@ module Provider
     end
 
     def markdown_format(property)
-      "    * `#{property.out_name}`: #{property.description.split("\n").join(' ')}"
+      prop_description = "    * `#{property.out_name}`: #{property.description.split("\n").join(' ')}"
+      if nested_object?(property)
+        return (prop_description + "\n\n").join("\n\n")
+      end
     end
 
     def grab_attributes

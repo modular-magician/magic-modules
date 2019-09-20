@@ -198,6 +198,7 @@ objects:
   - !ruby/object:Api::Resource
     name: 'Cluster'
     base_url: "projects/{{project}}/regions/{{region}}/clusters"
+    self_link: "projects/{{project}}/regions/{{region}}/clusters/{{clusterName}}"
     description: |
       Describes an autoscaling policy for Dataproc cluster autoscaler.
     parameters:
@@ -209,7 +210,7 @@ objects:
           The region in which the cluster and associated nodes will be created in.
     properties:
       - !ruby/object:Api::Type::String
-        name: 'name'
+        name: 'clusterName'
         required: true
         description: |
           The name of the cluster, unique within the project and region.
