@@ -1,7 +1,7 @@
 <% gcp_project_id = "#{external_attribute('gcp_project_id', doc_generation)}" -%>
 <% gcp_location = "#{external_attribute('gcp_location', doc_generation)}" -%>
 <% dataproc_cluster = grab_attributes['dataproc_cluster'] -%>
-describe google_dataproc_cluster(project: <%= gcp_project_id -%>, region: <%= gcp_location -%>, clusterName: <%= doc_generation ? "'#{dataproc_cluster['name']}'" : "dataproc_cluster['name']" -%>) do
+describe google_dataproc_cluster(project: <%= gcp_project_id -%>, region: <%= gcp_location -%>, cluster_name: <%= doc_generation ? "'#{dataproc_cluster['name']}'" : "dataproc_cluster['name']" -%>) do
   it { should exist }
   its('labels') { should include(<%= doc_generation ? "'#{dataproc_cluster['label_key']}'" : "dataproc_cluster['label_key']" -%> => <%= doc_generation ? "'#{dataproc_cluster['label_value']}'" : "dataproc_cluster['label_value']" -%>) }
   its('config.master_config.num_instances') { should cmp <%= doc_generation ? "'#{dataproc_cluster['config']['master_config']['num_instances']}'" : "dataproc_cluster['config']['master_config']['num_instances']" -%> }
@@ -11,6 +11,6 @@ describe google_dataproc_cluster(project: <%= gcp_project_id -%>, region: <%= gc
   its('config.software_config.properties') { should include(<%= doc_generation ? "'#{dataproc_cluster['config']['software_config']['prop_key']}'" : "dataproc_cluster['config']['software_config']['prop_key']" -%> => <%= doc_generation ? "'#{dataproc_cluster['config']['software_config']['prop_value']}'" : "dataproc_cluster['config']['software_config']['prop_value']" -%>) }
 end
 
-describe google_dataproc_cluster(project: <%= gcp_project_id -%>, region: <%= gcp_location -%>, clusterName: 'nonexistent') do
+describe google_dataproc_cluster(project: <%= gcp_project_id -%>, region: <%= gcp_location -%>, cluster_name: 'nonexistent') do
   it { should_not exist }
 end
