@@ -245,7 +245,6 @@ dataproc_cluster:
   label_key: label
   label_value: value
   config:
-    config_bucket: dataproc-staging-bucket
     master_config:
       num_instances: 1
       machine_type: n1-standard-1
@@ -259,11 +258,7 @@ dataproc_cluster:
     preemptible_worker_config:
       num_instances: 0
     software_config:
-      image_version: "1.3.7-deb9"
       prop_key: "dataproc:dataproc.allow.zero.workers"
       prop_value: "true"
     gce_cluster_config:
       tag: foo
-    initialization_action:
-      script: "gs://dataproc-initialization-actions/stackdriver/stackdriver.sh"
-      timeout_sec: 500
