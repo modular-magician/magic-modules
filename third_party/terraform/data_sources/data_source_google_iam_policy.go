@@ -28,7 +28,7 @@ func dataSourceGoogleIamPolicy() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"binding": {
 				Type:     schema.TypeSet,
-				Required: true,
+				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"role": {
