@@ -233,7 +233,7 @@ module Provider
         target_folder = data.output_folder
         name = module_name(data.object)
         path = File.join(target_folder,
-                         "lib/ansible/modules/cloud/google/#{name}.py")
+                         "plugins/modules/#{name}.py")
         data.generate(
           data.object.template || 'templates/ansible/resource.erb',
           path,
@@ -246,21 +246,27 @@ module Provider
         path = ["products/#{data.product.api_name}",
                 "examples/ansible/#{prod_name}.yaml"].join('/')
 
-        return unless data.object.has_tests
-        # Unlike other providers, all resources will not be built at once or
-        # in close timing to each other (due to external PRs).
-        # This means that examples might not be built out for every resource
-        # in a GCP product.
-        return unless File.file?(path)
+        return if data.object.tests.tests.empty?
 
         target_folder = data.output_folder
 
         name = module_name(data.object)
+
+        # Generate the main file with a list of tests.
         path = File.join(target_folder,
-                         "test/integration/targets/#{name}/tasks/main.yml")
-        unless data.object.custom_tests
+                         "tests/integration/targets/#{name}/tasks/main.yml")
+        data.generate(
+          'templates/ansible/tests_main.erb',
+          path,
+          self
+        )
+
+        # Generate each of the tests individually
+        data.object.tests.tests.each do |t|
+          path = File.join(target_folder,
+                           "tests/integration/targets/#{name}/tasks/#{t.name}.yml")
           data.generate(
-            'templates/ansible/integration_test.erb',
+            t.path,
             path,
             self
           )
@@ -268,7 +274,7 @@ module Provider
 
         # Generate 'defaults' file that contains variables.
         path = File.join(target_folder,
-                         "test/integration/targets/#{name}/defaults/main.yml")
+                         "tests/integration/targets/#{name}/defaults/main.yml")
         data.generate(
           'templates/ansible/integration_test_variables.erb',
           path,
@@ -281,14 +287,14 @@ module Provider
         name = module_name(data.object)
         data.generate('templates/ansible/facts.erb',
                       File.join(target_folder,
-                                "lib/ansible/modules/cloud/google/#{name}_info.py"),
+                                "plugins/modules/#{name}_info.py"),
                       self)
 
         # Generate symlink for old `facts` modules.
         return if version_added(data.object, :facts) >= '2.9'
 
         deprecated_facts_path = File.join(target_folder,
-                                          "lib/ansible/modules/cloud/google/_#{name}_facts.py")
+                                          "plugins/modules/_#{name}_facts.py")
         return if File.exist?(deprecated_facts_path)
 
         File.symlink "#{name}_info.py", deprecated_facts_path

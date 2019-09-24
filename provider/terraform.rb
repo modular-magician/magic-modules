@@ -120,9 +120,7 @@ module Provider
     # Capitalize the first letter of a property name.
     # E.g. "creationTimestamp" becomes "CreationTimestamp".
     def titlelize_property(property)
-      p = property.name.clone
-      p[0] = p[0].capitalize
-      p
+      property.name.camelize(:upper)
     end
 
     private
@@ -151,7 +149,7 @@ module Provider
       target_folder = File.join(target_folder, 'website', 'docs', 'r')
       FileUtils.mkpath target_folder
       name = data.object.name.underscore
-      product_name = data.product.name.underscore
+      product_name = @config.legacy_name || data.product.name.underscore
 
       filepath =
         File.join(target_folder, "#{product_name}_#{name}.html.markdown")
@@ -228,7 +226,7 @@ module Provider
       target_folder = File.join(target_folder, 'website', 'docs', 'r')
       FileUtils.mkpath target_folder
       name = data.object.name.underscore
-      product_name = data.product.name.underscore
+      product_name = @config.legacy_name || data.product.name.underscore
 
       filepath =
         File.join(target_folder, "#{product_name}_#{name}_iam.html.markdown")
@@ -243,6 +241,10 @@ module Provider
         @config,
         build_env
       )
+    end
+
+    def extract_identifiers(url)
+      url.scan(/\{\{(\w+)\}\}/).flatten
     end
   end
 end
