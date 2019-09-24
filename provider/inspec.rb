@@ -270,16 +270,16 @@ module Provider
     # Recursively calls itself on any arrays or nested objects within this property, indenting
     # further for each call
     def markdown_format(property, indent = 1)
-      markdown_indent = "    "
       prop_description = "`#{property.out_name}`: #{property.description.split("\n").join(' ')}"
-      description = "#{markdown_indent * indent}* #{prop_description}"
+      description = "#{'    ' * indent}* #{prop_description}"
       if nested_object?(property)
         description_arr = [description]
         description_arr += property.properties.map { |prop| markdown_format(prop, indent + 1) }
         description = description_arr.join("\n\n")
       elsif typed_array?(property)
         description_arr = [description]
-        description_arr += property.item_type.properties.map { |prop| markdown_format(prop, indent + 1) }
+        description_arr += property.item_type.properties.map\
+          { |prop| markdown_format(prop, indent + 1) }
         description = description_arr.join("\n\n")
       end
       description
