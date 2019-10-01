@@ -22,11 +22,8 @@ get_all_modules() {
   done
 }
 
-# Clone ansible/ansible
-git clone git@github.com:modular-magician/ansible.git
-
 # Install dependencies for Template Generator
-pushd "magic-modules-gcp"
+pushd "magic-modules-new-prs"
 bundle install
 
 # Setup SSH keys.
@@ -39,6 +36,10 @@ echo "$CREDS" > ~/github_private_key
 set -x
 chmod 400 ~/github_private_key
 popd
+
+# Clone ansible/ansible
+ssh-agent bash -c "ssh-add ~/github_private_key; git clone git@github.com:modular-magician/ansible.git"
+
 
 # Setup Git config and remotes.
 pushd "ansible"
@@ -55,7 +56,7 @@ popd
 # Copy code into ansible/ansible + commit to our fork
 # By using the "ansible_devel" provider, we get versions of the resources that work
 # with ansible devel.
-pushd "magic-modules-gcp"
+pushd "magic-modules-new-prs"
 ruby compiler.rb -a -e ansible -f ansible_devel -o ../ansible/
 popd
 
