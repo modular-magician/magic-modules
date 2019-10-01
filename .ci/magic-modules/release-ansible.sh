@@ -15,18 +15,15 @@ get_all_modules() {
   file_name=$remote_name
   ssh-agent bash -c "ssh-add ~/github_private_key; git fetch $remote_name"
   git checkout $remote_name/devel
-  git ls-files -- plugins/modules/gcp_* | cut -d/ -f 6 | cut -d. -f 1 > $file_name
+  git ls-files -- lib/ansible/modules/cloud/google/gcp_* | cut -d/ -f 6 | cut -d. -f 1 > $file_name
   
   for i in "${ignored_modules[@]}"; do
     sed -i "/$i/d" $file_name
   done
 }
 
-# Clone ansible/ansible
-git clone git@github.com:modular-magician/ansible.git
-
 # Install dependencies for Template Generator
-pushd "magic-modules-gcp"
+pushd "magic-modules-new-prs"
 bundle install
 
 # Setup SSH keys.
@@ -39,6 +36,9 @@ echo "$CREDS" > ~/github_private_key
 set -x
 chmod 400 ~/github_private_key
 popd
+
+# Clone ansible/ansible
+ssh-agent bash -c "ssh-add ~/github_private_key; git clone git@github.com:modular-magician/ansible.git"
 
 # Setup Git config and remotes.
 pushd "ansible"
@@ -55,7 +55,7 @@ popd
 # Copy code into ansible/ansible + commit to our fork
 # By using the "ansible_devel" provider, we get versions of the resources that work
 # with ansible devel.
-pushd "magic-modules-gcp"
+pushd "magic-modules-new-prs"
 ruby compiler.rb -a -e ansible -f ansible_devel -o ../ansible/
 popd
 
@@ -63,7 +63,7 @@ popd
 pushd "ansible"
 git add lib/ansible/modules/cloud/google/gcp_* test/integration/targets/gcp_*
 git commit -m "Migrating code from collection"
-ssh-agent bash -c "ssh-add ~/github_private_key; git push origin devel"
+ssh-agent bash -c "ssh-add ~/github_private_key; git push magician devel"
 
 set -e
 
