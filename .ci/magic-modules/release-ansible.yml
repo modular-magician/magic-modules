@@ -7,13 +7,13 @@ image_resource:
     type: docker-image
     source:
         repository: gcr.io/magic-modules/hub
-        tag: '1.1'
+        tag: '1.2'
 
 inputs:
-    - name: magic-modules-gcp
+    - name: magic-modules-new-prs
 
 run:
-    path: "magic-modules-gcp/.ci/magic-modules/release-ansible.sh"
+    path: "magic-modules-new-prs/.ci/magic-modules/release-ansible.sh"
 
 params:
   GITHUB_TOKEN: ""
