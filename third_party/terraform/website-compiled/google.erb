@@ -29,6 +29,9 @@
         <li<%%= sidebar_current("docs-google-provider-version-2-upgrade") %>>
           <a href="/docs/providers/google/version_2_upgrade.html">2.0.0 Upgrade Guide</a>
         </li>
+        <li<%%= sidebar_current("docs-google-provider-version-3-upgrade") %>>
+          <a href="/docs/providers/google/version_3_upgrade.html">3.0.0 Upgrade Guide</a>
+        </li>
       </ul>
     </li>
 
@@ -253,6 +256,10 @@
       <a href="/docs/providers/google/r/bigtable_app_profile.html">google_bigtable_app_profile</a>
       </li>
 
+      <li<%%= sidebar_current("docs-google-bigtable-gc-policy") %>>
+      <a href="/docs/providers/google/r/bigtable_gc_policy.html">google_bigtable_gc_policy</a>
+      </li>
+
       <li<%%= sidebar_current("docs-google-bigtable-instance") %>>
       <a href="/docs/providers/google/r/bigtable_instance.html">google_bigtable_instance</a>
       </li>
@@ -279,7 +286,21 @@
     <a href="#">Google Binary Authorization Resources</a>
     <ul class="nav nav-visible">
       <li<%%= sidebar_current("docs-google-binary-authorization-attestor") %>>
-      <a href="/docs/providers/google/r/binary_authorization_attestor.html">google_binary_authorization_attestor</a>
+        <a href="/docs/providers/google/r/binary_authorization_attestor.html">google_binary_authorization_attestor</a>
+      </li>
+
+      <li<%%= sidebar_current("docs-google-binary-authorization-attestor-iam") %>>
+      <a href="/docs/providers/google/r/binary_authorization_attestor_iam.html">google_binary_authorization_attestor_iam_binding</a>
+      </li>
+
+      <li<%%= sidebar_current("docs-google-binary-authorization-attestor-iam") %>>
+      <a href="/docs/providers/google/r/binary_authorization_attestor_iam.html">google_binary_authorization_attestor_iam_member</a>
+      </li>
+
+      <li<%%= sidebar_current("docs-google-binary-authorization-attestor-iam") %>>
+      <a href="/docs/providers/google/r/binary_authorization_attestor_iam.html">google_binary_authorization_attestor_iam_policy</a>
+      </li>
+
       <li<%%= sidebar_current("docs-google-binary-authorization-policy") %>>
       <a href="/docs/providers/google/r/binary_authorization_policy.html">google_binary_authorization_policy</a>
       </li>
@@ -753,7 +774,7 @@
       </li>
     </ul>
     </li>
-<% unless version == 'ga' %>
+
     <li<%%= sidebar_current("docs-google-container-analysis") %>>
     <a href="#">Google Container Analysis Resources</a>
     <ul class="nav nav-visible">
@@ -762,7 +783,6 @@
       </li>
     </ul>
     </li>
-<% end -%>
 
     <li<%%= sidebar_current("docs-google-container") %>>
     <a href="#">Google Kubernetes (Container) Engine Resources</a>
@@ -1225,6 +1245,10 @@
     <ul class="nav nav-visible">
       <li<%%= sidebar_current("docs-google-storage-bucket-x") %>>
       <a href="/docs/providers/google/r/storage_bucket.html">google_storage_bucket</a>
+      </li>
+
+      <li<%%= sidebar_current("docs-google-storage-bucket-access-control") %>>
+      <a href="/docs/providers/google/r/storage_bucket_access_control.html">google_storage_bucket_access_control</a>
       </li>
 
       <li<%%= sidebar_current("docs-google-storage-bucket-acl") %>>
