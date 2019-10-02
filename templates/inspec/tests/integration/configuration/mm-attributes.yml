@@ -262,3 +262,12 @@ dataproc_cluster:
       prop_value: "true"
     gce_cluster_config:
       tag: foo
+
+filestore_instance:
+  name: inspec_gcp
+  zone: us-central1-b
+  tier: PREMIUM
+  fileshare_capacity_gb: 2660
+  fileshare_name: inspec_gcp
+  network_name: default
+  network_mode: MODE_IPV4
