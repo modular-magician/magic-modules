@@ -41,6 +41,7 @@ func resourceComputeInstanceTemplate() *schema.Resource {
 				Optional: true,
 				Computed: true,
 				ForceNew: true,
+				ConflictsWith: []string{"name"},
 				ValidateFunc: func(v interface{}, k string) (ws []string, errors []error) {
 					// https://cloud.google.com/compute/docs/reference/latest/instanceTemplates#resource
 					// uuid is 26 characters, limit the prefix to 37.
