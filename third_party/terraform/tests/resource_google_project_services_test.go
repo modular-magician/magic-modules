@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hashicorp/terraform/helper/acctest"
-	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
 // Test that services can be enabled and disabled on a project
@@ -168,6 +168,7 @@ func TestAccProjectServices_ignoreUnenablableServices(t *testing.T) {
 		"pubsub.googleapis.com",
 		"oslogin.googleapis.com",
 		"bigquery-json.googleapis.com",
+		"bigquerystorage.googleapis.com",
 		"iam.googleapis.com",
 		"iamcredentials.googleapis.com",
 	}
@@ -201,6 +202,7 @@ func TestAccProjectServices_pagination(t *testing.T) {
 		"appengineflex.googleapis.com",
 		"bigquery-json.googleapis.com",
 		"bigquerydatatransfer.googleapis.com",
+		"bigquerystorage.googleapis.com",
 		"bigtableadmin.googleapis.com",
 		"bigtabletableadmin.googleapis.com",
 		"cloudbuild.googleapis.com",

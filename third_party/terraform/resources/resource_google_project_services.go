@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/hashicorp/errwrap"
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/serviceusage/v1"
 	"log"
@@ -28,6 +28,10 @@ func resourceGoogleProjectServices() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
+		DeprecationMessage: "google_project_services is deprecated - many users reported " +
+			"issues with dependent services that were not resolvable.  Please use google_project_service or the " +
+			"https://github.com/terraform-google-modules/terraform-google-project-factory/tree/master/modules/project_services" +
+			" module.  This resource will be removed in version 3.0.0.",
 
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(20 * time.Minute),

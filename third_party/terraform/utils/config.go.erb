@@ -7,8 +7,9 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/hashicorp/terraform/helper/logging"
-	"github.com/hashicorp/terraform/helper/pathorcontents"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/logging"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/pathorcontents"
+	"github.com/hashicorp/terraform-plugin-sdk/httpclient"
 
 	"golang.org/x/oauth2"
 	googleoauth "golang.org/x/oauth2/google"
@@ -70,8 +71,9 @@ type Config struct {
 	BatchingConfig		*batchingConfig
 	UserProjectOverride bool
 
-	client    *http.Client
-	userAgent string
+	client           *http.Client
+	terraformVersion string
+	userAgent        string
 
 	tokenSource oauth2.TokenSource
 
@@ -98,7 +100,6 @@ type Config struct {
 	ContainerBetaBasePath string
 	clientContainerBeta   *containerBeta.Service
 
-	DataprocBasePath string
 	clientDataproc   *dataproc.Service
 
 	DataprocBetaBasePath string
@@ -128,7 +129,6 @@ type Config struct {
 	ResourceManagerV2Beta1BasePath string
 	clientResourceManagerV2Beta1   *resourceManagerV2Beta1.Service
 
-	RuntimeconfigBasePath string
 	clientRuntimeconfig   *runtimeconfig.Service
 
 	clientSpanner   *spanner.Service
@@ -155,10 +155,8 @@ type Config struct {
 	ServiceUsageBasePath       string
 	clientServiceUsage         *serviceusage.Service
 
-	BigQueryBasePath string
 	clientBigQuery   *bigquery.Service
 
-	CloudFunctionsBasePath string
 	clientCloudFunctions   *cloudfunctions.Service
 
 	CloudIoTBasePath string
@@ -215,14 +213,13 @@ func (c *Config) LoadAndValidate() error {
 	// timeout for the maximum amount of time a logical request can take.
 	client.Timeout, _ = time.ParseDuration("30s")
 
-	terraformVersion := httpclient.UserAgentString()
+	tfUserAgent := httpclient.TerraformUserAgent(c.terraformVersion)
 	<% if version.nil? || version == 'ga' -%>
 	providerVersion := fmt.Sprintf("terraform-provider-google/%s", version.ProviderVersion)
 	<% else -%>
 	providerVersion := fmt.Sprintf("terraform-provider-google-<%= version -%>/%s", version.ProviderVersion)
 	<% end -%>
-	terraformWebsite := "(+https://www.terraform.io)"
-	userAgent := fmt.Sprintf("%s %s %s", terraformVersion, terraformWebsite, providerVersion)
+	userAgent := fmt.Sprintf("%s %s", tfUserAgent, providerVersion)
 
 	c.client = client
 	c.userAgent = userAgent
@@ -270,7 +267,7 @@ func (c *Config) LoadAndValidate() error {
 	c.clientContainerBeta.UserAgent = userAgent
 	c.clientContainerBeta.BasePath = containerBetaClientBasePath
 
-	dnsClientBasePath := removeBasePathVersion(c.DnsBasePath) + "v1/projects/"
+	dnsClientBasePath := removeBasePathVersion(c.DNSBasePath) + "v1/projects/"
 	log.Printf("[INFO] Instantiating Google Cloud DNS client for path %s", dnsClientBasePath)
 	c.clientDns, err = dns.NewService(context, option.WithHTTPClient(client))
 	if err != nil {
@@ -288,7 +285,7 @@ func (c *Config) LoadAndValidate() error {
 	c.clientDnsBeta.UserAgent = userAgent
 	c.clientDnsBeta.BasePath = dnsBetaClientBasePath
 
-	kmsClientBasePath := removeBasePathVersion(c.KmsBasePath)
+	kmsClientBasePath := removeBasePathVersion(c.KMSBasePath)
 	log.Printf("[INFO] Instantiating Google Cloud KMS client for path %s", kmsClientBasePath)
 	c.clientKms, err = cloudkms.NewService(context, option.WithHTTPClient(client))
 	if err != nil {
@@ -315,7 +312,7 @@ func (c *Config) LoadAndValidate() error {
 	c.clientStorage.UserAgent = userAgent
 	c.clientStorage.BasePath = storageClientBasePath
 
-	sqlClientBasePath := removeBasePathVersion(c.SqlBasePath) + "v1beta4/"
+	sqlClientBasePath := removeBasePathVersion(c.SQLBasePath) + "v1beta4/"
 	log.Printf("[INFO] Instantiating Google SqlAdmin client for path %s", sqlClientBasePath)
 	c.clientSqlAdmin, err = sqladmin.NewService(context, option.WithHTTPClient(client))
 	if err != nil {
@@ -360,14 +357,14 @@ func (c *Config) LoadAndValidate() error {
 	c.clientResourceManagerV2Beta1.UserAgent = userAgent
 	c.clientResourceManagerV2Beta1.BasePath = resourceManagerV2Beta1BasePath
 
-	runtimeconfigClientBasePath := removeBasePathVersion(c.RuntimeconfigBasePath)
-	log.Printf("[INFO] Instantiating Google Cloud Runtimeconfig client for path %s", runtimeconfigClientBasePath)
+	runtimeConfigClientBasePath := removeBasePathVersion(c.RuntimeConfigBasePath)
+	log.Printf("[INFO] Instantiating Google Cloud Runtimeconfig client for path %s", runtimeConfigClientBasePath)
 	c.clientRuntimeconfig, err = runtimeconfig.NewService(context, option.WithHTTPClient(client))
 	if err != nil {
 		return err
 	}
 	c.clientRuntimeconfig.UserAgent = userAgent
-	c.clientRuntimeconfig.BasePath = runtimeconfigClientBasePath
+	c.clientRuntimeconfig.BasePath = runtimeConfigClientBasePath
 
 	iamClientBasePath := removeBasePathVersion(c.IAMBasePath)
 	log.Printf("[INFO] Instantiating Google Cloud IAM client for path %s", iamClientBasePath)
@@ -646,4 +643,39 @@ func (c *Config) getTokenSource(clientScopes []string) (oauth2.TokenSource, erro
 // Remove the `/{{version}}/` from a base path, replacing it with `/`
 func removeBasePathVersion(url string) string {
 	return regexp.MustCompile(`/[^/]+/$`).ReplaceAllString(url, "/")
+}
+
+// For a consumer of config.go that isn't a full fledged provider and doesn't
+// have its own endpoint mechanism such as sweepers, init {{service}}BasePath
+// values to a default. After using this, you should call config.LoadAndValidate.
+func ConfigureBasePaths(c *Config) {
+	// Generated Products
+	<% products.map.each do |product| -%>
+	c.<%= product[:definitions].name -%>BasePath = <%= product[:definitions].name -%>DefaultBasePath
+	<% end -%>
+
+	// Handwritten Products / Versioned / Atypical Entries
+	<% unless version == 'ga' -%>
+	// start beta-only products
+	c.IAPBasePath = IAPDefaultBasePath
+	// end beta-only products
+	<% end -%>
+	c.CloudBillingBasePath = CloudBillingDefaultBasePath
+	c.ComposerBasePath = ComposerDefaultBasePath
+	c.ComputeBetaBasePath = ComputeBetaDefaultBasePath
+	c.ContainerBasePath = ContainerDefaultBasePath
+	c.ContainerBetaBasePath = ContainerBetaDefaultBasePath
+	c.DataprocBasePath = DataprocDefaultBasePath
+	c.DataflowBasePath = DataflowDefaultBasePath
+	c.DnsBetaBasePath = DnsBetaDefaultBasePath
+	c.IamCredentialsBasePath = IamCredentialsDefaultBasePath
+	c.ResourceManagerV2Beta1BasePath = ResourceManagerV2Beta1DefaultBasePath
+	c.IAMBasePath = IAMDefaultBasePath
+	c.ServiceManagementBasePath = ServiceManagementDefaultBasePath
+	c.ServiceNetworkingBasePath = ServiceNetworkingDefaultBasePath
+	c.ServiceUsageBasePath = ServiceUsageDefaultBasePath
+	c.BigQueryBasePath = BigQueryDefaultBasePath
+	c.CloudIoTBasePath = CloudIoTDefaultBasePath
+	c.StorageTransferBasePath = StorageTransferDefaultBasePath
+	c.BigtableAdminBasePath = BigtableAdminDefaultBasePath
 }
