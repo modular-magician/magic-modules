@@ -16,14 +16,15 @@ source hacking/env-setup
 popd
 
 # Build newest modules
-pushd magic-modules-gcp
+pushd magic-modules-new-prs
 bundle install
 bundle exec compiler -a -e ansible -o build/ansible
+popd
 
 # Install collection
-pushd magic-modules-gcp/build/ansible
-ansible-galaxy build .
-ansible-galaxy install ~/.ansible/collections
+pushd magic-modules-new-prs/build/ansible
+ansible-galaxy collection build .
+ansible-galaxy collection install *.gz -p ~/.ansible/collections
 popd
 
 # Setup Cloud configuration template with variables
@@ -31,4 +32,4 @@ pushd ~/.ansible/collections/ansible_collections/google/cloud
 cp /tmp/ansible-template.ini tests/integration/cloud-config-gcp.ini
 
 # Run ansible
-ansible-test integration -v --allow-unsupported --continue-on-error $(find test/integration/targets -name "gcp*" -type d -printf "%P ")
+ansible-test integration -v --allow-unsupported --continue-on-error $(find tests/integration/targets -name "gcp*" -type d -printf "%P ")
