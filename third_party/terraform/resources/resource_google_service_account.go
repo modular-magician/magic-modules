@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"google.golang.org/api/iam/v1"
 )
 
@@ -40,6 +41,11 @@ func resourceGoogleServiceAccount() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
+			"description": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validation.StringLenBetween(0, 256),
+			},
 			"project": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -63,9 +69,11 @@ func resourceGoogleServiceAccountCreate(d *schema.ResourceData, meta interface{}
 	}
 	aid := d.Get("account_id").(string)
 	displayName := d.Get("display_name").(string)
+	description := d.Get("description").(string)
 
 	sa := &iam.ServiceAccount{
 		DisplayName: displayName,
+		Description: description,
 	}
 
 	r := &iam.CreateServiceAccountRequest{
@@ -98,6 +106,7 @@ func resourceGoogleServiceAccountRead(d *schema.ResourceData, meta interface{}) 
 	d.Set("account_id", strings.Split(sa.Email, "@")[0])
 	d.Set("name", sa.Name)
 	d.Set("display_name", sa.DisplayName)
+	d.Set("description", sa.Description)
 	return nil
 }
 
@@ -114,16 +123,26 @@ func resourceGoogleServiceAccountDelete(d *schema.ResourceData, meta interface{}
 
 func resourceGoogleServiceAccountUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	if ok := d.HasChange("display_name"); ok {
+	patch := &iam.PatchServiceAccountRequest{
+		ServiceAccount: &iam.ServiceAccount{},
+	}
+	updateFields := []string{}
+	if d.HasChange("display_name") {
+		patch.ServiceAccount.DisplayName = d.Get("display_name").(string)
+		updateFields = append(updateFields, "displayName")
+	}
+	if d.HasChange("description") {
+		patch.ServiceAccount.Description = d.Get("description").(string)
+		updateFields = append(updateFields, "description")
+	}
+	if len(updateFields) > 0 {
 		sa, err := config.clientIAM.Projects.ServiceAccounts.Get(d.Id()).Do()
 		if err != nil {
 			return fmt.Errorf("Error retrieving service account %q: %s", d.Id(), err)
 		}
-		_, err = config.clientIAM.Projects.ServiceAccounts.Update(d.Id(),
-			&iam.ServiceAccount{
-				DisplayName: d.Get("display_name").(string),
-				Etag:        sa.Etag,
-			}).Do()
+		patch.ServiceAccount.Etag = sa.Etag
+		patch.UpdateMask = strings.Join(updateFields, ",")
+		_, err = config.clientIAM.Projects.ServiceAccounts.Patch(d.Id(), patch).Do()
 		if err != nil {
 			return fmt.Errorf("Error updating service account %q: %s", d.Id(), err)
 		}
