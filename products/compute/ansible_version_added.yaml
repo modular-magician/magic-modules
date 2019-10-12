@@ -8,6 +8,8 @@
     :version_added: '2.7'
   :BackendService:
     :version_added: '2.7'
+  :RegionBackendService:
+    :version_added: '2.10'
   :Disk:
     :version_added: '2.7'
   :Firewall:
@@ -38,6 +40,10 @@
     :version_added: '2.8'
   :Network:
     :version_added: '2.7'
+  :NetworkEndpointGroup:
+    :version_added: '2.10'
+  :NodeGroup:
+    :version_added: '2.10'
   :NodeTemplate:
     :version_added: '2.10'
   :RegionDisk:
@@ -217,6 +223,36 @@
       :version_added: '2.6'
     :timeoutSec:
       :version_added: '2.6'
+  :RegionBackendService:
+    :version_added: '2.10'
+    :name:
+      :version_added: '2.10'
+    :healthChecks:
+      :version_added: '2.10'
+    :backends:
+      :version_added: '2.10'
+      :description:
+        :version_added: '2.10'
+      :group:
+        :version_added: '2.10'
+      :failover:
+        :version_added: '2.10'
+    :description:
+      :version_added: '2.10'
+    :protocol:
+      :version_added: '2.10'
+    :sessionAffinity:
+      :version_added: '2.10'
+    :region:
+      :version_added: '2.10'
+    :timeoutSec:
+      :version_added: '2.10'
+    :connectionDraining:
+      :version_added: '2.10'
+      :drainingTimeoutSec:
+        :version_added: '2.10'
+    :loadBalancingScheme:
+      :version_added: '2.10'
   :Disk:
     :version_added: '2.6'
     :description:
@@ -359,6 +395,16 @@
       :version_added: '2.6'
     :loadBalancingScheme:
       :version_added: '2.6'
+    :metadataFilters:
+      :version_added: '2.10'
+      :filterMatchCriteria:
+        :version_added: '2.10'
+      :filterLabels:
+        :version_added: '2.10'
+        :name:
+          :version_added: '2.10'
+        :value:
+          :version_added: '2.10'
     :name:
       :version_added: '2.6'
     :network:
@@ -847,6 +893,34 @@
       :version_added: '2.8'
       :routingMode:
         :version_added: '2.8'
+  :NetworkEndpointGroup:
+    :version_added: '2.10'
+    :name:
+      :version_added: '2.10'
+    :description:
+      :version_added: '2.10'
+    :networkEndpointType:
+      :version_added: '2.10'
+    :network:
+      :version_added: '2.10'
+    :subnetwork:
+      :version_added: '2.10'
+    :defaultPort:
+      :version_added: '2.10'
+    :zone:
+      :version_added: '2.10'
+  :NodeGroup:
+    :version_added: '2.10'
+    :description:
+      :version_added: '2.10'
+    :name:
+      :version_added: '2.10'
+    :nodeTemplate:
+      :version_added: '2.10'
+    :size:
+      :version_added: '2.10'
+    :zone:
+      :version_added: '2.10'
   :NodeTemplate:
     :version_added: '2.10'
     :description:

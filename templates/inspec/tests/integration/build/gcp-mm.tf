@@ -157,6 +157,42 @@ variable "dataproc_cluster" {
   type = any
 }
 
+variable "folder_exclusion" {
+  type = "map"
+}
+
+variable "filestore_instance" {
+  type = "map"
+}
+
+variable "folder_sink" {
+  type = "map"
+}
+
+variable "runtimeconfig_config" {
+  type = "map"
+}
+
+variable "runtimeconfig_variable" {
+  type = "map"
+}
+
+variable "redis" {
+  type = "map"
+}
+
+variable "network_endpoint_group" {
+  type = "map"
+}
+
+variable "node_template" {
+  type = "map"
+}
+
+variable "node_group" {
+  type = "map"
+}
+
 resource "google_compute_ssl_policy" "custom-ssl-policy" {
   name            = "${var.ssl_policy["name"]}"
   min_tls_version = "${var.ssl_policy["min_tls_version"]}"
@@ -461,14 +497,22 @@ resource "google_compute_router" "gcp-inspec-router" {
   }
 }
 
+resource "google_compute_disk" "snapshot-disk" {
+  project = "${var.gcp_project_id}"
+  name  = var.snapshot["disk_name"]
+  type  = "${var.gcp_compute_disk_type}"
+  zone  = "${var.gcp_zone}"
+  image = "${var.gcp_compute_disk_image}"
+  labels = {
+    environment = "generic_compute_disk_label"
+  }
+}
+
 resource "google_compute_snapshot" "gcp-inspec-snapshot" {
   project = "${var.gcp_project_id}"
   name = "${var.snapshot["name"]}"
-  source_disk = "${google_compute_disk.generic_compute_disk.name}"
+  source_disk = "${google_compute_disk.snapshot-disk.name}"
   zone = "${var.gcp_zone}"
-  # Depends on the instance of the disk we are using. Allow instance to spin up
-  # Before snapshotting the disk to avoid resourceInUse errors
-  depends_on  = ["google_compute_instance.generic_external_vm_instance_data_disk"]
 }
 
 resource "google_compute_ssl_certificate" "gcp-inspec-ssl-certificate" {
@@ -624,6 +668,29 @@ resource "google_ml_engine_model" "inspec-gcp-model" {
   online_prediction_console_logging = var.ml_model["online_prediction_console_logging"]
 }
 
+resource "google_compute_firewall" "dataproc" {
+  name    = "dataproc-firewall"
+  network = "${google_compute_network.dataproc.name}"
+
+  source_ranges = ["10.128.0.0/9"]
+  allow {
+    protocol = "icmp"
+  }
+
+  allow {
+    protocol = "tcp"
+    ports    = ["0-65535"]
+  }
+  allow {
+    protocol = "udp"
+    ports    = ["0-65535"]
+  }
+}
+
+resource "google_compute_network" "dataproc" {
+  name = "dataproc-network"
+}
+
 resource "google_dataproc_cluster" "mycluster" {
   project = var.gcp_project_id
   region  = var.gcp_location
@@ -660,7 +727,112 @@ resource "google_dataproc_cluster" "mycluster" {
     }
 
     gce_cluster_config {
+      network = google_compute_network.dataproc.self_link
       tags    = [var.dataproc_cluster["config"]["gce_cluster_config"]["tag"]]
     }
   }
+}
+
+resource "google_logging_folder_exclusion" "my-exclusion" {
+  count       = "${var.gcp_organization_id == "" ? 0 : var.gcp_enable_privileged_resources}"
+  name        = var.folder_exclusion["name"]
+  folder      = google_folder.inspec-gcp-folder.0.name
+
+  description = var.folder_exclusion["description"]
+
+  filter      = var.folder_exclusion["filter"]
+}
+
+resource "google_filestore_instance" "instance" {
+  project = var.gcp_project_id
+  name    = var.filestore_instance["name"]
+  zone    = var.filestore_instance["zone"]
+  tier    = var.filestore_instance["tier"]
+
+  file_shares {
+    capacity_gb = var.filestore_instance["fileshare_capacity_gb"]
+    name        = var.filestore_instance["fileshare_name"]
+  }
+
+  networks {
+    network = var.filestore_instance["network_name"]
+    modes   = [var.filestore_instance["network_mode"]]
+  }
+}
+
+resource "google_logging_folder_sink" "folder-sink" {
+  count       = "${var.gcp_organization_id == "" ? 0 : var.gcp_enable_privileged_resources}"
+  name        = var.folder_sink.name
+  folder      = google_folder.inspec-gcp-folder.0.name
+
+  destination = "storage.googleapis.com/${google_storage_bucket.generic-storage-bucket.name}"
+
+  filter      = var.folder_sink.filter
+}
+
+resource "google_runtimeconfig_config" "inspec-runtime-config" {
+  project = var.gcp_project_id
+  name = var.runtimeconfig_config["name"]
+  description = var.runtimeconfig_config["description"]
+}
+
+resource "google_runtimeconfig_variable" "inspec-runtime-variable" {
+  project = var.gcp_project_id
+  parent = "${google_runtimeconfig_config.inspec-runtime-config.name}"
+  name = var.runtimeconfig_variable["name"]
+  text = var.runtimeconfig_variable["text"]
+}
+
+resource "google_redis_instance" "inspec-redis" {
+  project        = var.gcp_project_id
+  name           = var.redis["name"]
+  tier           = var.redis["tier"]
+  memory_size_gb = var.redis["memory_size_gb"]
+
+  location_id             = var.redis["location_id"]
+  alternative_location_id = var.redis["alternative_location_id"]
+
+  redis_version     = var.redis["redis_version"]
+  display_name      = var.redis["display_name"]
+  reserved_ip_range = var.redis["reserved_ip_range"]
+
+  labels = {
+    "${var.redis["label_key"]}" = var.redis["label_value"]
+  }
+}
+
+resource "google_compute_network_endpoint_group" "inspec-endpoint-group" {
+  project      = var.gcp_project_id
+  name         = var.network_endpoint_group["name"]
+  network      = google_compute_subnetwork.inspec-gcp-subnetwork.network
+  subnetwork   = google_compute_subnetwork.inspec-gcp-subnetwork.self_link
+  default_port = var.network_endpoint_group["default_port"]
+  zone         = var.gcp_zone
+}
+
+data "google_compute_node_types" "zone-node-type" {
+  project = var.gcp_project_id
+  zone    = var.gcp_zone
+}
+
+resource "google_compute_node_template" "inspec-template" {
+  project = var.gcp_project_id
+  region = var.gcp_location
+
+  name = var.node_template["name"]
+  node_type = "${data.google_compute_node_types.zone-node-type.names[0]}"
+
+  node_affinity_labels = {
+    "${var.node_template["label_key"]}" = "${var.node_template["label_value"]}"
+  }
+}
+
+resource "google_compute_node_group" "inspec-node-group" {
+  project = var.gcp_project_id
+  name = var.node_group["name"]
+  zone = var.gcp_zone
+  description = var.node_group["description"]
+
+  size = var.node_group["size"]
+  node_template = "${google_compute_node_template.inspec-template.self_link}"
 }
