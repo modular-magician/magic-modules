@@ -10,42 +10,33 @@ import (
 
 func TestAccDataSourceComputeRouter(t *testing.T) {
 	t.Parallel()
+	//region := getTestRegionFromEnv()
+	name := acctest.RandomWithPrefix("router-test")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDataSourceComputeRouterConfig(),
+				Config: testAccDataSourceComputeRouterConfig(name),
 				Check: resource.ComposeTestCheckFunc(
-					checkDataSourceStateMatchesResourceStateWithIgnores(
-						"data.google_compute_router.myrouter",
-						"google_compute_router.foobar",
-						map[string]struct{}{
-							"name": {},
-							"bgp": {},
-						},
-					),
+					resource.TestCheckResourceAttr("data.google_compute_router.myrouter", "id", name),
+					resource.TestCheckResourceAttr("data.google_compute_router.myrouter", "name", name),
+					resource.TestCheckResourceAttr("data.google_compute_router.myrouter", "network", fmt.Sprintf("https://www.googleapis.com/compute/v1/projects/%s/global/networks/%s", getTestProjectFromEnv(), name)),
 				),
 			},
 		},
 	})
 }
 
-func testAccDataSourceComputeRouterConfig() string {
+func testAccDataSourceComputeRouterConfig(name string) string {
 	return fmt.Sprintf(`
 		resource "google_compute_network" "foobar" {
-			name = "router-test-%s"
+			name = "%s"
 			auto_create_subnetworks = false
 		}
-		resource "google_compute_subnetwork" "foobar" {
-			name = "router-test-subnetwork-%s"
-			network = "${google_compute_network.foobar.self_link}"
-			ip_cidr_range = "10.0.0.0/16"
-		}
 		resource "google_compute_router" "foobar" {
-			name = "router-test-%s"
-			region = "${google_compute_subnetwork.foobar.region}"
+			name = "%s"
 			network = "${google_compute_network.foobar.name}"
 			bgp {
 				asn = 64514
@@ -54,6 +45,7 @@ func testAccDataSourceComputeRouterConfig() string {
 
 data "google_compute_router" "myrouter" {
 	name     = "${google_compute_router.foobar.name}"
+	network	 = "${google_compute_network.foobar.name}"
 }
-`, acctest.RandString(10), acctest.RandString(10), acctest.RandString(10))
+`, name, name)
 }

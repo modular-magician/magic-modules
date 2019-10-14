@@ -8,13 +8,14 @@ description: |-
 
 # google\_compute\_router
 
-Get a router within GCE from its name.
+Get a router within GCE from its name and VPC.
 
 ## Example Usage
 
 ```hcl
 data "google_compute_router" "my-router" {
-  name   = "default-us-east1"
+  name   = "myrouter-us-east1"
+  network = "my-network"
 }
 ```
 
@@ -22,11 +23,12 @@ data "google_compute_router" "my-router" {
 
 The following arguments are supported:
 
-* `name` - (Optional) The name of the router. One of `name` or `self_link`
-must be specified.
+* `name` - (Required) The name of the router.
 
-* `project` - (Optional) The ID of the project in which the resource belongs. If it
-    is not provided, the provider project is used.
+* `network` - (Required) The VPC network on which this router lives.
+
+* `project` - (Optional) The ID of the project in which the resource 
+    belongs. If it is not provided, the provider project is used.
 
 * `region` - (Optional) The region this router has been created in. If
     unspecified, this defaults to the region configured in the provider.
