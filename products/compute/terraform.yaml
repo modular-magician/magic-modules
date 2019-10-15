@@ -14,7 +14,6 @@
 --- !ruby/object:Provider::Terraform::Config
 overrides: !ruby/object:Overrides::ResourceOverrides
   Address: !ruby/object:Overrides::Terraform::ResourceOverride
-    id_format: "{{project}}/{{region}}/{{name}}"
     examples:
       - !ruby/object:Provider::Terraform::Examples
         name: "address_basic"
@@ -71,7 +70,6 @@ overrides: !ruby/object:Overrides::ResourceOverrides
     custom_code: !ruby/object:Provider::Terraform::CustomCode
       post_create: templates/terraform/post_create/labels.erb
   Autoscaler: !ruby/object:Overrides::Terraform::ResourceOverride
-    id_format: "{{zone}}/{{name}}"
     examples:
       - !ruby/object:Provider::Terraform::Examples
         name: "autoscaler_single_instance"
@@ -417,7 +415,6 @@ overrides: !ruby/object:Overrides::ResourceOverrides
       pre_delete: templates/terraform/pre_delete/detach_disk.erb
       constants: templates/terraform/constants/disk.erb
       encoder: templates/terraform/encoders/disk.erb
-      extra_schema_entry: templates/terraform/extra_schema_entry/disk.erb
       decoder: templates/terraform/decoders/disk.erb
       resource_definition: templates/terraform/resource_definition/disk.erb
     docs: !ruby/object:Provider::Terraform::Docs
@@ -508,6 +505,7 @@ overrides: !ruby/object:Overrides::ResourceOverrides
           network_name: "website-net"
     custom_code: !ruby/object:Provider::Terraform::CustomCode
       post_create: templates/terraform/post_create/labels.erb
+      extra_schema_entry: templates/terraform/extra_schema_entry/forwarding_rule.erb
     properties:
       id: !ruby/object:Overrides::Terraform::PropertyOverride
         exclude: true
@@ -906,9 +904,6 @@ overrides: !ruby/object:Overrides::ResourceOverrides
         default_value: True
         # autoCreateSubnetworks defaults to true, so we need to disable it explicitly
         conflicts: []
-      ipv4_range: !ruby/object:Overrides::Terraform::PropertyOverride
-        # autoCreateSubnetworks defaults to true, so we need to disable it explicitly
-        conflicts: []
       routingConfig: !ruby/object:Overrides::Terraform::PropertyOverride
         flatten_object: true
       routingConfig.routingMode: !ruby/object:Overrides::Terraform::PropertyOverride
@@ -922,6 +917,7 @@ overrides: !ruby/object:Overrides::ResourceOverrides
         default_from_api: true
     custom_code: !ruby/object:Provider::Terraform::CustomCode
       post_create: templates/terraform/post_create/compute_network_delete_default_route.erb
+      extra_schema_entry: templates/terraform/extra_schema_entry/network.erb
       encoder: templates/terraform/encoders/network.erb
   NetworkEndpoint: !ruby/object:Overrides::Terraform::ResourceOverride
     id_format: "{{project}}/{{zone}}/{{network_endpoint_group}}/{{instance}}/{{ip_address}}/{{port}}"
@@ -1021,7 +1017,6 @@ overrides: !ruby/object:Overrides::ResourceOverrides
   Region: !ruby/object:Overrides::Terraform::ResourceOverride
     exclude: true
   RegionAutoscaler: !ruby/object:Overrides::Terraform::ResourceOverride
-    id_format: "{{region}}/{{name}}"
     examples:
       - !ruby/object:Provider::Terraform::Examples
         name: "region_autoscaler_beta"
@@ -1334,7 +1329,6 @@ overrides: !ruby/object:Overrides::ResourceOverrides
             `next_hop_instance`.  Omit if `next_hop_instance` is specified as
             a URL.
   Router: !ruby/object:Overrides::Terraform::ResourceOverride
-    id_format: "{{region}}/{{name}}"
     mutex: router/{{region}}/{{name}}
     examples:
       - !ruby/object:Provider::Terraform::Examples
@@ -1644,7 +1638,6 @@ overrides: !ruby/object:Overrides::ResourceOverrides
       insert_minutes: 6
       update_minutes: 6
       delete_minutes: 6
-    id_format: "{{region}}/{{name}}"
     properties:
       id: !ruby/object:Overrides::Terraform::PropertyOverride
         exclude: true
