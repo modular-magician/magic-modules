@@ -4021,6 +4021,10 @@ objects:
         path: 'name'
         base_url: 'projects/{{project}}/global/operations/{{op_id}}'
         wait_ms: 1000
+        timeouts: !ruby/object:Api::Timeouts
+          insert_minutes: 6
+          update_minutes: 6
+          delete_minutes: 6
       result: !ruby/object:Api::Async::Result
         path: 'targetLink'
       status: !ruby/object:Api::Async::Status
@@ -5644,6 +5648,7 @@ objects:
     base_url: 'projects/{{project}}/zones/{{zone}}/networkEndpointGroups'
     input: true
     has_self_link: true
+    collection_url_key: 'items'
     references: !ruby/object:Api::Resource::ReferenceLinks
       guides:
         'Official Documentation': 'https://cloud.google.com/load-balancing/docs/negs/'
@@ -5750,6 +5755,7 @@ objects:
       guides:
         'Sole-Tenant Nodes': 'https://cloud.google.com/compute/docs/nodes/'
       api: 'https://cloud.google.com/compute/docs/reference/rest/v1/nodeGroups'
+    collection_url_key: 'items'
     async: !ruby/object:Api::Async
       operation: !ruby/object:Api::Async::Operation
         kind: 'compute#operation'
