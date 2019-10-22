@@ -19,6 +19,11 @@ func resourceStorageNotification() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
+			"notification_id": {
+				Type: schema.TypeString,
+				Computed: true,
+			},
+			
 			"bucket": {
 				Type:     schema.TypeString,
 				Required: true,
@@ -117,6 +122,7 @@ func resourceStorageNotificationRead(d *schema.ResourceData, meta interface{}) e
 		return handleNotFoundError(err, d, fmt.Sprintf("Notification configuration %s for bucket %s", notificationID, bucket))
 	}
 
+	d.Set("notification_id", notificationID)
 	d.Set("bucket", bucket)
 	d.Set("payload_format", res.PayloadFormat)
 	d.Set("topic", res.Topic)
