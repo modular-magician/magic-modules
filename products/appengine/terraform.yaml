@@ -27,7 +27,7 @@ overrides: !ruby/object:Overrides::ResourceOverrides
   StandardAppVersion: !ruby/object:Overrides::Terraform::ResourceOverride
     id_format: "apps/{{project}}/services/{{service}}/versions/{{version_id}}"
     import_format: ["apps/{{project}}/services/{{service}}/versions/{{version_id}}"]
-    mutex: "apps/{{project}}/services/{{service}}"
+    mutex: "apps/{{project}}"
     parameters:
       service: !ruby/object:Overrides::Terraform::PropertyOverride
         default_from_api: true
@@ -37,9 +37,13 @@ overrides: !ruby/object:Overrides::ResourceOverrides
         name: 'noop_on_destroy'
         description: |
           If set to `true`, the application version will not be deleted.
+      - !ruby/object:Provider::Terraform::VirtualFields
+        name: 'delete_service_on_destroy'
+        description: |
+          If set to `true`, the service will be deleted if it is the last version.    
     custom_code: !ruby/object:Provider::Terraform::CustomCode
-      custom_delete: templates/terraform/custom_delete/noop_on_destroy_appengine_version.go.erb
-      test_check_destroy: templates/terraform/custom_check_destroy/appengine_version.go.erb
+      custom_delete: templates/terraform/custom_delete/appversion_delete.go.erb
+      test_check_destroy: templates/terraform/custom_check_destroy/appengine.go.erb
     properties:
       id: !ruby/object:Overrides::Terraform::PropertyOverride
         name: 'version_id'
@@ -51,12 +55,14 @@ overrides: !ruby/object:Overrides::ResourceOverrides
         ignore_read: true
       threadsafe: !ruby/object:Overrides::Terraform::PropertyOverride
         ignore_read: true
+      instanceClass: !ruby/object:Overrides::Terraform::PropertyOverride
+        ignore_read: true    
     examples:
       - !ruby/object:Provider::Terraform::Examples
         name: "app_engine_standard_app_version"
-        primary_resource_id: "version_id"
+        primary_resource_id: "myapp_v1"
         ignore_read_extra:
-          - "noop_on_destroy"
+          - "delete_service_on_destroy"
         vars:
           project_id: "test-project"
           bucket_name: "appengine-static-content"
@@ -87,6 +93,18 @@ overrides: !ruby/object:Overrides::ResourceOverrides
         update_mask_fields:
           - "ssl_settings.certificate_id"
           - "ssl_settings.ssl_management_type"
+  ApplicationUrlDispatchRules: !ruby/object:Overrides::Terraform::ResourceOverride
+    id_format: "{{project}}"
+    import_format: ["{{project}}"]
+    mutex: "apps/{{project}}"
+    custom_code: !ruby/object:Provider::Terraform::CustomCode
+      test_check_destroy: templates/terraform/custom_check_destroy/appengine.go.erb
+    examples:
+      - !ruby/object:Provider::Terraform::Examples
+        name: "app_engine_application_url_dispatch_rules_basic"
+        primary_resource_id: "web_service"
+        vars:
+          bucket_name: "appengine-test-bucket"
 
 # This is for copying files over
 files: !ruby/object:Provider::Config::Files

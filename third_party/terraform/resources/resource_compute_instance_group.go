@@ -49,7 +49,7 @@ func resourceComputeInstanceGroup() *schema.Resource {
 				Optional: true,
 				Computed: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
-				Set:      schema.HashString,
+				Set:      selfLinkRelativePathHash,
 			},
 
 			"named_port": {
@@ -71,10 +71,11 @@ func resourceComputeInstanceGroup() *schema.Resource {
 			},
 
 			"network": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-				ForceNew: true,
+				Type:             schema.TypeString,
+				Optional:         true,
+				Computed:         true,
+				DiffSuppressFunc: compareSelfLinkOrResourceName,
+				ForceNew:         true,
 			},
 
 			"project": {
@@ -108,7 +109,7 @@ func getInstanceReferences(instanceUrls []string) (refs []*compute.InstanceRefer
 
 func validInstanceURLs(instanceUrls []string) bool {
 	for _, v := range instanceUrls {
-		if !strings.HasPrefix(v, "https://www.googleapis.com/compute/v1/") {
+		if !strings.HasPrefix(v, "https://") {
 			return false
 		}
 	}

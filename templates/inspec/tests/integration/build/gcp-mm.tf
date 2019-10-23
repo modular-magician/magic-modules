@@ -193,6 +193,10 @@ variable "node_group" {
   type = "map"
 }
 
+variable "router_nat" {
+  type = "map"
+}
+
 resource "google_compute_ssl_policy" "custom-ssl-policy" {
   name            = "${var.ssl_policy["name"]}"
   min_tls_version = "${var.ssl_policy["min_tls_version"]}"
@@ -668,6 +672,31 @@ resource "google_ml_engine_model" "inspec-gcp-model" {
   online_prediction_console_logging = var.ml_model["online_prediction_console_logging"]
 }
 
+resource "google_compute_firewall" "dataproc" {
+  project = var.gcp_project_id
+  name    = "dataproc-firewall"
+  network = "${google_compute_network.dataproc.name}"
+
+  source_ranges = ["10.128.0.0/9"]
+  allow {
+    protocol = "icmp"
+  }
+
+  allow {
+    protocol = "tcp"
+    ports    = ["0-65535"]
+  }
+  allow {
+    protocol = "udp"
+    ports    = ["0-65535"]
+  }
+}
+
+resource "google_compute_network" "dataproc" {
+  project = var.gcp_project_id
+  name    = "dataproc-network"
+}
+
 resource "google_dataproc_cluster" "mycluster" {
   project = var.gcp_project_id
   region  = var.gcp_location
@@ -704,6 +733,7 @@ resource "google_dataproc_cluster" "mycluster" {
     }
 
     gce_cluster_config {
+      network = google_compute_network.dataproc.self_link
       tags    = [var.dataproc_cluster["config"]["gce_cluster_config"]["tag"]]
     }
   }
@@ -811,4 +841,19 @@ resource "google_compute_node_group" "inspec-node-group" {
 
   size = var.node_group["size"]
   node_template = "${google_compute_node_template.inspec-template.self_link}"
+}
+
+resource "google_compute_router_nat" "inspec-nat" {
+  project                            = var.gcp_project_id
+  name                               = var.router_nat["name"]
+  router                             = google_compute_router.gcp-inspec-router.name
+  region                             = google_compute_router.gcp-inspec-router.region
+  nat_ip_allocate_option             = var.router_nat["nat_ip_allocate_option"]
+  source_subnetwork_ip_ranges_to_nat = var.router_nat["source_subnetwork_ip_ranges_to_nat"]
+  min_ports_per_vm                   = var.router_nat["min_ports_per_vm"]
+
+  log_config {
+    enable = var.router_nat["log_config_enable"]
+    filter = var.router_nat["log_config_filter"]
+  }
 }

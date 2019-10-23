@@ -18,7 +18,7 @@ import (
 )
 
 var (
-	instanceGroupManagerURL = regexp.MustCompile(fmt.Sprintf("^https://www.googleapis.com/compute/v1/projects/(%s)/zones/([a-z0-9-]*)/instanceGroupManagers/([^/]*)", ProjectRegex))
+	instanceGroupManagerURL = regexp.MustCompile(fmt.Sprintf("projects/(%s)/zones/([a-z0-9-]*)/instanceGroupManagers/([^/]*)", ProjectRegex))
 
 	networkConfig = &schema.Resource{
 		Schema: map[string]*schema.Schema{
@@ -179,9 +179,10 @@ func resourceContainerCluster() *schema.Resource {
 							},
 						},
 						"kubernetes_dashboard": {
-							Type:     schema.TypeList,
-							Optional: true,
-							Computed: true,
+							Type:       schema.TypeList,
+							Optional:   true,
+							Computed:   true,
+							Deprecated: "The Kubernetes Dashboard addon is deprecated for clusters on GKE.",
 							MaxItems: 1,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
@@ -344,6 +345,12 @@ func resourceContainerCluster() *schema.Resource {
 			},
 
 <% unless version == 'ga' -%>
+			"enable_shielded_nodes": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+			},
+
 			"authenticator_groups_config": {
 				Type:     schema.TypeList,
 				Optional: true,
@@ -719,6 +726,26 @@ func resourceContainerCluster() *schema.Resource {
 			},
 
 <% unless version == 'ga' -%>
+			"release_channel": {
+				Type:     schema.TypeList,
+				ForceNew: true,
+				Optional: true,
+				Computed: true,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"channel": {
+							Type:             schema.TypeString,
+							Default:          "UNSPECIFIED",
+							Optional:         true,
+							ForceNew:         true,
+							ValidateFunc:     validation.StringInSlice([]string{"UNSPECIFIED", "RAPID", "REGULAR", "STABLE"}, false),
+							DiffSuppressFunc: emptyOrDefaultStringSuppress("UNSPECIFIED"),
+						},
+					},
+				},
+			},
+
 			"vertical_pod_autoscaling": {
 				Type:     schema.TypeList,
 				MaxItems: 1,
@@ -947,6 +974,11 @@ func resourceContainerClusterCreate(d *schema.ResourceData, meta interface{}) er
 		IpAllocationPolicy:      expandIPAllocationPolicy(d.Get("ip_allocation_policy")),
 		PodSecurityPolicyConfig: expandPodSecurityPolicyConfig(d.Get("pod_security_policy_config")),
 <% unless version == 'ga' -%>
+		ShieldedNodes: &containerBeta.ShieldedNodes{
+			Enabled:         d.Get("enable_shielded_nodes").(bool),
+			ForceSendFields: []string{"Enabled"},
+		},
+		ReleaseChannel:          expandReleaseChannel(d.Get("release_channel")),
 		EnableTpu:               d.Get("enable_tpu").(bool),
 		BinaryAuthorization: &containerBeta.BinaryAuthorization{
 			Enabled:         d.Get("enable_binary_authorization").(bool),
@@ -1200,6 +1232,7 @@ func resourceContainerClusterRead(d *schema.ResourceData, meta interface{}) erro
 	d.Set("network", cluster.NetworkConfig.Network)
 	d.Set("subnetwork", cluster.NetworkConfig.Subnetwork)
 <% unless version == 'ga' -%>
+	d.Set("enable_shielded_nodes", cluster.ShieldedNodes.Enabled)
 	d.Set("enable_binary_authorization", cluster.BinaryAuthorization != nil && cluster.BinaryAuthorization.Enabled)
 	d.Set("enable_tpu", cluster.EnableTpu)
 	d.Set("tpu_ipv4_cidr_block", cluster.TpuIpv4CidrBlock)
@@ -1207,6 +1240,9 @@ func resourceContainerClusterRead(d *schema.ResourceData, meta interface{}) erro
 		return err
 	}
 	if err := d.Set("authenticator_groups_config", flattenAuthenticatorGroupsConfig(cluster.AuthenticatorGroupsConfig)); err != nil {
+		return err
+	}
+	if err := d.Set("release_channel", flattenReleaseChannel(cluster.ReleaseChannel)); err != nil {
 		return err
 	}
 	d.Set("enable_intranode_visibility", cluster.NetworkConfig.EnableIntraNodeVisibility)
@@ -1353,6 +1389,28 @@ func resourceContainerClusterUpdate(d *schema.ResourceData, meta interface{}) er
 		}
 	}
 <% unless version == 'ga' -%>
+	if d.HasChange("enable_shielded_nodes") {
+		enabled := d.Get("enable_shielded_nodes").(bool)
+		req := &containerBeta.UpdateClusterRequest{
+			Update: &containerBeta.ClusterUpdate{
+				DesiredShieldedNodes: &containerBeta.ShieldedNodes{
+					Enabled:         enabled,
+					ForceSendFields: []string{"Enabled"},
+				},
+			},
+		}
+
+		updateF := updateFunc(req, "updating GKE shielded nodes")
+		// Call update serially.
+		if err := lockedCall(lockKey, updateF); err != nil {
+			return err
+		}
+
+		log.Printf("[INFO] GKE cluster %s's shielded nodes has been updated to %v", d.Id(), enabled)
+
+		d.SetPartial("enable_shielded_nodes")
+	}
+
 	if d.HasChange("enable_binary_authorization") {
 		enabled := d.Get("enable_binary_authorization").(bool)
 		req := &containerBeta.UpdateClusterRequest{
@@ -2061,13 +2119,9 @@ func waitForContainerClusterReady(config *Config, project, location, clusterName
 	})
 }
 
-// container engine's API currently mistakenly returns the instance group manager's
-// URL instead of the instance group's URL in its responses. This shim detects that
-// error, and corrects it, by fetching the instance group manager URL and retrieving
-// the instance group manager, then using that to look up the instance group URL, which
-// is then substituted.
-//
-// This should be removed when the API response is fixed.
+// container engine's API returns the instance group manager's URL instead of the instance
+// group's URL in its responses, while the field is named as if it should have been the group
+// and not the manager. This shim should be supported for backwards compatibility reasons.
 func getInstanceGroupUrlsFromManagerUrls(config *Config, igmUrls []string) ([]string, error) {
 	instanceGroupURLs := make([]string, 0, len(igmUrls))
 	for _, u := range igmUrls {
@@ -2329,6 +2383,17 @@ func expandPrivateClusterConfig(configured interface{}) *containerBeta.PrivateCl
 }
 
 <% unless version == 'ga' -%>
+func expandReleaseChannel(configured interface{}) *containerBeta.ReleaseChannel {
+	l := configured.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil
+	}
+	config := l[0].(map[string]interface{})
+	return &containerBeta.ReleaseChannel{
+		Channel: config["channel"].(string),
+	}
+}
+
 func expandDatabaseEncryption(configured interface{}) *containerBeta.DatabaseEncryption {
 	l := configured.([]interface{})
 	if len(l) == 0 {
@@ -2535,6 +2600,21 @@ func flattenPrivateClusterConfig(c *containerBeta.PrivateClusterConfig) []map[st
 }
 
 <% unless version == 'ga' -%>
+func flattenReleaseChannel(c *containerBeta.ReleaseChannel) []map[string]interface{} {
+	result := []map[string]interface{}{}
+	if c != nil {
+		result = append(result, map[string]interface{}{
+			"channel": c.Channel,
+		})
+	} else {
+		// Explicitly set the release channel to the default.
+		result = append(result, map[string]interface{}{
+			"channel": "UNSPECIFIED",
+		})
+	}
+	return result
+}
+
 func flattenVerticalPodAutoscaling(c *containerBeta.VerticalPodAutoscaling) []map[string]interface{} {
 	if c == nil {
 		return nil
