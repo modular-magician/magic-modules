@@ -324,3 +324,16 @@ router_nat:
   min_ports_per_vm: 2
   log_config_enable: true
   log_config_filter: ERRORS_ONLY
+
+spannerinstance:
+  config: regional-us-east1
+  name: spinstance
+  display_name: inspectest
+  num_nodes: 1
+  label_key: env
+  label_value: test
+
+spannerdatabase:
+  name: spdatabase
+  instance: spinstance
+  ddl: "CREATE TABLE test (test STRING(MAX),) PRIMARY KEY (test)" 
