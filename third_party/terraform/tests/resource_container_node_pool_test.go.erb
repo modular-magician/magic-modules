@@ -163,7 +163,7 @@ func TestAccContainerNodePool_withNodeConfig(t *testing.T) {
 	})
 }
 
-<% unless version.nil? || version == 'ga' -%>
+// Authoritative taints
 func TestAccContainerNodePool_withNodeConfigTaints(t *testing.T) {
 	t.Parallel()
 
@@ -186,11 +186,9 @@ func TestAccContainerNodePool_withNodeConfigTaints(t *testing.T) {
 				// but will still cause an import diff
 				ImportStateVerifyIgnore: []string{"autoscaling.#"},
 			},
-			// Once taints are in GA, consider merging this test with the _withNodeConfig test.
 		},
 	})
 }
-<% end -%>
 
 <% unless version.nil? || version == 'ga' -%>
 func TestAccContainerNodePool_withWorkloadMetadataConfig(t *testing.T) {
@@ -1034,6 +1032,12 @@ resource "google_container_node_pool" "np_with_node_config" {
 		preemptible = true
 		min_cpu_platform = "Intel Broadwell"
 
+		initial_taint {
+			key = "taint_key"
+			value = "taint_value"
+			effect = "PREFER_NO_SCHEDULE"
+		}
+
 		// Updatable fields
 		image_type = "COS"
 	}
@@ -1064,13 +1068,18 @@ resource "google_container_node_pool" "np_with_node_config" {
 		preemptible = true
 		min_cpu_platform = "Intel Broadwell"
 
+		initial_taint {
+			key = "taint_key"
+			value = "taint_value"
+			effect = "PREFER_NO_SCHEDULE"
+		}
+
 		// Updatable fields
 		image_type = "UBUNTU"
 	}
 }`, cluster, nodePool)
 }
 
-<% unless version.nil? || version == 'ga' -%>
 func testAccContainerNodePool_withNodeConfigTaints() string {
 	return fmt.Sprintf(`
 resource "google_container_cluster" "cluster" {
@@ -1089,6 +1098,7 @@ resource "google_container_node_pool" "np_with_node_config" {
 			value = "taint_value"
 			effect = "PREFER_NO_SCHEDULE"
 		}
+
 		taint {
 			key = "taint_key2"
 			value = "taint_value2"
@@ -1097,7 +1107,6 @@ resource "google_container_node_pool" "np_with_node_config" {
 	}
 }`, acctest.RandString(10), acctest.RandString(10))
 }
-<% end -%>
 
 <% unless version.nil? || version == 'ga' -%>
 func testAccContainerNodePool_withWorkloadMetadataConfig() string {
