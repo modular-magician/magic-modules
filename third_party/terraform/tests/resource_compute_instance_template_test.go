@@ -161,6 +161,54 @@ func TestComputeInstanceTemplate_reorderDisks(t *testing.T) {
 	}
 }
 
+func TestComputeInstanceTemplate_scratchDiskSizeCustomizeDiff(t *testing.T) {
+	t.Parallel()
+
+	cases := map[string]struct {
+		Typee       string // misspelled on purpose, type is a special symbol
+		DiskType    string
+		DiskSize    int
+		ExpectError bool
+	}{
+		"scratch disk correct size": {
+			Typee:       "SCRATCH",
+			DiskType:    "local-ssd",
+			DiskSize:    375,
+			ExpectError: false,
+		},
+		"scratch disk incorrect size": {
+			Typee:       "SCRATCH",
+			DiskType:    "local-ssd",
+			DiskSize:    300,
+			ExpectError: true,
+		},
+		"non-scratch disk": {
+			Typee:       "PERSISTENT",
+			DiskType:    "",
+			DiskSize:    300,
+			ExpectError: false,
+		},
+	}
+
+	for tn, tc := range cases {
+		d := &ResourceDiffMock{
+			After: map[string]interface{}{
+				"disk.#":              1,
+				"disk.0.type":         tc.Typee,
+				"disk.0.disk_type":    tc.DiskType,
+				"disk.0.disk_size_gb": tc.DiskSize,
+			},
+		}
+		err := resourceComputeInstanceTemplateScratchDiskCustomizeDiffFunc(d)
+		if tc.ExpectError && err == nil {
+			t.Errorf("%s failed, expected error but was none", tn)
+		}
+		if !tc.ExpectError && err != nil {
+			t.Errorf("%s failed, found unexpected error: %s", tn, err)
+		}
+	}
+}
+
 func TestAccComputeInstanceTemplate_basic(t *testing.T) {
 	t.Parallel()
 
@@ -736,6 +784,21 @@ func TestAccComputeInstanceTemplate_shieldedVmConfig2(t *testing.T) {
 	})
 }
 
+func TestAccComputeInstanceTemplate_invalidDiskType(t *testing.T) {
+	t.Parallel()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccComputeInstanceTemplate_invalidDiskType(),
+				ExpectError: regexp.MustCompile("SCRATCH disks must have a disk_type of local-ssd"),
+			},
+		},
+	})
+}
+
 func testAccCheckComputeInstanceTemplateDestroy(s *terraform.State) error {
 	config := testAccProvider.Meta().(*Config)
 
@@ -744,8 +807,9 @@ func testAccCheckComputeInstanceTemplateDestroy(s *terraform.State) error {
 			continue
 		}
 
+		splits := strings.Split(rs.Primary.ID, "/")
 		_, err := config.clientCompute.InstanceTemplates.Get(
-			config.Project, rs.Primary.ID).Do()
+			config.Project, splits[len(splits)-1]).Do()
 		if err == nil {
 			return fmt.Errorf("Instance template still exists")
 		}
@@ -782,13 +846,15 @@ func testAccCheckComputeInstanceTemplateExistsInProject(n, p string, instanceTem
 
 		config := testAccProvider.Meta().(*Config)
 
+		splits := strings.Split(rs.Primary.ID, "/")
+		templateName := splits[len(splits)-1]
 		found, err := config.clientCompute.InstanceTemplates.Get(
-			p, rs.Primary.ID).Do()
+			p, templateName).Do()
 		if err != nil {
 			return err
 		}
 
-		if found.Name != rs.Primary.ID {
+		if found.Name != templateName {
 			return fmt.Errorf("Instance template not found")
 		}
 
@@ -811,13 +877,15 @@ func testAccCheckComputeBetaInstanceTemplateExistsInProject(n, p string, instanc
 
 		config := testAccProvider.Meta().(*Config)
 
+		splits := strings.Split(rs.Primary.ID, "/")
+		templateName := splits[len(splits)-1]
 		found, err := config.clientComputeBeta.InstanceTemplates.Get(
-			p, rs.Primary.ID).Do()
+			p, templateName).Do()
 		if err != nil {
 			return err
 		}
 
-		if found.Name != rs.Primary.ID {
+		if found.Name != templateName {
 			return fmt.Errorf("Instance template not found")
 		}
 
@@ -1867,4 +1935,42 @@ resource "google_compute_instance_template" "foobar" {
 		enable_integrity_monitoring = %t
 	}
 }`, acctest.RandString(10), enableSecureBoot, enableVtpm, enableIntegrityMonitoring)
+}
+
+func testAccComputeInstanceTemplate_invalidDiskType() string {
+	return fmt.Sprintf(`
+# Use this datasource insead of hardcoded values when https://github.com/hashicorp/terraform/issues/22679
+# is resolved.
+# data "google_compute_image" "my_image" {
+# 	family  = "centos-7"
+# 	project = "gce-uefi-images"
+# }
+
+resource "google_compute_instance_template" "foobar" {
+	name = "instancet-test-%s"
+	machine_type = "n1-standard-1"
+	can_ip_forward = false
+
+	disk {
+		source_image = "https://www.googleapis.com/compute/v1/projects/gce-uefi-images/global/images/centos-7-v20190729"
+		auto_delete = true
+		boot = true
+	}
+
+	disk {
+		auto_delete = true
+		type = "SCRATCH"
+		disk_type = "local-ssd"
+	}
+
+	disk {
+		source_image = "https://www.googleapis.com/compute/v1/projects/gce-uefi-images/global/images/centos-7-v20190729"
+		auto_delete = true
+		type = "SCRATCH"
+	}
+
+	network_interface {
+		network = "default"
+	}
+}`, acctest.RandString(10))
 }
