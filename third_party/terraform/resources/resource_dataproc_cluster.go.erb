@@ -362,7 +362,7 @@ func resourceDataprocCluster() *schema.Resource {
 									"enable_http_port_access": {
 										Type:     schema.TypeBool,
 										Optional: true,
-										Default:  false,
+										ForceNew: true,
 									},
 								},
 							},
