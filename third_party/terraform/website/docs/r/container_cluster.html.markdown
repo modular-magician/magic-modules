@@ -114,19 +114,7 @@ master will be created, as well as the default node location. If you specify a
 zone (such as `us-central1-a`), the cluster will be a zonal cluster with a
 single cluster master. If you specify a region (such as `us-west1`), the
 cluster will be a regional cluster with multiple masters spread across zones in
-the region, and with default node locations in those zones as well.
-
-* `zone` - (Optional, Deprecated) The zone that the cluster master and nodes
-should be created in. If specified, this cluster will be a zonal cluster. `zone`
-has been deprecated in favour of `location`.
-
-* `region` (Optional, Deprecated) The region that the cluster master and nodes
-should be created in. If specified, this cluster will be a [regional clusters](https://cloud.google.com/kubernetes-engine/docs/concepts/multi-zone-and-regional-clusters#regional)
-where the cluster master and nodes (by default) will be created in several zones
-throughout the region. `region` has been deprecated in favour of `location`.
-
-~> Only one of `location`, `zone`, and `region` may be set. If none are set,
-the provider zone is used to create a zonal cluster.
+the region, and with default node locations in those zones as well
 
 * `node_locations` - (Optional) The list of zones in which the cluster's nodes
 are located. Nodes must be in the region of their regional cluster or in the
@@ -139,14 +127,6 @@ single zone while nodes are present in each of the primary zone and the node
 locations. In contrast, in a regional cluster, cluster master nodes are present
 in multiple zones in the region. For that reason, regional clusters should be
 preferred.
-
-* `additional_zones` - (Optional) The list of zones in which the cluster's nodes
-should be located. These must be in the same region as the cluster zone for
-zonal clusters, or in the region of a regional cluster. In a multi-zonal cluster,
-the number of nodes specified in `initial_node_count` is created in
-all specified zones as well as the primary zone. If specified for a regional
-cluster, nodes will only be created in these zones. `additional_zones` has been
-deprecated in favour of `node_locations`.
 
 * `addons_config` - (Optional) The configuration for addons supported by GKE.
     Structure is documented below.
@@ -206,7 +186,7 @@ set this to a value of at least `1`, alongside setting
 
 * `logging_service` - (Optional) The logging service that the cluster should
     write logs to. Available options include `logging.googleapis.com`,
-    `logging.googleapis.com/kubernetes`, and `none`. Defaults to `logging.googleapis.com`
+    `logging.googleapis.com/kubernetes`, and `none`. Defaults to `logging.googleapis.com/kubernetes`
 
 * `maintenance_policy` - (Optional) The maintenance policy to use for the cluster. Structure is
     documented below.
@@ -233,9 +213,9 @@ Structure is documented below.
     [the docs](https://cloud.google.com/kubernetes-engine/versioning-and-upgrades#specifying_cluster_version)
     describe the various acceptable formats for this field.
 
--> If you are using the `google_container_engine_versions` datasource with a regional cluster, ensure that you have provided a `region`
-to the datasource. A `region` can have a different set of supported versions than its corresponding `zone`s, and not all `zone`s in a
-`region` are guaranteed to support the same version.
+-> If you are using the `google_container_engine_versions` datasource with a regional cluster, ensure that you have provided a `location`
+to the datasource. A region can have a different set of supported versions than its corresponding zones, and not all zones in a
+region are guaranteed to support the same version.
 
 * `monitoring_service` - (Optional) The monitoring service that the cluster
     should write metrics to.
@@ -243,7 +223,7 @@ to the datasource. A `region` can have a different set of supported versions tha
     VM metrics will be collected by Google Compute Engine regardless of this setting
     Available options include
     `monitoring.googleapis.com`, `monitoring.googleapis.com/kubernetes`, and `none`.
-    Defaults to `monitoring.googleapis.com`
+    Defaults to `monitoring.googleapis.com/kubernetes`
 
 * `network` - (Optional) The name or self_link of the Google Compute Engine
     network to which the cluster is connected. For Shared VPC, set this to the self link of the
@@ -563,9 +543,9 @@ The `node_config` block supports:
     Note this will grant read access to ALL GCS content unless you also
     specify a custom role. See https://cloud.google.com/kubernetes-engine/docs/how-to/access-scopes
   * `logging-write` (`https://www.googleapis.com/auth/logging.write`),
-    if `logging_service` points to Google
+    if `logging_service` is not `none`.
   * `monitoring` (`https://www.googleapis.com/auth/monitoring`),
-    if `monitoring_service` points to Google
+    if `monitoring_service` is not `none`.
 
 * `preemptible` - (Optional) A boolean that represents whether or not the underlying node VMs
     are preemptible. See the [official documentation](https://cloud.google.com/container-engine/docs/preemptible-vm)
@@ -748,10 +728,12 @@ This resource provides the following
 
 ## Import
 
-GKE clusters can be imported using the `project` , `zone` or `region`, and `name`. If the project is omitted, the default
+GKE clusters can be imported using the `project` , `location`, and `name`. If the project is omitted, the default
 provider value will be used. Examples:
 
 ```
+$ terraform import google_container_cluster.mycluster projects/my-gcp-project/locations/us-east1-a/clusters/my-cluster
+
 $ terraform import google_container_cluster.mycluster my-gcp-project/us-east1-a/my-cluster
 
 $ terraform import google_container_cluster.mycluster us-east1-a/my-cluster
