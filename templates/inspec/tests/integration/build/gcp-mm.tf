@@ -197,11 +197,15 @@ variable "router_nat" {
   type = "map"
 }
 
+<<<<<<< HEAD
 variable "spannerinstance" {
   type = "map"
 }
 
 variable "spannerdatabase" {
+=======
+variable "service" {
+>>>>>>> upstream/master
   type = "map"
 }
 
@@ -512,9 +516,9 @@ resource "google_compute_router" "gcp-inspec-router" {
 resource "google_compute_disk" "snapshot-disk" {
   project = "${var.gcp_project_id}"
   name  = var.snapshot["disk_name"]
-  type  = "${var.gcp_compute_disk_type}"
+  type  = var.snapshot["disk_type"]
   zone  = "${var.gcp_zone}"
-  image = "${var.gcp_compute_disk_image}"
+  image = var.snapshot["disk_image"]
   labels = {
     environment = "generic_compute_disk_label"
   }
@@ -865,6 +869,12 @@ resource "google_compute_router_nat" "inspec-nat" {
     filter = var.router_nat["log_config_filter"]
   }
 }
+
+resource "google_project_service" "project" {
+  project = var.gcp_project_id
+  service = var.service["name"]
+}
+
 
 resource "google_spanner_instance" "spanner_instance" {
   project      = "${var.gcp_project_id}"
