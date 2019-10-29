@@ -197,17 +197,18 @@ variable "router_nat" {
   type = "map"
 }
 
-<<<<<<< HEAD
+variable "service" {
+  type = "map"
+}
+
 variable "spannerinstance" {
   type = "map"
 }
 
 variable "spannerdatabase" {
-=======
-variable "service" {
->>>>>>> upstream/master
   type = "map"
 }
+
 
 resource "google_compute_ssl_policy" "custom-ssl-policy" {
   name            = "${var.ssl_policy["name"]}"
@@ -874,7 +875,6 @@ resource "google_project_service" "project" {
   project = var.gcp_project_id
   service = var.service["name"]
 }
-
 
 resource "google_spanner_instance" "spanner_instance" {
   project      = "${var.gcp_project_id}"
