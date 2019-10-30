@@ -332,7 +332,7 @@ The `addons_config` block supports:
     controller addon, which makes it easy to set up HTTP load balancers for services in a
     cluster. It is enabled by default; set `disabled = true` to disable.
 
-* `kubernetes_dashboard` - (Optional) The status of the Kubernetes Dashboard
+* `kubernetes_dashboard` - (Optional, Deprecated) The status of the Kubernetes Dashboard
     add-on, which controls whether the Kubernetes Dashboard is enabled for this cluster.
     It is disabled by default; set `disabled = false` to enable.
 
@@ -402,7 +402,7 @@ The `authenticator_groups_config` block supports:
 
 The `maintenance_policy` block supports:
 
-* `daily_maintenance_window` - (Required) Time window specified for daily maintenance operations.
+* `daily_maintenance_window` - (Required in GA, Optional in Beta) Time window specified for daily maintenance operations.
     Specify `start_time` in [RFC3339](https://www.ietf.org/rfc/rfc3339.txt) format "HH:MM”,
     where HH : \[00-23\] and MM : \[00-59\] GMT. For example:
 
@@ -413,6 +413,26 @@ maintenance_policy {
   }
 }
 ```
+
+* `recurring_window` - (Optional, [Beta](https://terraform.io/docs/providers/google/provider_versions.html)) Time window for
+recurring maintenance operations.
+
+Specify `start_time` and `end_time` in [RFC3339](https://www.ietf.org/rfc/rfc3339.txt) date format.  The start time's date is
+the initial date that the window starts, and the end time is used for calculating duration.  Specify `recurrence` in
+[RFC5545](https://tools.ietf.org/html/rfc5545#section-3.8.5.3) RRULE format, to specify when this recurs.
+
+For example:
+```
+maintenance_policy {
+  recurring_window {
+    start_time = "2019-01-01T03:00"
+    end_time = "2019-01-01T06:00"
+    recurrence = "FREQ=DAILY"
+  }
+}
+```
+
+In beta, one or the other of `recurring_window` and `daily_maintenance_window` is required if a `maintenance_policy` block is supplied.
 
 The `ip_allocation_policy` block supports:
 
@@ -567,9 +587,14 @@ The `node_config` block supports:
 * `tags` - (Optional) The list of instance tags applied to all nodes. Tags are used to identify
     valid sources or targets for network firewalls.
 
-* `taint` - (Optional, [Beta](https://terraform.io/docs/providers/google/provider_versions.html)) List of
-    [kubernetes taints](https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/)
-    to apply to each node. Structure is documented below.
+* `taint` - (Optional) A list of [Kubernetes taints](https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/)
+to apply to nodes. GKE's API can only set this field on cluster creation.
+However, GKE will add taints to your nodes if you enable certain features such
+as GPUs. If this field is set, any diffs on this field will cause Terraform to
+recreate the underlying resource. Taint values can be updated safely in
+Kubernetes (eg. through `kubectl`), and it's recommended that you do not use
+this field to manage taints. If you do, `lifecycle.ignore_changes` is
+recommended. Structure is documented below.
 
 * `workload_metadata_config` - (Optional, [Beta](https://terraform.io/docs/providers/google/provider_versions.html)) Metadata configuration to expose to workloads on the node pool.
     Structure is documented below.

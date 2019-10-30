@@ -152,17 +152,20 @@ var schemaNodeConfig = &schema.Schema{
 				Type:     schema.TypeList,
 				Optional: true,
 				Computed: true,
+				ForceNew: true,
 				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"enable_secure_boot": {
 							Type:     schema.TypeBool,
 							Optional: true,
+							ForceNew: true,
 							Default:  false,
 						},
 						"enable_integrity_monitoring": {
 							Type:     schema.TypeBool,
 							Optional: true,
+							ForceNew: true,
 							Default:  true,
 						},
 					},
@@ -170,9 +173,6 @@ var schemaNodeConfig = &schema.Schema{
 			},
 
 			"taint": {
-<% if version.nil? || version == 'ga' -%>
-				Removed:       "This field is in beta. Use it in the the google-beta provider instead. See https://terraform.io/docs/providers/google/provider_versions.html for more details.",
-<% end -%>
 				Type:             schema.TypeList,
 				Optional:         true,
 				// Computed=true because GKE Sandbox will automatically add taints to nodes that can/cannot run sandboxed pods.
@@ -345,7 +345,6 @@ func expandNodeConfig(v interface{}) *containerBeta.NodeConfig {
 		nc.MinCpuPlatform = v.(string)
 	}
 
-<% unless version == 'ga' -%>
 	if v, ok := nodeConfig["taint"]; ok && len(v.([]interface{})) > 0 {
 		taints := v.([]interface{})
 		nodeTaints := make([]*containerBeta.NodeTaint, 0, len(taints))
@@ -360,7 +359,6 @@ func expandNodeConfig(v interface{}) *containerBeta.NodeConfig {
 		}
 		nc.Taints = nodeTaints
 	}
-<% end -%>
 
 <% unless version == 'ga' -%>
 	if v, ok := nodeConfig["workload_metadata_config"]; ok && len(v.([]interface{})) > 0 {
@@ -402,8 +400,8 @@ func flattenNodeConfig(c *containerBeta.NodeConfig) []map[string]interface{} {
 		"preemptible":              c.Preemptible,
 		"min_cpu_platform":         c.MinCpuPlatform,
 		"shielded_instance_config": flattenShieldedInstanceConfig(c.ShieldedInstanceConfig),
-<% unless version == 'ga' -%>
 		"taint":                    flattenTaints(c.Taints),
+<% unless version == 'ga' -%>
 		"workload_metadata_config": flattenWorkloadMetadataConfig(c.WorkloadMetadataConfig),
 		"sandbox_config": 			flattenSandboxConfig(c.SandboxConfig),
 <% end -%>
@@ -438,7 +436,6 @@ func flattenShieldedInstanceConfig(c *containerBeta.ShieldedInstanceConfig) []ma
 	return result
 }
 
-<% unless version.nil? || version == 'ga' -%>
 func flattenTaints(c []*containerBeta.NodeTaint) []map[string]interface{} {
 	result := []map[string]interface{}{}
 	for _, taint := range c {
@@ -450,7 +447,6 @@ func flattenTaints(c []*containerBeta.NodeTaint) []map[string]interface{} {
 	}
 	return result
 }
-<% end -%>
 
 <% unless version.nil? || version == 'ga' -%>
 func flattenWorkloadMetadataConfig(c *containerBeta.WorkloadMetadataConfig) []map[string]interface{} {
