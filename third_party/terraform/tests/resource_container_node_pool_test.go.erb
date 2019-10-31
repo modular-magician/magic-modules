@@ -28,7 +28,6 @@ func TestAccContainerNodePool_basic(t *testing.T) {
 				ResourceName:      "google_container_node_pool.np",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateVerifyIgnore: []string{"max_pods_per_node"},
 			},
 		},
 	})
@@ -53,14 +52,12 @@ func TestAccContainerNodePool_nodeLocations(t *testing.T) {
 				ResourceName:      "google_container_node_pool.np",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateVerifyIgnore: []string{"max_pods_per_node"},
 			},
 		},
 	})
 }
 <% end -%>
 
-<% unless version == 'ga' -%>
 func TestAccContainerNodePool_maxPodsPerNode(t *testing.T) {
 	t.Parallel()
 
@@ -79,12 +76,10 @@ func TestAccContainerNodePool_maxPodsPerNode(t *testing.T) {
 				ResourceName:      "google_container_node_pool.np",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateVerifyIgnore: []string{"max_pods_per_node"},
 			},
 		},
 	})
 }
-<% end -%>
 
 func TestAccContainerNodePool_namePrefix(t *testing.T) {
 	t.Parallel()
@@ -103,7 +98,7 @@ func TestAccContainerNodePool_namePrefix(t *testing.T) {
 				ResourceName:            "google_container_node_pool.np",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"name_prefix", "max_pods_per_node"},
+				ImportStateVerifyIgnore: []string{"name_prefix"},
 			},
 		},
 	})
@@ -126,7 +121,6 @@ func TestAccContainerNodePool_noName(t *testing.T) {
 				ResourceName:      "google_container_node_pool.np",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateVerifyIgnore: []string{"max_pods_per_node"},
 			},
 		},
 	})
@@ -152,7 +146,7 @@ func TestAccContainerNodePool_withNodeConfig(t *testing.T) {
 				ImportStateVerify: true,
 				// autoscaling.# = 0 is equivalent to no autoscaling at all,
 				// but will still cause an import diff
-				ImportStateVerifyIgnore: []string{"autoscaling.#", "max_pods_per_node"},
+				ImportStateVerifyIgnore: []string{"autoscaling.#"},
 			},
 			resource.TestStep{
 				Config: testAccContainerNodePool_withNodeConfigUpdate(cluster, nodePool),
@@ -163,40 +157,11 @@ func TestAccContainerNodePool_withNodeConfig(t *testing.T) {
 				ImportStateVerify: true,
 				// autoscaling.# = 0 is equivalent to no autoscaling at all,
 				// but will still cause an import diff
-				ImportStateVerifyIgnore: []string{"autoscaling.#", "max_pods_per_node"},
+				ImportStateVerifyIgnore: []string{"autoscaling.#"},
 			},
 		},
 	})
 }
-
-<% unless version.nil? || version == 'ga' -%>
-func TestAccContainerNodePool_withNodeConfigTaints(t *testing.T) {
-	t.Parallel()
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckContainerNodePoolDestroy,
-		Steps: []resource.TestStep{
-			resource.TestStep{
-				Config: testAccContainerNodePool_withNodeConfigTaints(),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("google_container_node_pool.np_with_node_config", "node_config.0.taint.#", "2"),
-				),
-			},
-			{
-				ResourceName:            "google_container_node_pool.np_with_node_config",
-				ImportState:             true,
-				ImportStateVerify:       true,
-				// autoscaling.# = 0 is equivalent to no autoscaling at all,
-				// but will still cause an import diff
-				ImportStateVerifyIgnore: []string{"autoscaling.#", "max_pods_per_node"},
-			},
-			// Once taints are in GA, consider merging this test with the _withNodeConfig test.
-		},
-	})
-}
-<% end -%>
 
 <% unless version.nil? || version == 'ga' -%>
 func TestAccContainerNodePool_withWorkloadMetadataConfig(t *testing.T) {
@@ -222,7 +187,6 @@ func TestAccContainerNodePool_withWorkloadMetadataConfig(t *testing.T) {
 				ImportStateVerifyIgnore: []string{
 					"node_config.0.workload_metadata_config.#",
 					"node_config.0.workload_metadata_config.0.node_metadata",
-					"max_pods_per_node",
 				},
 			},
 		},
@@ -295,7 +259,6 @@ func TestAccContainerNodePool_withGPU(t *testing.T) {
 				ResourceName:      "google_container_node_pool.np_with_gpu",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateVerifyIgnore: []string{"max_pods_per_node"},
 			},
 		},
 	})
@@ -332,7 +295,6 @@ func TestAccContainerNodePool_withManagement(t *testing.T) {
 				ResourceName:      "google_container_node_pool.np_with_management",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateVerifyIgnore: []string{"max_pods_per_node"},
 			},
 			resource.TestStep{
 				Config: testAccContainerNodePool_withManagement(cluster, nodePool, management),
@@ -349,7 +311,6 @@ func TestAccContainerNodePool_withManagement(t *testing.T) {
 				ResourceName:      "google_container_node_pool.np_with_management",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateVerifyIgnore: []string{"max_pods_per_node"},
 			},
 		},
 	})
@@ -370,7 +331,6 @@ func TestAccContainerNodePool_withNodeConfigScopeAlias(t *testing.T) {
 				ResourceName:      "google_container_node_pool.np_with_node_config_scope_alias",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateVerifyIgnore: []string{"max_pods_per_node"},
 			},
 		},
 	})
@@ -399,7 +359,6 @@ func TestAccContainerNodePool_regionalAutoscaling(t *testing.T) {
 				ResourceName:      "google_container_node_pool.np",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateVerifyIgnore: []string{"max_pods_per_node"},
 			},
 			resource.TestStep{
 				Config: testAccContainerNodePool_updateAutoscaling(cluster, np),
@@ -412,7 +371,6 @@ func TestAccContainerNodePool_regionalAutoscaling(t *testing.T) {
 				ResourceName:      "google_container_node_pool.np",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateVerifyIgnore: []string{"max_pods_per_node"},
 			},
 			resource.TestStep{
 				Config: testAccContainerNodePool_basic(cluster, np),
@@ -427,7 +385,7 @@ func TestAccContainerNodePool_regionalAutoscaling(t *testing.T) {
 				ImportStateVerify: true,
 				// autoscaling.# = 0 is equivalent to no autoscaling at all,
 				// but will still cause an import diff
-				ImportStateVerifyIgnore: []string{"autoscaling.#", "max_pods_per_node"},
+				ImportStateVerifyIgnore: []string{"autoscaling.#"},
 			},
 		},
 	})
@@ -455,7 +413,6 @@ func TestAccContainerNodePool_autoscaling(t *testing.T) {
 				ResourceName:      "google_container_node_pool.np",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateVerifyIgnore: []string{"max_pods_per_node"},
 			},
 			resource.TestStep{
 				Config: testAccContainerNodePool_updateAutoscaling(cluster, np),
@@ -468,7 +425,6 @@ func TestAccContainerNodePool_autoscaling(t *testing.T) {
 				ResourceName:      "google_container_node_pool.np",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateVerifyIgnore: []string{"max_pods_per_node"},
 			},
 			resource.TestStep{
 				Config: testAccContainerNodePool_basic(cluster, np),
@@ -483,7 +439,7 @@ func TestAccContainerNodePool_autoscaling(t *testing.T) {
 				ImportStateVerify: true,
 				// autoscaling.# = 0 is equivalent to no autoscaling at all,
 				// but will still cause an import diff
-				ImportStateVerifyIgnore: []string{"autoscaling.#", "max_pods_per_node"},
+				ImportStateVerifyIgnore: []string{"autoscaling.#"},
 			},
 		},
 	})
@@ -510,7 +466,6 @@ func TestAccContainerNodePool_resize(t *testing.T) {
 				ResourceName:      "google_container_node_pool.np",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateVerifyIgnore: []string{"max_pods_per_node"},
 			},
 			{
 				Config: testAccContainerNodePool_resize(cluster, np),
@@ -522,7 +477,6 @@ func TestAccContainerNodePool_resize(t *testing.T) {
 				ResourceName:      "google_container_node_pool.np",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateVerifyIgnore: []string{"max_pods_per_node"},
 			},
 		},
 	})
@@ -546,7 +500,6 @@ func TestAccContainerNodePool_version(t *testing.T) {
 				ResourceName:      "google_container_node_pool.np",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateVerifyIgnore: []string{"max_pods_per_node"},
 			},
 			{
 				Config: testAccContainerNodePool_updateVersion(cluster, np),
@@ -555,7 +508,6 @@ func TestAccContainerNodePool_version(t *testing.T) {
 				ResourceName:      "google_container_node_pool.np",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateVerifyIgnore: []string{"max_pods_per_node"},
 			},
 			{
 				Config: testAccContainerNodePool_version(cluster, np),
@@ -564,7 +516,6 @@ func TestAccContainerNodePool_version(t *testing.T) {
 				ResourceName:      "google_container_node_pool.np",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateVerifyIgnore: []string{"max_pods_per_node"},
 			},
 		},
 	})
@@ -588,7 +539,6 @@ func TestAccContainerNodePool_regionalClusters(t *testing.T) {
 				ResourceName:      "google_container_node_pool.np",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateVerifyIgnore: []string{"max_pods_per_node"},
 			},
 		},
 	})
@@ -612,7 +562,6 @@ func TestAccContainerNodePool_012_ConfigModeAttr(t *testing.T) {
 				ResourceName:            "google_container_node_pool.np",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"max_pods_per_node"},
 			},
 			{
 				Config: testAccContainerNodePool_012_ConfigModeAttr2(cluster, np),
@@ -621,7 +570,6 @@ func TestAccContainerNodePool_012_ConfigModeAttr(t *testing.T) {
 				ResourceName:            "google_container_node_pool.np",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"max_pods_per_node"},
 			},
 		},
 	})
@@ -646,7 +594,6 @@ func TestAccContainerNodePool_EmptyGuestAccelerator(t *testing.T) {
 				ResourceName:            "google_container_node_pool.np",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"max_pods_per_node"},
 			},
 			{
 				// Test alternative way to specify an empty node pool
@@ -656,7 +603,6 @@ func TestAccContainerNodePool_EmptyGuestAccelerator(t *testing.T) {
 				ResourceName:            "google_container_node_pool.np",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"max_pods_per_node"},
 			},
 			{
 				// Assert that changes in count from 1 result in a diff
@@ -669,6 +615,30 @@ func TestAccContainerNodePool_EmptyGuestAccelerator(t *testing.T) {
 				Config:             testAccContainerNodePool_PartialEmptyGuestAccelerator2(cluster, np),
 				ExpectNonEmptyPlan: true,
 				PlanOnly:           true,
+			},
+		},
+	})
+}
+
+func TestAccContainerNodePool_shieldedInstanceConfig(t *testing.T) {
+	t.Parallel()
+
+	cluster := fmt.Sprintf("tf-nodepool-test-%s", acctest.RandString(10))
+	np := fmt.Sprintf("tf-nodepool-test-%s", acctest.RandString(10))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckContainerNodePoolDestroy,
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: testAccContainerNodePool_shieldedInstanceConfig(cluster, np),
+			},
+			resource.TestStep{
+				ResourceName:            "google_container_node_pool.np",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"max_pods_per_node"},
 			},
 		},
 	})
@@ -782,7 +752,6 @@ resource "google_container_node_pool" "np" {
 }
 <% end -%>
 
-<% unless version == 'ga' -%>
 func testAccContainerNodePool_maxPodsPerNode(cluster, np string) string {
 	return fmt.Sprintf(`
 resource "google_compute_network" "container_network" {
@@ -838,7 +807,6 @@ resource "google_container_node_pool" "np" {
 	initial_node_count = 2
 }`, cluster, cluster, np)
 }
-<% end -%>
 
 func testAccContainerNodePool_regionalClusters(cluster, np string) string {
 	return fmt.Sprintf(`
@@ -1037,6 +1005,18 @@ resource "google_container_node_pool" "np_with_node_config" {
 		preemptible = true
 		min_cpu_platform = "Intel Broadwell"
 
+		taint {
+			key = "taint_key"
+			value = "taint_value"
+			effect = "PREFER_NO_SCHEDULE"
+		}
+
+		taint {
+			key = "taint_key2"
+			value = "taint_value2"
+			effect = "NO_EXECUTE"
+		}
+
 		// Updatable fields
 		image_type = "COS"
 	}
@@ -1067,40 +1047,23 @@ resource "google_container_node_pool" "np_with_node_config" {
 		preemptible = true
 		min_cpu_platform = "Intel Broadwell"
 
-		// Updatable fields
-		image_type = "UBUNTU"
-	}
-}`, cluster, nodePool)
-}
-
-<% unless version.nil? || version == 'ga' -%>
-func testAccContainerNodePool_withNodeConfigTaints() string {
-	return fmt.Sprintf(`
-resource "google_container_cluster" "cluster" {
-	name = "tf-cluster-nodepool-test-%s"
-	zone = "us-central1-a"
-	initial_node_count = 1
-}
-resource "google_container_node_pool" "np_with_node_config" {
-	name = "tf-nodepool-test-%s"
-	zone = "us-central1-a"
-	cluster = "${google_container_cluster.cluster.name}"
-	initial_node_count = 1
-	node_config {
 		taint {
 			key = "taint_key"
 			value = "taint_value"
 			effect = "PREFER_NO_SCHEDULE"
 		}
+
 		taint {
 			key = "taint_key2"
 			value = "taint_value2"
 			effect = "NO_EXECUTE"
 		}
+
+		// Updatable fields
+		image_type = "UBUNTU"
 	}
-}`, acctest.RandString(10), acctest.RandString(10))
+}`, cluster, nodePool)
 }
-<% end -%>
 
 <% unless version.nil? || version == 'ga' -%>
 func testAccContainerNodePool_withWorkloadMetadataConfig() string {
@@ -1232,7 +1195,7 @@ resource "google_container_node_pool" "np_with_gpu" {
 
 	node_config {
 		machine_type = "n1-standard-1"
-		disk_size_gb = 10
+		disk_size_gb = 32
 
 		oauth_scopes = [
 			"https://www.googleapis.com/auth/devstorage.read_only",
@@ -1443,6 +1406,28 @@ resource "google_container_node_pool" "np" {
 		guest_accelerator {
 			count = 1
 			type  = "nvidia-tesla-p9000"
+		}
+	}
+}`, cluster, np)
+}
+
+func testAccContainerNodePool_shieldedInstanceConfig(cluster, np string) string {
+	return fmt.Sprintf(`
+resource "google_container_cluster" "cluster" {
+	name               = "%s"
+	location           = "us-central1-a"
+	initial_node_count = 1
+}
+
+resource "google_container_node_pool" "np" {
+	name               = "%s"
+	location           = "us-central1-a"
+	cluster            = "${google_container_cluster.cluster.name}"
+	initial_node_count = 2
+	node_config {
+		shielded_instance_config {
+			enable_integrity_monitoring = true
+			enable_secure_boot          = true
 		}
 	}
 }`, cluster, np)

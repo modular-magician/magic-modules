@@ -156,7 +156,7 @@ in this cluster in CIDR notation (e.g. 10.96.0.0/14). Leave blank to have one
 automatically chosen or specify a /14 block in 10.0.0.0/8. This field will only
 work if your cluster is not VPC-native- when an `ip_allocation_policy` block is
 not defined, or `ip_allocation_policy.use_ip_aliases` is set to false. If your
-cluster is VPC-native, use `ip_allocation_policy.cluster_ipv4_cidr_block`. 
+cluster is VPC-native, use `ip_allocation_policy.cluster_ipv4_cidr_block`.
 
 * `cluster_autoscaling` - (Optional, [Beta](https://terraform.io/docs/providers/google/provider_versions.html))
 Per-cluster configuration of Node Auto-Provisioning with Cluster Autoscaler to
@@ -170,11 +170,10 @@ for more details. Structure is documented below.
 
 * `description` - (Optional) Description of the cluster.
 
-* `default_max_pods_per_node` - (Optional, [Beta](https://terraform.io/docs/providers/google/provider_versions.html)) The default maximum number of pods per node in this cluster.
-    Note that this does not work on node pools which are "route-based" - that is, node
-    pools belonging to clusters that do not have IP Aliasing enabled.
-    See the [official documentation](https://cloud.google.com/kubernetes-engine/docs/how-to/flexible-pod-cidr)
-    for more information.
+* `default_max_pods_per_node` - (Optional) The default maximum number of pods
+per node in this cluster. This doesn't work on "routes-based" clusters, clusters
+that don't have IP Aliasing enabled. See the [official documentation](https://cloud.google.com/kubernetes-engine/docs/how-to/flexible-pod-cidr)
+for more information.
 
 * `enable_binary_authorization` - (Optional, [Beta](https://terraform.io/docs/providers/google/provider_versions.html)) Enable Binary Authorization for this cluster.
     If enabled, all container images will be validated by Google Binary Authorization.
@@ -190,6 +189,8 @@ for more details. Structure is documented below.
     When enabled, identities in the system, including service accounts, nodes, and controllers,
     will have statically granted permissions beyond those provided by the RBAC configuration or IAM.
     Defaults to `false`
+
+* `enable_shielded_nodes` - (Optional, [Beta](https://terraform.io/docs/providers/google/provider_versions.html)) Enable Shielded Nodes features on all nodes in this cluster.  Defaults to `false`.
 
 * `initial_node_count` - (Optional) The number of nodes to create in this
 cluster's default node pool. In regional or multi-zonal clusters, this is the
@@ -288,6 +289,10 @@ to the datasource. A `region` can have a different set of supported versions tha
 * `project` - (Optional) The ID of the project in which the resource belongs. If it
     is not provided, the provider project is used.
 
+* `release_channel` - (Optional, [Beta](https://terraform.io/docs/providers/google/provider_versions.html)) Configuration options for the
+    [Release channel](https://cloud.google.com/kubernetes-engine/docs/concepts/release-channels)
+    feature, which provide more control over automatic upgrades of your GKE clusters. Structure is documented below.
+
 * `remove_default_node_pool` - (Optional) If `true`, deletes the default node
     pool upon cluster creation. If you're using `google_container_node_pool`
     resources with no default node pool, this should be set to `true`, alongside
@@ -327,7 +332,7 @@ The `addons_config` block supports:
     controller addon, which makes it easy to set up HTTP load balancers for services in a
     cluster. It is enabled by default; set `disabled = true` to disable.
 
-* `kubernetes_dashboard` - (Optional) The status of the Kubernetes Dashboard
+* `kubernetes_dashboard` - (Optional, Deprecated) The status of the Kubernetes Dashboard
     add-on, which controls whether the Kubernetes Dashboard is enabled for this cluster.
     It is disabled by default; set `disabled = false` to enable.
 
@@ -397,7 +402,7 @@ The `authenticator_groups_config` block supports:
 
 The `maintenance_policy` block supports:
 
-* `daily_maintenance_window` - (Required) Time window specified for daily maintenance operations.
+* `daily_maintenance_window` - (Required in GA, Optional in Beta) Time window specified for daily maintenance operations.
     Specify `start_time` in [RFC3339](https://www.ietf.org/rfc/rfc3339.txt) format "HH:MM”,
     where HH : \[00-23\] and MM : \[00-59\] GMT. For example:
 
@@ -408,6 +413,26 @@ maintenance_policy {
   }
 }
 ```
+
+* `recurring_window` - (Optional, [Beta](https://terraform.io/docs/providers/google/provider_versions.html)) Time window for
+recurring maintenance operations.
+
+Specify `start_time` and `end_time` in [RFC3339](https://www.ietf.org/rfc/rfc3339.txt) date format.  The start time's date is
+the initial date that the window starts, and the end time is used for calculating duration.  Specify `recurrence` in
+[RFC5545](https://tools.ietf.org/html/rfc5545#section-3.8.5.3) RRULE format, to specify when this recurs.
+
+For example:
+```
+maintenance_policy {
+  recurring_window {
+    start_time = "2019-01-01T03:00"
+    end_time = "2019-01-01T06:00"
+    recurrence = "FREQ=DAILY"
+  }
+}
+```
+
+In beta, one or the other of `recurring_window` and `daily_maintenance_window` is required if a `maintenance_policy` block is supplied.
 
 The `ip_allocation_policy` block supports:
 
@@ -432,7 +457,7 @@ to have a range chosen with a specific netmask. Set to a CIDR notation (e.g. 10.
 from the RFC-1918 private networks (e.g. 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16) to
 pick a specific range to use. This field will only work if your cluster is
 VPC-native- when `ip_allocation_policy.use_ip_aliases` is undefined or set to
-true. If your cluster is not VPC-native, use `cluster_ipv4_cidr`. 
+true. If your cluster is not VPC-native, use `cluster_ipv4_cidr`.
 
 * `node_ipv4_cidr_block` - (Optional) The IP address range of the node IPs in this cluster.
     This should be set only if `create_subnetwork` is true.
@@ -546,7 +571,7 @@ The `node_config` block supports:
     are preemptible. See the [official documentation](https://cloud.google.com/container-engine/docs/preemptible-vm)
     for more information. Defaults to false.
 
-* `sandbox_config` - (Optional, [Beta](https://terraform.io/docs/providers/google/provider_versions.html)) [GKE Sandbox](https://cloud.google.com/kubernetes-engine/docs/how-to/sandbox-pods) configuration. When enabling this feature you must specify `image_type = "COS_CONTAINERD"` and `node_version = "1.12.7-gke.17"` or later to use it. 
+* `sandbox_config` - (Optional, [Beta](https://terraform.io/docs/providers/google/provider_versions.html)) [GKE Sandbox](https://cloud.google.com/kubernetes-engine/docs/how-to/sandbox-pods) configuration. When enabling this feature you must specify `image_type = "COS_CONTAINERD"` and `node_version = "1.12.7-gke.17"` or later to use it.
     Structure is documented below.
 
 * `service_account` - (Optional) The service account to be used by the Node VMs.
@@ -557,12 +582,19 @@ The `node_config` block supports:
 
      -> Projects that enable the [Cloud Compute Engine API](https://cloud.google.com/compute/) with Terraform may need these roles added manually to the service account. Projects that enable the API in the Cloud Console should have them added automatically.
 
+* `shielded_instance_config` - (Optional) Shielded Instance options. Structure is documented below.
+
 * `tags` - (Optional) The list of instance tags applied to all nodes. Tags are used to identify
     valid sources or targets for network firewalls.
 
-* `taint` - (Optional, [Beta](https://terraform.io/docs/providers/google/provider_versions.html)) List of
-    [kubernetes taints](https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/)
-    to apply to each node. Structure is documented below.
+* `taint` - (Optional) A list of [Kubernetes taints](https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/)
+to apply to nodes. GKE's API can only set this field on cluster creation.
+However, GKE will add taints to your nodes if you enable certain features such
+as GPUs. If this field is set, any diffs on this field will cause Terraform to
+recreate the underlying resource. Taint values can be updated safely in
+Kubernetes (eg. through `kubectl`), and it's recommended that you do not use
+this field to manage taints. If you do, `lifecycle.ignore_changes` is
+recommended. Structure is documented below.
 
 * `workload_metadata_config` - (Optional, [Beta](https://terraform.io/docs/providers/google/provider_versions.html)) Metadata configuration to expose to workloads on the node pool.
     Structure is documented below.
@@ -611,6 +643,15 @@ The `sandbox_type` block supports:
 
     * `"gvisor"`: Pods run within a gVisor sandbox.
 
+The `release_channel` block supports:
+
+* `channel` - (Optional) The selected release channel. Defaults to `UNSPECIFIED`.
+    Accepted values are:
+    * UNSPECIFIED: Not set.
+    * RAPID: Weekly upgrade cadence; Early testers and developers who requires new features.
+    * REGULAR: Multiple per month upgrade cadence; Production users who need features not yet offered in the Stable channel.
+    * STABLE: Every few months upgrade cadence; Production users who need stability above all else, and for whom frequent upgrades are too risky.
+
 The `resource_usage_export_config` block supports:
 
 * `enable_network_egress_metering` (Optional) - Whether to enable network egress metering for this cluster. If enabled, a daemonset will be created
@@ -628,6 +669,16 @@ resource_usage_export_config {
   }
 }
 ```
+
+The `shielded_instance_config` block supports:
+
+* `enable_secure_boot` (Optional) - Defines if the instance has Secure Boot enabled.
+
+Secure Boot helps ensure that the system only runs authentic software by verifying the digital signature of all boot components, and halting the boot process if signature verification fails.  Defaults to `false`.
+
+* `enable_integrity_monitoring` (Optional) - Defines if the instance has integrity monitoring enabled.
+
+Enables monitoring and attestation of the boot integrity of the instance. The attestation is performed against the integrity policy baseline. This baseline is initially derived from the implicitly trusted boot image when the instance is created.  Defaults to `true`.
 
 The `taint` block supports:
 

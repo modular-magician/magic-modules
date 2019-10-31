@@ -108,6 +108,7 @@ resource "google_service_account" "acceptance" {
     project = "%v"
     account_id = "%v"
     display_name = "%v"
+    description = "foo"
 }
 `, project, account, name)
 }

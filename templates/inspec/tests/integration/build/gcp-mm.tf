@@ -181,6 +181,35 @@ variable "redis" {
   type = "map"
 }
 
+variable "network_endpoint_group" {
+  type = "map"
+}
+
+variable "node_template" {
+  type = "map"
+}
+
+variable "node_group" {
+  type = "map"
+}
+
+variable "router_nat" {
+  type = "map"
+}
+
+variable "service" {
+  type = "map"
+}
+
+variable "spannerinstance" {
+  type = "map"
+}
+
+variable "spannerdatabase" {
+  type = "map"
+}
+
+
 resource "google_compute_ssl_policy" "custom-ssl-policy" {
   name            = "${var.ssl_policy["name"]}"
   min_tls_version = "${var.ssl_policy["min_tls_version"]}"
@@ -485,14 +514,22 @@ resource "google_compute_router" "gcp-inspec-router" {
   }
 }
 
+resource "google_compute_disk" "snapshot-disk" {
+  project = "${var.gcp_project_id}"
+  name  = var.snapshot["disk_name"]
+  type  = var.snapshot["disk_type"]
+  zone  = "${var.gcp_zone}"
+  image = var.snapshot["disk_image"]
+  labels = {
+    environment = "generic_compute_disk_label"
+  }
+}
+
 resource "google_compute_snapshot" "gcp-inspec-snapshot" {
   project = "${var.gcp_project_id}"
   name = "${var.snapshot["name"]}"
-  source_disk = "${google_compute_disk.generic_compute_disk.name}"
+  source_disk = "${google_compute_disk.snapshot-disk.name}"
   zone = "${var.gcp_zone}"
-  # Depends on the instance of the disk we are using. Allow instance to spin up
-  # Before snapshotting the disk to avoid resourceInUse errors
-  depends_on  = ["google_compute_instance.generic_external_vm_instance_data_disk"]
 }
 
 resource "google_compute_ssl_certificate" "gcp-inspec-ssl-certificate" {
@@ -648,6 +685,31 @@ resource "google_ml_engine_model" "inspec-gcp-model" {
   online_prediction_console_logging = var.ml_model["online_prediction_console_logging"]
 }
 
+resource "google_compute_firewall" "dataproc" {
+  project = var.gcp_project_id
+  name    = "dataproc-firewall"
+  network = "${google_compute_network.dataproc.name}"
+
+  source_ranges = ["10.128.0.0/9"]
+  allow {
+    protocol = "icmp"
+  }
+
+  allow {
+    protocol = "tcp"
+    ports    = ["0-65535"]
+  }
+  allow {
+    protocol = "udp"
+    ports    = ["0-65535"]
+  }
+}
+
+resource "google_compute_network" "dataproc" {
+  project = var.gcp_project_id
+  name    = "dataproc-network"
+}
+
 resource "google_dataproc_cluster" "mycluster" {
   project = var.gcp_project_id
   region  = var.gcp_location
@@ -684,6 +746,7 @@ resource "google_dataproc_cluster" "mycluster" {
     }
 
     gce_cluster_config {
+      network = google_compute_network.dataproc.self_link
       tags    = [var.dataproc_cluster["config"]["gce_cluster_config"]["tag"]]
     }
   }
@@ -755,4 +818,78 @@ resource "google_redis_instance" "inspec-redis" {
   labels = {
     "${var.redis["label_key"]}" = var.redis["label_value"]
   }
+}
+
+resource "google_compute_network_endpoint_group" "inspec-endpoint-group" {
+  project      = var.gcp_project_id
+  name         = var.network_endpoint_group["name"]
+  network      = google_compute_subnetwork.inspec-gcp-subnetwork.network
+  subnetwork   = google_compute_subnetwork.inspec-gcp-subnetwork.self_link
+  default_port = var.network_endpoint_group["default_port"]
+  zone         = var.gcp_zone
+}
+
+data "google_compute_node_types" "zone-node-type" {
+  project = var.gcp_project_id
+  zone    = var.gcp_zone
+}
+
+resource "google_compute_node_template" "inspec-template" {
+  project = var.gcp_project_id
+  region = var.gcp_location
+
+  name = var.node_template["name"]
+  node_type = "${data.google_compute_node_types.zone-node-type.names[0]}"
+
+  node_affinity_labels = {
+    "${var.node_template["label_key"]}" = "${var.node_template["label_value"]}"
+  }
+}
+
+resource "google_compute_node_group" "inspec-node-group" {
+  project = var.gcp_project_id
+  name = var.node_group["name"]
+  zone = var.gcp_zone
+  description = var.node_group["description"]
+
+  size = var.node_group["size"]
+  node_template = "${google_compute_node_template.inspec-template.self_link}"
+}
+
+resource "google_compute_router_nat" "inspec-nat" {
+  project                            = var.gcp_project_id
+  name                               = var.router_nat["name"]
+  router                             = google_compute_router.gcp-inspec-router.name
+  region                             = google_compute_router.gcp-inspec-router.region
+  nat_ip_allocate_option             = var.router_nat["nat_ip_allocate_option"]
+  source_subnetwork_ip_ranges_to_nat = var.router_nat["source_subnetwork_ip_ranges_to_nat"]
+  min_ports_per_vm                   = var.router_nat["min_ports_per_vm"]
+
+  log_config {
+    enable = var.router_nat["log_config_enable"]
+    filter = var.router_nat["log_config_filter"]
+  }
+}
+
+resource "google_project_service" "project" {
+  project = var.gcp_project_id
+  service = var.service["name"]
+}
+
+resource "google_spanner_instance" "spanner_instance" {
+  project      = "${var.gcp_project_id}"
+  config       = "${var.spannerinstance["config"]}"
+  name         = "${var.spannerinstance["name"]}"
+  display_name = "${var.spannerinstance["display_name"]}"
+  num_nodes    = "${var.spannerinstance["num_nodes"]}"
+  labels = {
+    "${var.spannerinstance["label_key"]}" = "${var.spannerinstance["label_value"]}"
+  }
+}
+
+resource "google_spanner_database" "database" {
+  project      = "${var.gcp_project_id}"
+  instance     = "${google_spanner_instance.spanner_instance.name}"
+  name         = "${var.spannerdatabase["name"]}"
+  ddl          = ["${var.spannerdatabase["ddl"]}"]
 }
