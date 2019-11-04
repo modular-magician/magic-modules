@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"google.golang.org/api/iam/v1"
 )
 
@@ -42,8 +43,9 @@ func resourceGoogleServiceAccount() *schema.Resource {
 				Optional: true,
 			},
 			"description": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validation.StringLenBetween(0, 256),
 			},
 			"project": {
 				Type:     schema.TypeString,
@@ -126,17 +128,26 @@ func resourceGoogleServiceAccountDelete(d *schema.ResourceData, meta interface{}
 
 func resourceGoogleServiceAccountUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	if d.HasChange("display_name") || d.HasChange("description") {
+	patch := &iam.PatchServiceAccountRequest{
+		ServiceAccount: &iam.ServiceAccount{},
+	}
+	updateFields := []string{}
+	if d.HasChange("display_name") {
+		patch.ServiceAccount.DisplayName = d.Get("display_name").(string)
+		updateFields = append(updateFields, "displayName")
+	}
+	if d.HasChange("description") {
+		patch.ServiceAccount.Description = d.Get("description").(string)
+		updateFields = append(updateFields, "description")
+	}
+	if len(updateFields) > 0 {
 		sa, err := config.clientIAM.Projects.ServiceAccounts.Get(d.Id()).Do()
 		if err != nil {
 			return fmt.Errorf("Error retrieving service account %q: %s", d.Id(), err)
 		}
-		_, err = config.clientIAM.Projects.ServiceAccounts.Update(d.Id(),
-			&iam.ServiceAccount{
-				DisplayName: d.Get("display_name").(string),
-				Description: d.Get("description").(string),
-				Etag:        sa.Etag,
-			}).Do()
+		patch.ServiceAccount.Etag = sa.Etag
+		patch.UpdateMask = strings.Join(updateFields, ",")
+		_, err = config.clientIAM.Projects.ServiceAccounts.Patch(d.Id(), patch).Do()
 		if err != nil {
 			return fmt.Errorf("Error updating service account %q: %s", d.Id(), err)
 		}
