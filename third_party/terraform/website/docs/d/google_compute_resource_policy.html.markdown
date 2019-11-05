@@ -1,6 +1,6 @@
 ---
 layout: "google"
-subcategory: "Google Cloud Platform"
+subcategory: "Google Compute Engine"
 page_title: "Google: google_compute_resource_policy"
 sidebar_current: "docs-google-datasource-compute-resource-policy"
 description: |-
