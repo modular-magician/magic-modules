@@ -1,5 +1,5 @@
-<%- # the license inside this block applies to this file
-	# Copyright 2018 Google Inc.
+<%# The license inside this block applies to this file.
+	# Copyright 2019 Google Inc.
 	# Licensed under the Apache License, Version 2.0 (the "License");
 	# you may not use this file except in compliance with the License.
 	# You may obtain a copy of the License at
@@ -12,16 +12,9 @@
 	# See the License for the specific language governing permissions and
 	# limitations under the License.
 -%>
-func expand<%= prefix -%><%= titlelize_property(property) -%>(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
-	r := regexp.MustCompile("projects/(.+)/notes/(.+)")
-	if r.MatchString(v.(string)) {
-		return v.(string), nil
-	}
-
-	project, err := getProject(d, config)
-	if err != nil {
-		return nil, err
-	}
-
-	return fmt.Sprintf("projects/%s/notes/%s", project, v.(string)), nil
-}
+"enable_flow_logs": {
+	Type:       schema.TypeBool,
+	Computed:   true,
+	Optional:   true,
+	Removed:    "This field is being removed in favor of log_config. If log_config is present, flow logs are enabled. Please remove this field",
+},
