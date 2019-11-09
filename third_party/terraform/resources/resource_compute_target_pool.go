@@ -209,7 +209,7 @@ func resourceComputeTargetPoolCreate(d *schema.ResourceData, meta interface{}) e
 	// It probably maybe worked, so store the ID now
 	d.SetId(tpool.Name)
 
-	err = computeOperationWait(config.clientCompute, op, project, "Creating Target Pool")
+	err = computeOperationWait(config, op, project, "Creating Target Pool")
 	if err != nil {
 		return err
 	}
@@ -256,7 +256,7 @@ func resourceComputeTargetPoolUpdate(d *schema.ResourceData, meta interface{}) e
 			return fmt.Errorf("Error updating health_check: %s", err)
 		}
 
-		err = computeOperationWait(config.clientCompute, op, project, "Updating Target Pool")
+		err = computeOperationWait(config, op, project, "Updating Target Pool")
 		if err != nil {
 			return err
 		}
@@ -272,7 +272,7 @@ func resourceComputeTargetPoolUpdate(d *schema.ResourceData, meta interface{}) e
 			return fmt.Errorf("Error updating health_check: %s", err)
 		}
 
-		err = computeOperationWait(config.clientCompute, op, project, "Updating Target Pool")
+		err = computeOperationWait(config, op, project, "Updating Target Pool")
 		if err != nil {
 			return err
 		}
@@ -306,7 +306,7 @@ func resourceComputeTargetPoolUpdate(d *schema.ResourceData, meta interface{}) e
 			return fmt.Errorf("Error updating instances: %s", err)
 		}
 
-		err = computeOperationWait(config.clientCompute, op, project, "Updating Target Pool")
+		err = computeOperationWait(config, op, project, "Updating Target Pool")
 		if err != nil {
 			return err
 		}
@@ -321,7 +321,7 @@ func resourceComputeTargetPoolUpdate(d *schema.ResourceData, meta interface{}) e
 		if err != nil {
 			return fmt.Errorf("Error updating instances: %s", err)
 		}
-		err = computeOperationWait(config.clientCompute, op, project, "Updating Target Pool")
+		err = computeOperationWait(config, op, project, "Updating Target Pool")
 		if err != nil {
 			return err
 		}
@@ -339,7 +339,7 @@ func resourceComputeTargetPoolUpdate(d *schema.ResourceData, meta interface{}) e
 			return fmt.Errorf("Error updating backup_pool: %s", err)
 		}
 
-		err = computeOperationWait(config.clientCompute, op, project, "Updating Target Pool")
+		err = computeOperationWait(config, op, project, "Updating Target Pool")
 		if err != nil {
 			return err
 		}
@@ -417,7 +417,7 @@ func resourceComputeTargetPoolDelete(d *schema.ResourceData, meta interface{}) e
 		return fmt.Errorf("Error deleting TargetPool: %s", err)
 	}
 
-	err = computeOperationWait(config.clientCompute, op, project, "Deleting Target Pool")
+	err = computeOperationWait(config, op, project, "Deleting Target Pool")
 	if err != nil {
 		return err
 	}

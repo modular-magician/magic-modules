@@ -516,7 +516,7 @@ func forceDeleteComputeNetwork(d *schema.ResourceData, config *Config, projectId
 			if err != nil {
 				return fmt.Errorf("Error deleting firewall: %s", err)
 			}
-			err = computeSharedOperationWait(config.clientCompute, op, projectId, "Deleting Firewall")
+			err = computeSharedOperationWait(config, op, projectId, "Deleting Firewall")
 			if err != nil {
 				return err
 			}
@@ -567,7 +567,7 @@ func deleteComputeNetwork(project, network string, config *Config) error {
 		return fmt.Errorf("Error deleting network: %s", err)
 	}
 
-	err = computeOperationWaitTime(config.clientCompute, op, project, "Deleting Network", 10)
+	err = computeSharedOperationWaitTime(config, op, project, "Deleting Network", 10)
 	if err != nil {
 		return err
 	}
