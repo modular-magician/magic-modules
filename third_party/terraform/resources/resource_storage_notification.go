@@ -122,12 +122,12 @@ func resourceStorageNotificationRead(d *schema.ResourceData, meta interface{}) e
 		return handleNotFoundError(err, d, fmt.Sprintf("Notification configuration %s for bucket %s", notificationID, bucket))
 	}
 
-	d.Set("notification_id", notificationID)
 	d.Set("bucket", bucket)
 	d.Set("payload_format", res.PayloadFormat)
 	d.Set("topic", res.Topic)
 	d.Set("object_name_prefix", res.ObjectNamePrefix)
 	d.Set("event_types", res.EventTypes)
+	d.Set("notification_id", notificationID)
 	d.Set("self_link", res.SelfLink)
 	d.Set("custom_attributes", res.CustomAttributes)
 
