@@ -25,7 +25,6 @@ for an example of enabling notifications by granting the correct IAM permission.
 
 ```hcl
 resource "google_storage_notification" "notification" {
-	notification_id	  = "1"
 	bucket            = "${google_storage_bucket.bucket.name}"
 	payload_format    = "JSON_API_V1"
 	topic             = "${google_pubsub_topic.topic.name}"
