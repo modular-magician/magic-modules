@@ -82,6 +82,8 @@ The following arguments are supported:
 In addition to the arguments listed above, the following computed attributes are
 exported:
 
+* `notification_id` - The ID of the created notification.
+
 * `self_link` - The URI of the created resource.
 
 ## Import

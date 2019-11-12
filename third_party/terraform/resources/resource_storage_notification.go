@@ -18,7 +18,7 @@ func resourceStorageNotification() *schema.Resource {
 			State: schema.ImportStatePassthrough,
 		},
 
-		Schema: map[string]*schema.Schema{
+		Schema: map[string]*schema.Schema{			
 			"bucket": {
 				Type:     schema.TypeString,
 				Required: true,
@@ -64,6 +64,11 @@ func resourceStorageNotification() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
+			},
+			
+			"notification_id": {
+				Type: schema.TypeString,
+				Computed: true,
 			},
 
 			"self_link": {
@@ -122,6 +127,7 @@ func resourceStorageNotificationRead(d *schema.ResourceData, meta interface{}) e
 	d.Set("topic", res.Topic)
 	d.Set("object_name_prefix", res.ObjectNamePrefix)
 	d.Set("event_types", res.EventTypes)
+	d.Set("notification_id", notificationID)
 	d.Set("self_link", res.SelfLink)
 	d.Set("custom_attributes", res.CustomAttributes)
 
