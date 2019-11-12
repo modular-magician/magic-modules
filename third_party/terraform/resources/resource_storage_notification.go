@@ -18,12 +18,7 @@ func resourceStorageNotification() *schema.Resource {
 			State: schema.ImportStatePassthrough,
 		},
 
-		Schema: map[string]*schema.Schema{
-			"notification_id": {
-				Type: schema.TypeString,
-				Computed: true,
-			},
-			
+		Schema: map[string]*schema.Schema{			
 			"bucket": {
 				Type:     schema.TypeString,
 				Required: true,
@@ -69,6 +64,11 @@ func resourceStorageNotification() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
+			},
+			
+			"notification_id": {
+				Type: schema.TypeString,
+				Computed: true,
 			},
 
 			"self_link": {
