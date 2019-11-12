@@ -15,7 +15,6 @@
 overrides: !ruby/object:Overrides::ResourceOverrides
   Attestor: !ruby/object:Overrides::Terraform::ResourceOverride
     import_format: ["projects/{{project}}/attestors/{{name}}"]
-    id_format: "{{project}}/{{name}}"
     examples:
      - !ruby/object:Provider::Terraform::Examples
       name: "binary_authorization_attestor_basic"
@@ -39,7 +38,7 @@ overrides: !ruby/object:Overrides::ResourceOverrides
     properties:
       name: !ruby/object:Overrides::Terraform::PropertyOverride
         custom_flatten: 'templates/terraform/custom_flatten/name_from_self_link.erb'
-        custom_expand: 'templates/terraform/custom_expand/binaryauthorization_attestor_name.erb'
+        custom_expand: 'templates/terraform/custom_expand/shortname_to_url.go.erb'
       attestationAuthorityNote.noteReference: !ruby/object:Overrides::Terraform::PropertyOverride
         custom_expand: 'templates/terraform/custom_expand/container_analysis_note.erb'
         diff_suppress_func: 'compareSelfLinkOrResourceName'
@@ -54,7 +53,7 @@ overrides: !ruby/object:Overrides::ResourceOverrides
       attestationAuthorityNote.publicKeys.id: !ruby/object:Overrides::Terraform::PropertyOverride
         default_from_api: true
   Policy: !ruby/object:Overrides::Terraform::ResourceOverride
-    id_format: "{{project}}"
+    id_format: "projects/{{project}}"
     import_format: ["projects/{{project}}"]
     custom_code: !ruby/object:Provider::Terraform::CustomCode
       constants: 'templates/terraform/constants/binaryauthorization_policy.erb'
