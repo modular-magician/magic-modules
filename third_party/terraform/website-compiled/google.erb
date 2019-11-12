@@ -18,19 +18,19 @@
           <a href="/docs/providers/google/index.html">Provider Info</a>
         </li>
         <li<%%= sidebar_current("docs-google-provider-reference") %>>
-          <a href="/docs/providers/google/provider_reference.html">Provider Configuration Reference</a>
+          <a href="/docs/providers/google/guides/provider_reference.html">Provider Configuration Reference</a>
         </li>
         <li<%%= sidebar_current("docs-google-provider-versions") %>>
-          <a href="/docs/providers/google/provider_versions.html">Google Provider Versions</a>
+          <a href="/docs/providers/google/guides/provider_versions.html">Google Provider Versions</a>
         </li>
         <li<%%= sidebar_current("docs-google-provider-getting-started") %>>
-          <a href="/docs/providers/google/getting_started.html">Getting Started Guide</a>
+          <a href="/docs/providers/google/guides/getting_started.html">Getting Started Guide</a>
         </li>
         <li<%%= sidebar_current("docs-google-provider-version-2-upgrade") %>>
-          <a href="/docs/providers/google/version_2_upgrade.html">2.0.0 Upgrade Guide</a>
+          <a href="/docs/providers/google/guides/version_2_upgrade.html">2.0.0 Upgrade Guide</a>
         </li>
         <li<%%= sidebar_current("docs-google-provider-version-3-upgrade") %>>
-          <a href="/docs/providers/google/version_3_upgrade.html">3.0.0 Upgrade Guide</a>
+          <a href="/docs/providers/google/guides/version_3_upgrade.html">3.0.0 Upgrade Guide</a>
         </li>
       </ul>
     </li>
@@ -103,6 +103,9 @@
           <a href="/docs/providers/google/d/google_compute_resource_policy.html">google_compute_resource_policy</a>
       </li>
 <% end  -%>
+      <li<%%= sidebar_current("docs-google-datasource-compute-router") %>>
+        <a href="/docs/providers/google/d/datasource_compute_router.html">google_compute_router</a>
+      </li>
       <li<%%= sidebar_current("docs-google-datasource-compute-ssl-certificate") %>>
         <a href="/docs/providers/google/d/datasource_compute_ssl_certificate.html">google_compute_ssl_certificate</a>
       </li>
@@ -808,6 +811,16 @@
     </ul>
     </li>
 
+<% unless version == 'ga' %>
+    <li<%%= sidebar_current("docs-google-data-fusion") %>>
+    <a href="#">Google Data Fusion Resources</a>
+    <ul class="nav nav-visible">
+      <li<%%= sidebar_current("docs-google-data-fusion") %>>
+          <a href="/docs/providers/google/r/data_fusion_instance.html">google_data_fusion_instance</a>
+      </li>
+    </ul>
+    </li>
+<% end -%>
 
     <li<%%= sidebar_current("docs-google-dataflow") %>>
     <a href="#">Google Dataflow Resources</a>

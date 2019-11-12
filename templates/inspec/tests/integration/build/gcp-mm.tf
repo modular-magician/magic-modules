@@ -193,6 +193,27 @@ variable "node_group" {
   type = "map"
 }
 
+variable "router_nat" {
+  type = "map"
+}
+
+variable "service" {
+  type = "map"
+}
+
+variable "spannerinstance" {
+  type = "map"
+}
+
+variable "spannerdatabase" {
+  type = "map"
+}
+
+variable "scheduler_job" {
+  type = "map"
+}
+
+
 resource "google_compute_ssl_policy" "custom-ssl-policy" {
   name            = "${var.ssl_policy["name"]}"
   min_tls_version = "${var.ssl_policy["min_tls_version"]}"
@@ -500,9 +521,9 @@ resource "google_compute_router" "gcp-inspec-router" {
 resource "google_compute_disk" "snapshot-disk" {
   project = "${var.gcp_project_id}"
   name  = var.snapshot["disk_name"]
-  type  = "${var.gcp_compute_disk_type}"
+  type  = var.snapshot["disk_type"]
   zone  = "${var.gcp_zone}"
-  image = "${var.gcp_compute_disk_image}"
+  image = var.snapshot["disk_image"]
   labels = {
     environment = "generic_compute_disk_label"
   }
@@ -837,4 +858,56 @@ resource "google_compute_node_group" "inspec-node-group" {
 
   size = var.node_group["size"]
   node_template = "${google_compute_node_template.inspec-template.self_link}"
+}
+
+resource "google_compute_router_nat" "inspec-nat" {
+  project                            = var.gcp_project_id
+  name                               = var.router_nat["name"]
+  router                             = google_compute_router.gcp-inspec-router.name
+  region                             = google_compute_router.gcp-inspec-router.region
+  nat_ip_allocate_option             = var.router_nat["nat_ip_allocate_option"]
+  source_subnetwork_ip_ranges_to_nat = var.router_nat["source_subnetwork_ip_ranges_to_nat"]
+  min_ports_per_vm                   = var.router_nat["min_ports_per_vm"]
+
+  log_config {
+    enable = var.router_nat["log_config_enable"]
+    filter = var.router_nat["log_config_filter"]
+  }
+}
+
+resource "google_project_service" "project" {
+  project = var.gcp_project_id
+  service = var.service["name"]
+}
+
+resource "google_spanner_instance" "spanner_instance" {
+  project      = "${var.gcp_project_id}"
+  config       = "${var.spannerinstance["config"]}"
+  name         = "${var.spannerinstance["name"]}"
+  display_name = "${var.spannerinstance["display_name"]}"
+  num_nodes    = "${var.spannerinstance["num_nodes"]}"
+  labels = {
+    "${var.spannerinstance["label_key"]}" = "${var.spannerinstance["label_value"]}"
+  }
+}
+
+resource "google_spanner_database" "database" {
+  project      = "${var.gcp_project_id}"
+  instance     = "${google_spanner_instance.spanner_instance.name}"
+  name         = "${var.spannerdatabase["name"]}"
+  ddl          = ["${var.spannerdatabase["ddl"]}"]
+}
+
+resource "google_cloud_scheduler_job" "job" {
+  project  = var.gcp_project_id
+  region   = var.scheduler_job["region"]
+  name     = var.scheduler_job["name"]
+  description = var.scheduler_job["description"]
+  schedule = var.scheduler_job["schedule"]
+  time_zone = var.scheduler_job["time_zone"]
+
+  http_target {
+    http_method = var.scheduler_job["http_method"]
+    uri = var.scheduler_job["http_target_uri"]
+  }
 }

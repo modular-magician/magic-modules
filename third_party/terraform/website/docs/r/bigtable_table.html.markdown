@@ -1,4 +1,5 @@
 ---
+subcategory: "Bigtable"
 layout: "google"
 page_title: "Google: google_bigtable_table"
 sidebar_current: "docs-google-bigtable-table"
@@ -55,3 +56,17 @@ The following arguments are supported:
 ## Attributes Reference
 
 Only the arguments listed above are exposed as attributes.
+
+## Import
+
+Bigtable Tables can be imported using any of these accepted formats:
+
+```
+$ terraform import google_bigtable_table.default projects/{{project}}/instances/{{instance_name}}/tables/{{name}}
+$ terraform import google_bigtable_table.default {{project}}/{{instance_name}}/{{name}}
+$ terraform import google_bigtable_table.default {{instance_name}}/{{name}}
+```
+
+The following fields can't be read and will show diffs if set in config when imported:
+
+- `split_keys`
