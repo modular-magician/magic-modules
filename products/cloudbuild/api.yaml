@@ -73,7 +73,8 @@ objects:
           Substitutions data for Build resource.
       - !ruby/object:Api::Type::String
         name: 'filename'
-        conflicts:
+        exactly_one_of:
+          - filename
           - build
         description: |
           Path, from the source root, to a file whose contents is used for the template. Either a filename or build template must be provided.
@@ -113,6 +114,7 @@ objects:
           Branch and tag names in trigger templates are interpreted as regular
           expressions. Any branch or tag change that matches that regular
           expression will trigger a build.
+        required: true
         properties:
           - !ruby/object:Api::Type::String
             name: 'projectId'
@@ -137,15 +139,27 @@ objects:
             description: |
               Name of the branch to build. Exactly one a of branch name, tag, or commit SHA must be provided.
               This field is a regular expression.
+            exactly_one_of:
+              - trigger_template.0.branch_name
+              - trigger_template.0.tag_name
+              - trigger_template.0.commit_sha
           - !ruby/object:Api::Type::String
             name: 'tagName'
             description: |
               Name of the tag to build. Exactly one of a branch name, tag, or commit SHA must be provided.
               This field is a regular expression.
+            exactly_one_of:
+              - trigger_template.0.branch_name
+              - trigger_template.0.tag_name
+              - trigger_template.0.commit_sha
           - !ruby/object:Api::Type::String
             name: 'commitSha'
             description: |
               Explicit commit SHA to build. Exactly one of a branch name, tag, or commit SHA must be provided.
+            exactly_one_of:
+              - trigger_template.0.branch_name
+              - trigger_template.0.tag_name
+              - trigger_template.0.commit_sha
       - !ruby/object:Api::Type::NestedObject
         name: 'github'
         description: |
@@ -166,9 +180,13 @@ objects:
             name: 'pullRequest'
             description: |
                 filter to match changes in pull requests.  Specify only one of pullRequest or push.
+            exactly_one_of:
+              - github.0.pull_request
+              - github.0.push
             properties:
               - !ruby/object:Api::Type::String
                 name: 'branch'
+                required: true
                 description: |
                     Regex of branches to match.
               - !ruby/object:Api::Type::Enum
@@ -182,17 +200,29 @@ objects:
             name: 'push'
             description: |
                 filter to match changes in refs, like branches or tags.  Specify only one of pullRequest or push.
+            exactly_one_of:
+              - github.0.pull_request
+              - github.0.push
             properties:
               - !ruby/object:Api::Type::String
                 name: 'branch'
                 description: |
                     Regex of branches to match.  Specify only one of branch or tag.
+                exactly_one_of:
+                  - github.0.push.0.branch
+                  - github.0.push.0.tag
               - !ruby/object:Api::Type::String
                 name: 'tag'
                 description: |
                     Regex of tags to match.  Specify only one of branch or tag.
+                exactly_one_of:
+                  - github.0.push.0.branch
+                  - github.0.push.0.tag
       - !ruby/object:Api::Type::NestedObject
         name: 'build'
+        exactly_one_of:
+          - filename
+          - build
         description: |
           Contents of the build template. Either a filename or build template must be provided.
         properties:
@@ -211,12 +241,14 @@ objects:
               If any of the images fail to be pushed, the build status is marked FAILURE.
           - !ruby/object:Api::Type::Array
             name: 'steps'
+            required: true
             description: |
               The operations to be performed on the workspace.
             item_type: !ruby/object:Api::Type::NestedObject
               properties:
                 - !ruby/object:Api::Type::String
                   name: 'name'
+                  required: true
                   description: |
                     The name of the container image that will run this particular build step.
 
@@ -313,6 +345,7 @@ objects:
                     properties:
                         - !ruby/object:Api::Type::String
                           name: 'name'
+                          required: true
                           description: |
                             Name of the volume to mount.
 
@@ -320,6 +353,7 @@ objects:
                             Docker volumes. Each named volume must be used by at least two build steps.
                         - !ruby/object:Api::Type::String
                           name: 'path'
+                          required: true
                           description: |
                             Path at which to mount the volume.
 

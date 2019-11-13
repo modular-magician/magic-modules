@@ -461,10 +461,10 @@ objects:
         properties:
         - !ruby/object:Api::Type::Integer
           name: 'signedUrlCacheMaxAgeSec'
-          default_value: 3600
+          required: true
           description: |
             Maximum number of seconds the response to a signed URL request will
-            be considered fresh. Defaults to 1hr (3600s). After this time period,
+            be considered fresh. After this time period,
             the response will be revalidated before being served.
             When serving responses to signed URL requests,
             Cloud CDN will internally behave as though
@@ -665,6 +665,7 @@ objects:
                 Note that you must specify an Instance Group or Network Endpoint
                 Group resource using the fully-qualified URL, rather than a
                 partial URL.
+              required: true
             - !ruby/object:Api::Type::Integer
               name: 'maxConnections'
               description: |
@@ -734,6 +735,13 @@ objects:
         properties:
           - !ruby/object:Api::Type::NestedObject
             name: 'connectTimeout'
+            at_least_one_of:
+              - circuit_breakers.0.connect_timeout
+              - circuit_breakers.0.max_requests_per_connection
+              - circuit_breakers.0.max_connections
+              - circuit_breakers.0.max_pending_requests
+              - circuit_breakers.0.max_requests
+              - circuit_breakers.0.max_retries
             description: |
               The timeout for new network connections to hosts.
             properties:
@@ -752,6 +760,13 @@ objects:
                   be from 0 to 999,999,999 inclusive.
           - !ruby/object:Api::Type::Integer
             name: 'maxRequestsPerConnection'
+            at_least_one_of:
+              - circuit_breakers.0.connect_timeout
+              - circuit_breakers.0.max_requests_per_connection
+              - circuit_breakers.0.max_connections
+              - circuit_breakers.0.max_pending_requests
+              - circuit_breakers.0.max_requests
+              - circuit_breakers.0.max_retries
             description: |
               Maximum requests for a single backend connection. This parameter
               is respected by both the HTTP/1.1 and HTTP/2 implementations. If
@@ -760,24 +775,52 @@ objects:
           - !ruby/object:Api::Type::Integer
             name: 'maxConnections'
             default_value: 1024
+            at_least_one_of:
+              - circuit_breakers.0.connect_timeout
+              - circuit_breakers.0.max_requests_per_connection
+              - circuit_breakers.0.max_connections
+              - circuit_breakers.0.max_pending_requests
+              - circuit_breakers.0.max_requests
+              - circuit_breakers.0.max_retries
             description: |
               The maximum number of connections to the backend cluster.
               Defaults to 1024.
           - !ruby/object:Api::Type::Integer
             name: 'maxPendingRequests'
             default_value: 1024
+            at_least_one_of:
+              - circuit_breakers.0.connect_timeout
+              - circuit_breakers.0.max_requests_per_connection
+              - circuit_breakers.0.max_connections
+              - circuit_breakers.0.max_pending_requests
+              - circuit_breakers.0.max_requests
+              - circuit_breakers.0.max_retries
             description: |
               The maximum number of pending requests to the backend cluster.
               Defaults to 1024.
           - !ruby/object:Api::Type::Integer
             name: 'maxRequests'
             default_value: 1024
+            at_least_one_of:
+              - circuit_breakers.0.connect_timeout
+              - circuit_breakers.0.max_requests_per_connection
+              - circuit_breakers.0.max_connections
+              - circuit_breakers.0.max_pending_requests
+              - circuit_breakers.0.max_requests
+              - circuit_breakers.0.max_retries
             description: |
               The maximum number of parallel requests to the backend cluster.
               Defaults to 1024.
           - !ruby/object:Api::Type::Integer
             name: 'maxRetries'
             default_value: 3
+            at_least_one_of:
+              - circuit_breakers.0.connect_timeout
+              - circuit_breakers.0.max_requests_per_connection
+              - circuit_breakers.0.max_connections
+              - circuit_breakers.0.max_pending_requests
+              - circuit_breakers.0.max_requests
+              - circuit_breakers.0.max_retries
             description: |
               The maximum number of parallel retries to the backend cluster.
               Defaults to 3.
@@ -796,6 +839,10 @@ objects:
         properties:
           - !ruby/object:Api::Type::NestedObject
             name: 'httpCookie'
+            at_least_one_of:
+              - consistent_hash.0.http_cookie
+              - consistent_hash.0.http_header_name
+              - consistent_hash.0.minimum_ring_size
             description: |
               Hash is based on HTTP Cookie. This field describes a HTTP cookie
               that will be used as the hash key for the consistent hash load
@@ -804,6 +851,10 @@ objects:
             properties:
               - !ruby/object:Api::Type::NestedObject
                 name: 'ttl'
+                at_least_one_of:
+                  - consistent_hash.0.http_cookie.0.ttl
+                  - consistent_hash.0.http_cookie.0.name
+                  - consistent_hash.0.http_cookie.0.path
                 description: |
                   Lifetime of the cookie.
                 properties:
@@ -822,20 +873,36 @@ objects:
                       be from 0 to 999,999,999 inclusive.
               - !ruby/object:Api::Type::String
                 name: 'name'
+                at_least_one_of:
+                  - consistent_hash.0.http_cookie.0.ttl
+                  - consistent_hash.0.http_cookie.0.name
+                  - consistent_hash.0.http_cookie.0.path
                 description: |
                   Name of the cookie.
               - !ruby/object:Api::Type::String
                 name: 'path'
+                at_least_one_of:
+                  - consistent_hash.0.http_cookie.0.ttl
+                  - consistent_hash.0.http_cookie.0.name
+                  - consistent_hash.0.http_cookie.0.path
                 description: |
                   Path to set for the cookie.
           - !ruby/object:Api::Type::String
             name: 'httpHeaderName'
+            at_least_one_of:
+              - consistent_hash.0.http_cookie
+              - consistent_hash.0.http_header_name
+              - consistent_hash.0.minimum_ring_size
             description: |
               The hash based on the value of the specified header field.
               This field is applicable if the sessionAffinity is set to HEADER_FIELD.
           - !ruby/object:Api::Type::Integer
             name: 'minimumRingSize'
             default_value: 1024
+            at_least_one_of:
+              - consistent_hash.0.http_cookie
+              - consistent_hash.0.http_header_name
+              - consistent_hash.0.minimum_ring_size
             description: |
               The minimum number of virtual nodes to use for the hash ring.
               Larger ring sizes result in more granular load
@@ -850,17 +917,38 @@ objects:
           - !ruby/object:Api::Type::NestedObject
             name: 'cacheKeyPolicy'
             description: 'The CacheKeyPolicy for this CdnPolicy.'
+            at_least_one_of:
+              - cdn_policy.0.cache_key_policy
+              - cdn_policy.0.signed_url_cache_max_age_sec
             properties:
               - !ruby/object:Api::Type::Boolean
                 name: 'includeHost'
+                at_least_one_of:
+                  - cdn_policy.0.cache_key_policy.0.include_host
+                  - cdn_policy.0.cache_key_policy.0.include_protocol
+                  - cdn_policy.0.cache_key_policy.0.include_query_string
+                  - cdn_policy.0.cache_key_policy.0.query_string_blacklist
+                  - cdn_policy.0.cache_key_policy.0.query_string_whitelist
                 description: |
                   If true requests to different hosts will be cached separately.
               - !ruby/object:Api::Type::Boolean
                 name: 'includeProtocol'
+                at_least_one_of:
+                  - cdn_policy.0.cache_key_policy.0.include_host
+                  - cdn_policy.0.cache_key_policy.0.include_protocol
+                  - cdn_policy.0.cache_key_policy.0.include_query_string
+                  - cdn_policy.0.cache_key_policy.0.query_string_blacklist
+                  - cdn_policy.0.cache_key_policy.0.query_string_whitelist
                 description: |
                   If true, http and https requests will be cached separately.
               - !ruby/object:Api::Type::Boolean
                 name: 'includeQueryString'
+                at_least_one_of:
+                  - cdn_policy.0.cache_key_policy.0.include_host
+                  - cdn_policy.0.cache_key_policy.0.include_protocol
+                  - cdn_policy.0.cache_key_policy.0.include_query_string
+                  - cdn_policy.0.cache_key_policy.0.query_string_blacklist
+                  - cdn_policy.0.cache_key_policy.0.query_string_whitelist
                 description: |
                   If true, include query string parameters in the cache key
                   according to query_string_whitelist and
@@ -871,6 +959,12 @@ objects:
                   key entirely.
               - !ruby/object:Api::Type::Array
                 name: 'queryStringBlacklist'
+                at_least_one_of:
+                  - cdn_policy.0.cache_key_policy.0.include_host
+                  - cdn_policy.0.cache_key_policy.0.include_protocol
+                  - cdn_policy.0.cache_key_policy.0.include_query_string
+                  - cdn_policy.0.cache_key_policy.0.query_string_blacklist
+                  - cdn_policy.0.cache_key_policy.0.query_string_whitelist
                 description: |
                   Names of query string parameters to exclude in cache keys.
 
@@ -881,6 +975,12 @@ objects:
                 item_type: Api::Type::String
               - !ruby/object:Api::Type::Array
                 name: 'queryStringWhitelist'
+                at_least_one_of:
+                  - cdn_policy.0.cache_key_policy.0.include_host
+                  - cdn_policy.0.cache_key_policy.0.include_protocol
+                  - cdn_policy.0.cache_key_policy.0.include_query_string
+                  - cdn_policy.0.cache_key_policy.0.query_string_blacklist
+                  - cdn_policy.0.cache_key_policy.0.query_string_whitelist
                 description: |
                   Names of query string parameters to include in cache keys.
 
@@ -892,6 +992,9 @@ objects:
           - !ruby/object:Api::Type::Integer
             name: 'signedUrlCacheMaxAgeSec'
             default_value: 3600
+            at_least_one_of:
+              - cdn_policy.0.cache_key_policy
+              - cdn_policy.0.signed_url_cache_max_age_sec
             description: |
               Maximum number of seconds the response to a signed URL request
               will be considered fresh, defaults to 1hr (3600s). After this
@@ -1056,6 +1159,18 @@ objects:
         properties:
           - !ruby/object:Api::Type::NestedObject
             name: 'baseEjectionTime'
+            at_least_one_of:
+              - outlier_detection.0.base_ejection_time
+              - outlier_detection.0.consecutive_errors
+              - outlier_detection.0.consecutive_gateway_failure
+              - outlier_detection.0.enforcing_consecutive_errors
+              - outlier_detection.0.enforcing_consecutive_gateway_failure
+              - outlier_detection.0.enforcing_success_rate
+              - outlier_detection.0.interval
+              - outlier_detection.0.max_ejection_percent
+              - outlier_detection.0.success_rate_minimum_hosts
+              - outlier_detection.0.success_rate_request_volume
+              - outlier_detection.0.success_rate_stdev_factor
             description: |
               The base time that a host is ejected for. The real time is equal to the base
               time multiplied by the number of times the host has been ejected. Defaults to
@@ -1075,6 +1190,18 @@ objects:
                   `nanos` field. Must be from 0 to 999,999,999 inclusive.
           - !ruby/object:Api::Type::Integer
             name: 'consecutiveErrors'
+            at_least_one_of:
+              - outlier_detection.0.base_ejection_time
+              - outlier_detection.0.consecutive_errors
+              - outlier_detection.0.consecutive_gateway_failure
+              - outlier_detection.0.enforcing_consecutive_errors
+              - outlier_detection.0.enforcing_consecutive_gateway_failure
+              - outlier_detection.0.enforcing_success_rate
+              - outlier_detection.0.interval
+              - outlier_detection.0.max_ejection_percent
+              - outlier_detection.0.success_rate_minimum_hosts
+              - outlier_detection.0.success_rate_request_volume
+              - outlier_detection.0.success_rate_stdev_factor
             default_value: 5
             description: |
               Number of errors before a host is ejected from the connection pool. When the
@@ -1082,6 +1209,18 @@ objects:
               Defaults to 5.
           - !ruby/object:Api::Type::Integer
             name: 'consecutiveGatewayFailure'
+            at_least_one_of:
+              - outlier_detection.0.base_ejection_time
+              - outlier_detection.0.consecutive_errors
+              - outlier_detection.0.consecutive_gateway_failure
+              - outlier_detection.0.enforcing_consecutive_errors
+              - outlier_detection.0.enforcing_consecutive_gateway_failure
+              - outlier_detection.0.enforcing_success_rate
+              - outlier_detection.0.interval
+              - outlier_detection.0.max_ejection_percent
+              - outlier_detection.0.success_rate_minimum_hosts
+              - outlier_detection.0.success_rate_request_volume
+              - outlier_detection.0.success_rate_stdev_factor
             default_value: 5
             description: |
               The number of consecutive gateway failures (502, 503, 504 status or connection
@@ -1089,6 +1228,18 @@ objects:
               gateway failure ejection occurs. Defaults to 5.
           - !ruby/object:Api::Type::Integer
             name: 'enforcingConsecutiveErrors'
+            at_least_one_of:
+              - outlier_detection.0.base_ejection_time
+              - outlier_detection.0.consecutive_errors
+              - outlier_detection.0.consecutive_gateway_failure
+              - outlier_detection.0.enforcing_consecutive_errors
+              - outlier_detection.0.enforcing_consecutive_gateway_failure
+              - outlier_detection.0.enforcing_success_rate
+              - outlier_detection.0.interval
+              - outlier_detection.0.max_ejection_percent
+              - outlier_detection.0.success_rate_minimum_hosts
+              - outlier_detection.0.success_rate_request_volume
+              - outlier_detection.0.success_rate_stdev_factor
             default_value: 100
             description: |
               The percentage chance that a host will be actually ejected when an outlier
@@ -1096,6 +1247,18 @@ objects:
               ejection or to ramp it up slowly. Defaults to 100.
           - !ruby/object:Api::Type::Integer
             name: 'enforcingConsecutiveGatewayFailure'
+            at_least_one_of:
+              - outlier_detection.0.base_ejection_time
+              - outlier_detection.0.consecutive_errors
+              - outlier_detection.0.consecutive_gateway_failure
+              - outlier_detection.0.enforcing_consecutive_errors
+              - outlier_detection.0.enforcing_consecutive_gateway_failure
+              - outlier_detection.0.enforcing_success_rate
+              - outlier_detection.0.interval
+              - outlier_detection.0.max_ejection_percent
+              - outlier_detection.0.success_rate_minimum_hosts
+              - outlier_detection.0.success_rate_request_volume
+              - outlier_detection.0.success_rate_stdev_factor
             default_value: 0
             description: |
               The percentage chance that a host will be actually ejected when an outlier
@@ -1103,6 +1266,18 @@ objects:
               used to disable ejection or to ramp it up slowly. Defaults to 0.
           - !ruby/object:Api::Type::Integer
             name: 'enforcingSuccessRate'
+            at_least_one_of:
+              - outlier_detection.0.base_ejection_time
+              - outlier_detection.0.consecutive_errors
+              - outlier_detection.0.consecutive_gateway_failure
+              - outlier_detection.0.enforcing_consecutive_errors
+              - outlier_detection.0.enforcing_consecutive_gateway_failure
+              - outlier_detection.0.enforcing_success_rate
+              - outlier_detection.0.interval
+              - outlier_detection.0.max_ejection_percent
+              - outlier_detection.0.success_rate_minimum_hosts
+              - outlier_detection.0.success_rate_request_volume
+              - outlier_detection.0.success_rate_stdev_factor
             default_value: 100
             description: |
               The percentage chance that a host will be actually ejected when an outlier
@@ -1110,6 +1285,18 @@ objects:
               disable ejection or to ramp it up slowly. Defaults to 100.
           - !ruby/object:Api::Type::NestedObject
             name: 'interval'
+            at_least_one_of:
+              - outlier_detection.0.base_ejection_time
+              - outlier_detection.0.consecutive_errors
+              - outlier_detection.0.consecutive_gateway_failure
+              - outlier_detection.0.enforcing_consecutive_errors
+              - outlier_detection.0.enforcing_consecutive_gateway_failure
+              - outlier_detection.0.enforcing_success_rate
+              - outlier_detection.0.interval
+              - outlier_detection.0.max_ejection_percent
+              - outlier_detection.0.success_rate_minimum_hosts
+              - outlier_detection.0.success_rate_request_volume
+              - outlier_detection.0.success_rate_stdev_factor
             description: |
               Time interval between ejection sweep analysis. This can result in both new
               ejections as well as hosts being returned to service. Defaults to 10 seconds.
@@ -1128,12 +1315,36 @@ objects:
                   `nanos` field. Must be from 0 to 999,999,999 inclusive.
           - !ruby/object:Api::Type::Integer
             name: 'maxEjectionPercent'
+            at_least_one_of:
+              - outlier_detection.0.base_ejection_time
+              - outlier_detection.0.consecutive_errors
+              - outlier_detection.0.consecutive_gateway_failure
+              - outlier_detection.0.enforcing_consecutive_errors
+              - outlier_detection.0.enforcing_consecutive_gateway_failure
+              - outlier_detection.0.enforcing_success_rate
+              - outlier_detection.0.interval
+              - outlier_detection.0.max_ejection_percent
+              - outlier_detection.0.success_rate_minimum_hosts
+              - outlier_detection.0.success_rate_request_volume
+              - outlier_detection.0.success_rate_stdev_factor
             default_value: 10
             description: |
               Maximum percentage of hosts in the load balancing pool for the backend service
               that can be ejected. Defaults to 10%.
           - !ruby/object:Api::Type::Integer
             name: 'successRateMinimumHosts'
+            at_least_one_of:
+              - outlier_detection.0.base_ejection_time
+              - outlier_detection.0.consecutive_errors
+              - outlier_detection.0.consecutive_gateway_failure
+              - outlier_detection.0.enforcing_consecutive_errors
+              - outlier_detection.0.enforcing_consecutive_gateway_failure
+              - outlier_detection.0.enforcing_success_rate
+              - outlier_detection.0.interval
+              - outlier_detection.0.max_ejection_percent
+              - outlier_detection.0.success_rate_minimum_hosts
+              - outlier_detection.0.success_rate_request_volume
+              - outlier_detection.0.success_rate_stdev_factor
             default_value: 5
             description: |
               The number of hosts in a cluster that must have enough request volume to detect
@@ -1142,6 +1353,18 @@ objects:
               cluster. Defaults to 5.
           - !ruby/object:Api::Type::Integer
             name: 'successRateRequestVolume'
+            at_least_one_of:
+              - outlier_detection.0.base_ejection_time
+              - outlier_detection.0.consecutive_errors
+              - outlier_detection.0.consecutive_gateway_failure
+              - outlier_detection.0.enforcing_consecutive_errors
+              - outlier_detection.0.enforcing_consecutive_gateway_failure
+              - outlier_detection.0.enforcing_success_rate
+              - outlier_detection.0.interval
+              - outlier_detection.0.max_ejection_percent
+              - outlier_detection.0.success_rate_minimum_hosts
+              - outlier_detection.0.success_rate_request_volume
+              - outlier_detection.0.success_rate_stdev_factor
             default_value: 100
             description: |
               The minimum number of total requests that must be collected in one interval (as
@@ -1151,6 +1374,18 @@ objects:
               to 100.
           - !ruby/object:Api::Type::Integer
             name: 'successRateStdevFactor'
+            at_least_one_of:
+              - outlier_detection.0.base_ejection_time
+              - outlier_detection.0.consecutive_errors
+              - outlier_detection.0.consecutive_gateway_failure
+              - outlier_detection.0.enforcing_consecutive_errors
+              - outlier_detection.0.enforcing_consecutive_gateway_failure
+              - outlier_detection.0.enforcing_success_rate
+              - outlier_detection.0.interval
+              - outlier_detection.0.max_ejection_percent
+              - outlier_detection.0.success_rate_minimum_hosts
+              - outlier_detection.0.success_rate_request_volume
+              - outlier_detection.0.success_rate_stdev_factor
             default_value: 1900
             description: |
               This factor is used to determine the ejection threshold for success rate outlier
@@ -1214,10 +1449,16 @@ objects:
         properties:
           - !ruby/object:Api::Type::Boolean
             name: 'enable'
+            at_least_one_of:
+              - log_config.0.enable
+              - log_config.0.sample_rate
             description: |
               Whether to enable logging for the load balancer traffic served by this backend service.
           - !ruby/object:Api::Type::Double
             name: 'sampleRate'
+            at_least_one_of:
+              - log_config.0.enable
+              - log_config.0.sample_rate
             description: |
               This field can only be specified if logging is enabled for this backend service. The value of
               the field must be in [0, 1]. This configures the sampling rate of requests to the load balancer
@@ -1398,6 +1639,13 @@ objects:
         properties:
           - !ruby/object:Api::Type::NestedObject
             name: 'connectTimeout'
+            at_least_one_of:
+              - circuit_breakers.0.connect_timeout
+              - circuit_breakers.0.max_requests_per_connection
+              - circuit_breakers.0.max_connections
+              - circuit_breakers.0.max_pending_requests
+              - circuit_breakers.0.max_requests
+              - circuit_breakers.0.max_retries
             description: |
               The timeout for new network connections to hosts.
             properties:
@@ -1416,6 +1664,13 @@ objects:
                   be from 0 to 999,999,999 inclusive.
           - !ruby/object:Api::Type::Integer
             name: 'maxRequestsPerConnection'
+            at_least_one_of:
+              - circuit_breakers.0.connect_timeout
+              - circuit_breakers.0.max_requests_per_connection
+              - circuit_breakers.0.max_connections
+              - circuit_breakers.0.max_pending_requests
+              - circuit_breakers.0.max_requests
+              - circuit_breakers.0.max_retries
             description: |
               Maximum requests for a single backend connection. This parameter
               is respected by both the HTTP/1.1 and HTTP/2 implementations. If
@@ -1424,24 +1679,52 @@ objects:
           - !ruby/object:Api::Type::Integer
             name: 'maxConnections'
             default_value: 1024
+            at_least_one_of:
+              - circuit_breakers.0.connect_timeout
+              - circuit_breakers.0.max_requests_per_connection
+              - circuit_breakers.0.max_connections
+              - circuit_breakers.0.max_pending_requests
+              - circuit_breakers.0.max_requests
+              - circuit_breakers.0.max_retries
             description: |
               The maximum number of connections to the backend cluster.
               Defaults to 1024.
           - !ruby/object:Api::Type::Integer
             name: 'maxPendingRequests'
             default_value: 1024
+            at_least_one_of:
+              - circuit_breakers.0.connect_timeout
+              - circuit_breakers.0.max_requests_per_connection
+              - circuit_breakers.0.max_connections
+              - circuit_breakers.0.max_pending_requests
+              - circuit_breakers.0.max_requests
+              - circuit_breakers.0.max_retries
             description: |
               The maximum number of pending requests to the backend cluster.
               Defaults to 1024.
           - !ruby/object:Api::Type::Integer
             name: 'maxRequests'
             default_value: 1024
+            at_least_one_of:
+              - circuit_breakers.0.connect_timeout
+              - circuit_breakers.0.max_requests_per_connection
+              - circuit_breakers.0.max_connections
+              - circuit_breakers.0.max_pending_requests
+              - circuit_breakers.0.max_requests
+              - circuit_breakers.0.max_retries
             description: |
               The maximum number of parallel requests to the backend cluster.
               Defaults to 1024.
           - !ruby/object:Api::Type::Integer
             name: 'maxRetries'
             default_value: 3
+            at_least_one_of:
+              - circuit_breakers.0.connect_timeout
+              - circuit_breakers.0.max_requests_per_connection
+              - circuit_breakers.0.max_connections
+              - circuit_breakers.0.max_pending_requests
+              - circuit_breakers.0.max_requests
+              - circuit_breakers.0.max_retries
             description: |
               The maximum number of parallel retries to the backend cluster.
               Defaults to 3.
@@ -1462,6 +1745,10 @@ objects:
         properties:
           - !ruby/object:Api::Type::NestedObject
             name: 'httpCookie'
+            at_least_one_of:
+              - consistent_hash.0.http_cookie
+              - consistent_hash.0.http_header_name
+              - consistent_hash.0.minimum_ring_size
             description: |
               Hash is based on HTTP Cookie. This field describes a HTTP cookie
               that will be used as the hash key for the consistent hash load
@@ -1470,6 +1757,10 @@ objects:
             properties:
               - !ruby/object:Api::Type::NestedObject
                 name: 'ttl'
+                at_least_one_of:
+                  - consistent_hash.0.http_cookie.0.ttl
+                  - consistent_hash.0.http_cookie.0.name
+                  - consistent_hash.0.http_cookie.0.path
                 description: |
                   Lifetime of the cookie.
                 properties:
@@ -1488,20 +1779,36 @@ objects:
                       be from 0 to 999,999,999 inclusive.
               - !ruby/object:Api::Type::String
                 name: 'name'
+                at_least_one_of:
+                  - consistent_hash.0.http_cookie.0.ttl
+                  - consistent_hash.0.http_cookie.0.name
+                  - consistent_hash.0.http_cookie.0.path
                 description: |
                   Name of the cookie.
               - !ruby/object:Api::Type::String
                 name: 'path'
+                at_least_one_of:
+                  - consistent_hash.0.http_cookie.0.ttl
+                  - consistent_hash.0.http_cookie.0.name
+                  - consistent_hash.0.http_cookie.0.path
                 description: |
                   Path to set for the cookie.
           - !ruby/object:Api::Type::String
             name: 'httpHeaderName'
+            at_least_one_of:
+              - consistent_hash.0.http_cookie
+              - consistent_hash.0.http_header_name
+              - consistent_hash.0.minimum_ring_size
             description: |
               The hash based on the value of the specified header field.
               This field is applicable if the sessionAffinity is set to HEADER_FIELD.
           - !ruby/object:Api::Type::Integer
             name: 'minimumRingSize'
             default_value: 1024
+            at_least_one_of:
+              - consistent_hash.0.http_cookie
+              - consistent_hash.0.http_header_name
+              - consistent_hash.0.minimum_ring_size
             description: |
               The minimum number of virtual nodes to use for the hash ring.
               Larger ring sizes result in more granular load
@@ -1538,6 +1845,10 @@ objects:
         properties:
           - !ruby/object:Api::Type::Boolean
             name: 'disableConnectionDrainOnFailover'
+            at_least_one_of:
+              - failover_policy.0.disable_connection_drain_on_failover
+              - failover_policy.0.drop_traffic_if_unhealthy
+              - failover_policy.0.failover_ratio
             description: |
               On failover or failback, this field indicates whether connection drain
               will be honored. Setting this to true has the following effect: connections
@@ -1549,6 +1860,10 @@ objects:
               The default is false.
           - !ruby/object:Api::Type::Boolean
             name: 'dropTrafficIfUnhealthy'
+            at_least_one_of:
+              - failover_policy.0.disable_connection_drain_on_failover
+              - failover_policy.0.drop_traffic_if_unhealthy
+              - failover_policy.0.failover_ratio
             description: |
               This option is used only when no healthy VMs are detected in the primary
               and backup instance groups. When set to true, traffic is dropped. When
@@ -1556,6 +1871,10 @@ objects:
               The default is false.
           - !ruby/object:Api::Type::Double
             name: 'failoverRatio'
+            at_least_one_of:
+              - failover_policy.0.disable_connection_drain_on_failover
+              - failover_policy.0.drop_traffic_if_unhealthy
+              - failover_policy.0.failover_ratio
             description: |
               The value of the field must be in [0, 1]. If the ratio of the healthy
               VMs in the primary backend is at or below this number, traffic arriving
@@ -1660,6 +1979,18 @@ objects:
         properties:
           - !ruby/object:Api::Type::NestedObject
             name: 'baseEjectionTime'
+            at_least_one_of:
+              - outlier_detection.0.base_ejection_time
+              - outlier_detection.0.consecutive_errors
+              - outlier_detection.0.consecutive_gateway_failure
+              - outlier_detection.0.enforcing_consecutive_errors
+              - outlier_detection.0.enforcing_consecutive_gateway_failure
+              - outlier_detection.0.enforcing_success_rate
+              - outlier_detection.0.interval
+              - outlier_detection.0.max_ejection_percent
+              - outlier_detection.0.success_rate_minimum_hosts
+              - outlier_detection.0.success_rate_request_volume
+              - outlier_detection.0.success_rate_stdev_factor
             description: |
               The base time that a host is ejected for. The real time is equal to the base
               time multiplied by the number of times the host has been ejected. Defaults to
@@ -1680,6 +2011,18 @@ objects:
           - !ruby/object:Api::Type::Integer
             name: 'consecutiveErrors'
             default_value: 5
+            at_least_one_of:
+              - outlier_detection.0.base_ejection_time
+              - outlier_detection.0.consecutive_errors
+              - outlier_detection.0.consecutive_gateway_failure
+              - outlier_detection.0.enforcing_consecutive_errors
+              - outlier_detection.0.enforcing_consecutive_gateway_failure
+              - outlier_detection.0.enforcing_success_rate
+              - outlier_detection.0.interval
+              - outlier_detection.0.max_ejection_percent
+              - outlier_detection.0.success_rate_minimum_hosts
+              - outlier_detection.0.success_rate_request_volume
+              - outlier_detection.0.success_rate_stdev_factor
             description: |
               Number of errors before a host is ejected from the connection pool. When the
               backend host is accessed over HTTP, a 5xx return code qualifies as an error.
@@ -1687,6 +2030,18 @@ objects:
           - !ruby/object:Api::Type::Integer
             name: 'consecutiveGatewayFailure'
             default_value: 5
+            at_least_one_of:
+              - outlier_detection.0.base_ejection_time
+              - outlier_detection.0.consecutive_errors
+              - outlier_detection.0.consecutive_gateway_failure
+              - outlier_detection.0.enforcing_consecutive_errors
+              - outlier_detection.0.enforcing_consecutive_gateway_failure
+              - outlier_detection.0.enforcing_success_rate
+              - outlier_detection.0.interval
+              - outlier_detection.0.max_ejection_percent
+              - outlier_detection.0.success_rate_minimum_hosts
+              - outlier_detection.0.success_rate_request_volume
+              - outlier_detection.0.success_rate_stdev_factor
             description: |
               The number of consecutive gateway failures (502, 503, 504 status or connection
               errors that are mapped to one of those status codes) before a consecutive
@@ -1694,6 +2049,18 @@ objects:
           - !ruby/object:Api::Type::Integer
             name: 'enforcingConsecutiveErrors'
             default_value: 100
+            at_least_one_of:
+              - outlier_detection.0.base_ejection_time
+              - outlier_detection.0.consecutive_errors
+              - outlier_detection.0.consecutive_gateway_failure
+              - outlier_detection.0.enforcing_consecutive_errors
+              - outlier_detection.0.enforcing_consecutive_gateway_failure
+              - outlier_detection.0.enforcing_success_rate
+              - outlier_detection.0.interval
+              - outlier_detection.0.max_ejection_percent
+              - outlier_detection.0.success_rate_minimum_hosts
+              - outlier_detection.0.success_rate_request_volume
+              - outlier_detection.0.success_rate_stdev_factor
             description: |
               The percentage chance that a host will be actually ejected when an outlier
               status is detected through consecutive 5xx. This setting can be used to disable
@@ -1701,6 +2068,18 @@ objects:
           - !ruby/object:Api::Type::Integer
             name: 'enforcingConsecutiveGatewayFailure'
             default_value: 0
+            at_least_one_of:
+              - outlier_detection.0.base_ejection_time
+              - outlier_detection.0.consecutive_errors
+              - outlier_detection.0.consecutive_gateway_failure
+              - outlier_detection.0.enforcing_consecutive_errors
+              - outlier_detection.0.enforcing_consecutive_gateway_failure
+              - outlier_detection.0.enforcing_success_rate
+              - outlier_detection.0.interval
+              - outlier_detection.0.max_ejection_percent
+              - outlier_detection.0.success_rate_minimum_hosts
+              - outlier_detection.0.success_rate_request_volume
+              - outlier_detection.0.success_rate_stdev_factor
             description: |
               The percentage chance that a host will be actually ejected when an outlier
               status is detected through consecutive gateway failures. This setting can be
@@ -1708,12 +2087,36 @@ objects:
           - !ruby/object:Api::Type::Integer
             name: 'enforcingSuccessRate'
             default_value: 100
+            at_least_one_of:
+              - outlier_detection.0.base_ejection_time
+              - outlier_detection.0.consecutive_errors
+              - outlier_detection.0.consecutive_gateway_failure
+              - outlier_detection.0.enforcing_consecutive_errors
+              - outlier_detection.0.enforcing_consecutive_gateway_failure
+              - outlier_detection.0.enforcing_success_rate
+              - outlier_detection.0.interval
+              - outlier_detection.0.max_ejection_percent
+              - outlier_detection.0.success_rate_minimum_hosts
+              - outlier_detection.0.success_rate_request_volume
+              - outlier_detection.0.success_rate_stdev_factor
             description: |
               The percentage chance that a host will be actually ejected when an outlier
               status is detected through success rate statistics. This setting can be used to
               disable ejection or to ramp it up slowly. Defaults to 100.
           - !ruby/object:Api::Type::NestedObject
             name: 'interval'
+            at_least_one_of:
+              - outlier_detection.0.base_ejection_time
+              - outlier_detection.0.consecutive_errors
+              - outlier_detection.0.consecutive_gateway_failure
+              - outlier_detection.0.enforcing_consecutive_errors
+              - outlier_detection.0.enforcing_consecutive_gateway_failure
+              - outlier_detection.0.enforcing_success_rate
+              - outlier_detection.0.interval
+              - outlier_detection.0.max_ejection_percent
+              - outlier_detection.0.success_rate_minimum_hosts
+              - outlier_detection.0.success_rate_request_volume
+              - outlier_detection.0.success_rate_stdev_factor
             description: |
               Time interval between ejection sweep analysis. This can result in both new
               ejections as well as hosts being returned to service. Defaults to 10 seconds.
@@ -1733,12 +2136,36 @@ objects:
           - !ruby/object:Api::Type::Integer
             name: 'maxEjectionPercent'
             default_value: 10
+            at_least_one_of:
+              - outlier_detection.0.base_ejection_time
+              - outlier_detection.0.consecutive_errors
+              - outlier_detection.0.consecutive_gateway_failure
+              - outlier_detection.0.enforcing_consecutive_errors
+              - outlier_detection.0.enforcing_consecutive_gateway_failure
+              - outlier_detection.0.enforcing_success_rate
+              - outlier_detection.0.interval
+              - outlier_detection.0.max_ejection_percent
+              - outlier_detection.0.success_rate_minimum_hosts
+              - outlier_detection.0.success_rate_request_volume
+              - outlier_detection.0.success_rate_stdev_factor
             description: |
               Maximum percentage of hosts in the load balancing pool for the backend service
               that can be ejected. Defaults to 10%.
           - !ruby/object:Api::Type::Integer
             name: 'successRateMinimumHosts'
             default_value: 5
+            at_least_one_of:
+              - outlier_detection.0.base_ejection_time
+              - outlier_detection.0.consecutive_errors
+              - outlier_detection.0.consecutive_gateway_failure
+              - outlier_detection.0.enforcing_consecutive_errors
+              - outlier_detection.0.enforcing_consecutive_gateway_failure
+              - outlier_detection.0.enforcing_success_rate
+              - outlier_detection.0.interval
+              - outlier_detection.0.max_ejection_percent
+              - outlier_detection.0.success_rate_minimum_hosts
+              - outlier_detection.0.success_rate_request_volume
+              - outlier_detection.0.success_rate_stdev_factor
             description: |
               The number of hosts in a cluster that must have enough request volume to detect
               success rate outliers. If the number of hosts is less than this setting, outlier
@@ -1747,6 +2174,18 @@ objects:
           - !ruby/object:Api::Type::Integer
             name: 'successRateRequestVolume'
             default_value: 100
+            at_least_one_of:
+              - outlier_detection.0.base_ejection_time
+              - outlier_detection.0.consecutive_errors
+              - outlier_detection.0.consecutive_gateway_failure
+              - outlier_detection.0.enforcing_consecutive_errors
+              - outlier_detection.0.enforcing_consecutive_gateway_failure
+              - outlier_detection.0.enforcing_success_rate
+              - outlier_detection.0.interval
+              - outlier_detection.0.max_ejection_percent
+              - outlier_detection.0.success_rate_minimum_hosts
+              - outlier_detection.0.success_rate_request_volume
+              - outlier_detection.0.success_rate_stdev_factor
             description: |
               The minimum number of total requests that must be collected in one interval (as
               defined by the interval duration above) to include this host in success rate
@@ -1756,6 +2195,18 @@ objects:
           - !ruby/object:Api::Type::Integer
             name: 'successRateStdevFactor'
             default_value: 1900
+            at_least_one_of:
+              - outlier_detection.0.base_ejection_time
+              - outlier_detection.0.consecutive_errors
+              - outlier_detection.0.consecutive_gateway_failure
+              - outlier_detection.0.enforcing_consecutive_errors
+              - outlier_detection.0.enforcing_consecutive_gateway_failure
+              - outlier_detection.0.enforcing_success_rate
+              - outlier_detection.0.interval
+              - outlier_detection.0.max_ejection_percent
+              - outlier_detection.0.success_rate_minimum_hosts
+              - outlier_detection.0.success_rate_request_volume
+              - outlier_detection.0.success_rate_stdev_factor
             description: |
               This factor is used to determine the ejection threshold for success rate outlier
               ejection. The ejection threshold is the difference between the mean success
@@ -1807,10 +2258,16 @@ objects:
         properties:
           - !ruby/object:Api::Type::Boolean
             name: 'enable'
+            at_least_one_of:
+              - log_config.0.enable
+              - log_config.0.sample_rate
             description: |
               Whether to enable logging for the load balancer traffic served by this backend service.
           - !ruby/object:Api::Type::Double
             name: 'sampleRate'
+            at_least_one_of:
+              - log_config.0.enable
+              - log_config.0.sample_rate
             description: |
               This field can only be specified if logging is enabled for this backend service. The value of
               the field must be in [0, 1]. This configures the sampling rate of requests to the load balancer
@@ -2391,8 +2848,9 @@ objects:
           The list of ALLOW rules specified by this firewall. Each rule
           specifies a protocol and port-range tuple that describes a permitted
           connection.
-        conflicts:
-          - denied
+        exactly_one_of:
+          - allow
+          - deny
         item_type: !ruby/object:Api::Type::NestedObject
           properties:
             # IPProtocol has to be string, instead of Enum because user can
@@ -2423,6 +2881,9 @@ objects:
         output: true
       - !ruby/object:Api::Type::Array
         name: 'denied'
+        exactly_one_of:
+          - allow
+          - deny
         description: |
           The list of DENY rules specified by this firewall. Each rule specifies
           a protocol and port-range tuple that describes a denied connection.
@@ -2717,16 +3178,6 @@ objects:
         description: |
           A BackendService to receive the matched traffic. This is used only
           for INTERNAL load balancing.
-      - !ruby/object:Api::Type::Enum
-        name: 'ipVersion'
-        deprecation_message: >-
-          ipVersion is not used for regional forwarding rules. Please remove
-          this field if you are using it.
-        description: |
-          ipVersion is not a valid field for regional forwarding rules.
-        values:
-          - :IPV4
-          - :IPV6
       - !ruby/object:Api::Type::Enum
         name: 'loadBalancingScheme'
         description: |
@@ -3565,42 +4016,91 @@ objects:
           - :HTTP2
       - !ruby/object:Api::Type::NestedObject
         name: 'httpHealthCheck'
-        conflicts:
-          - httpsHealthCheck
-          - http2HealthCheck
-          - tcpHealthCheck
-          - sslHealthCheck
+        exactly_one_of:
+          - http_health_check
+          - https_health_check
+          - http2_health_check
+          - tcp_health_check
+          - ssl_health_check
         properties:
             - !ruby/object:Api::Type::String
               name: 'host'
+              at_least_one_of:
+                - http_health_check.0.host
+                - http_health_check.0.request_path
+                - http_health_check.0.response
+                - http_health_check.0.port
+                - http_health_check.0.port_name
+                - http_health_check.0.proxy_header
+                - http_health_check.0.port_specification
               description: |
                 The value of the host header in the HTTP health check request.
                 If left empty (default value), the public IP on behalf of which this health
                 check is performed will be used.
             - !ruby/object:Api::Type::String
               name: 'requestPath'
+              at_least_one_of:
+                - http_health_check.0.host
+                - http_health_check.0.request_path
+                - http_health_check.0.response
+                - http_health_check.0.port
+                - http_health_check.0.port_name
+                - http_health_check.0.proxy_header
+                - http_health_check.0.port_specification
               description: |
                 The request path of the HTTP health check request.
                 The default value is /.
               default_value: "/"
             - !ruby/object:Api::Type::String
               name: 'response'
+              at_least_one_of:
+                - http_health_check.0.host
+                - http_health_check.0.request_path
+                - http_health_check.0.response
+                - http_health_check.0.port
+                - http_health_check.0.port_name
+                - http_health_check.0.proxy_header
+                - http_health_check.0.port_specification
               description: |
                 The bytes to match against the beginning of the response data. If left empty
                 (the default value), any response will indicate health. The response data
                 can only be ASCII.
             - !ruby/object:Api::Type::Integer
               name: 'port'
+              at_least_one_of:
+                - http_health_check.0.host
+                - http_health_check.0.request_path
+                - http_health_check.0.response
+                - http_health_check.0.port
+                - http_health_check.0.port_name
+                - http_health_check.0.proxy_header
+                - http_health_check.0.port_specification
               description: |
                 The TCP port number for the HTTP health check request.
                 The default value is 80.
             - !ruby/object:Api::Type::String
               name: 'portName'
+              at_least_one_of:
+                - http_health_check.0.host
+                - http_health_check.0.request_path
+                - http_health_check.0.response
+                - http_health_check.0.port
+                - http_health_check.0.port_name
+                - http_health_check.0.proxy_header
+                - http_health_check.0.port_specification
               description: |
                 Port name as defined in InstanceGroup#NamedPort#name. If both port and
                 port_name are defined, port takes precedence.
             - !ruby/object:Api::Type::Enum
               name: 'proxyHeader'
+              at_least_one_of:
+                - http_health_check.0.host
+                - http_health_check.0.request_path
+                - http_health_check.0.response
+                - http_health_check.0.port
+                - http_health_check.0.port_name
+                - http_health_check.0.proxy_header
+                - http_health_check.0.port_specification
               description: |
                 Specifies the type of proxy header to append before sending data to the
                 backend, either NONE or PROXY_V1. The default is NONE.
@@ -3610,6 +4110,14 @@ objects:
               default_value: :NONE
             - !ruby/object:Api::Type::Enum
               name: 'portSpecification'
+              at_least_one_of:
+                - http_health_check.0.host
+                - http_health_check.0.request_path
+                - http_health_check.0.response
+                - http_health_check.0.port
+                - http_health_check.0.port_name
+                - http_health_check.0.proxy_header
+                - http_health_check.0.port_specification
               description: |
                 Specifies how port is selected for health checking, can be one of the
                 following values:
@@ -3631,42 +4139,91 @@ objects:
                 - :USE_SERVING_PORT
       - !ruby/object:Api::Type::NestedObject
         name: 'httpsHealthCheck'
-        conflicts:
-          - httpHealthCheck
-          - http2HealthCheck
-          - tcpHealthCheck
-          - sslHealthCheck
+        exactly_one_of:
+          - http_health_check
+          - https_health_check
+          - http2_health_check
+          - tcp_health_check
+          - ssl_health_check
         properties:
             - !ruby/object:Api::Type::String
               name: 'host'
+              at_least_one_of:
+                - https_health_check.0.host
+                - https_health_check.0.request_path
+                - https_health_check.0.response
+                - https_health_check.0.port
+                - https_health_check.0.port_name
+                - https_health_check.0.proxy_header
+                - https_health_check.0.port_specification
               description: |
                 The value of the host header in the HTTPS health check request.
                 If left empty (default value), the public IP on behalf of which this health
                 check is performed will be used.
             - !ruby/object:Api::Type::String
               name: 'requestPath'
+              at_least_one_of:
+                - https_health_check.0.host
+                - https_health_check.0.request_path
+                - https_health_check.0.response
+                - https_health_check.0.port
+                - https_health_check.0.port_name
+                - https_health_check.0.proxy_header
+                - https_health_check.0.port_specification
               description: |
                 The request path of the HTTPS health check request.
                 The default value is /.
               default_value: "/"
             - !ruby/object:Api::Type::String
               name: 'response'
+              at_least_one_of:
+                - https_health_check.0.host
+                - https_health_check.0.request_path
+                - https_health_check.0.response
+                - https_health_check.0.port
+                - https_health_check.0.port_name
+                - https_health_check.0.proxy_header
+                - https_health_check.0.port_specification
               description: |
                 The bytes to match against the beginning of the response data. If left empty
                 (the default value), any response will indicate health. The response data
                 can only be ASCII.
             - !ruby/object:Api::Type::Integer
               name: 'port'
+              at_least_one_of:
+                - https_health_check.0.host
+                - https_health_check.0.request_path
+                - https_health_check.0.response
+                - https_health_check.0.port
+                - https_health_check.0.port_name
+                - https_health_check.0.proxy_header
+                - https_health_check.0.port_specification
               description: |
                 The TCP port number for the HTTPS health check request.
                 The default value is 443.
             - !ruby/object:Api::Type::String
               name: 'portName'
+              at_least_one_of:
+                - https_health_check.0.host
+                - https_health_check.0.request_path
+                - https_health_check.0.response
+                - https_health_check.0.port
+                - https_health_check.0.port_name
+                - https_health_check.0.proxy_header
+                - https_health_check.0.port_specification
               description: |
                 Port name as defined in InstanceGroup#NamedPort#name. If both port and
                 port_name are defined, port takes precedence.
             - !ruby/object:Api::Type::Enum
               name: 'proxyHeader'
+              at_least_one_of:
+                - https_health_check.0.host
+                - https_health_check.0.request_path
+                - https_health_check.0.response
+                - https_health_check.0.port
+                - https_health_check.0.port_name
+                - https_health_check.0.proxy_header
+                - https_health_check.0.port_specification
               description: |
                 Specifies the type of proxy header to append before sending data to the
                 backend, either NONE or PROXY_V1. The default is NONE.
@@ -3676,6 +4233,14 @@ objects:
               default_value: :NONE
             - !ruby/object:Api::Type::Enum
               name: 'portSpecification'
+              at_least_one_of:
+                - https_health_check.0.host
+                - https_health_check.0.request_path
+                - https_health_check.0.response
+                - https_health_check.0.port
+                - https_health_check.0.port_name
+                - https_health_check.0.proxy_header
+                - https_health_check.0.port_specification
               description: |
                 Specifies how port is selected for health checking, can be one of the
                 following values:
@@ -3697,14 +4262,22 @@ objects:
                 - :USE_SERVING_PORT
       - !ruby/object:Api::Type::NestedObject
         name: 'tcpHealthCheck'
-        conflicts:
-          - httpHealthCheck
-          - http2HealthCheck
-          - httpsHealthCheck
-          - sslHealthCheck
+        exactly_one_of:
+          - http_health_check
+          - https_health_check
+          - http2_health_check
+          - tcp_health_check
+          - ssl_health_check
         properties:
             - !ruby/object:Api::Type::String
               name: 'request'
+              at_least_one_of:
+                - tcp_health_check.0.request
+                - tcp_health_check.0.response
+                - tcp_health_check.0.port
+                - tcp_health_check.0.port_name
+                - tcp_health_check.0.proxy_header
+                - tcp_health_check.0.port_specification
               description: |
                 The application data to send once the TCP connection has been
                 established (default value is empty). If both request and response are
@@ -3712,22 +4285,50 @@ objects:
                 data can only be ASCII.
             - !ruby/object:Api::Type::String
               name: 'response'
+              at_least_one_of:
+                - tcp_health_check.0.request
+                - tcp_health_check.0.response
+                - tcp_health_check.0.port
+                - tcp_health_check.0.port_name
+                - tcp_health_check.0.proxy_header
+                - tcp_health_check.0.port_specification
               description: |
                 The bytes to match against the beginning of the response data. If left empty
                 (the default value), any response will indicate health. The response data
                 can only be ASCII.
             - !ruby/object:Api::Type::Integer
               name: 'port'
+              at_least_one_of:
+                - tcp_health_check.0.request
+                - tcp_health_check.0.response
+                - tcp_health_check.0.port
+                - tcp_health_check.0.port_name
+                - tcp_health_check.0.proxy_header
+                - tcp_health_check.0.port_specification
               description: |
                 The TCP port number for the TCP health check request.
                 The default value is 443.
             - !ruby/object:Api::Type::String
               name: 'portName'
+              at_least_one_of:
+                - tcp_health_check.0.request
+                - tcp_health_check.0.response
+                - tcp_health_check.0.port
+                - tcp_health_check.0.port_name
+                - tcp_health_check.0.proxy_header
+                - tcp_health_check.0.port_specification
               description: |
                 Port name as defined in InstanceGroup#NamedPort#name. If both port and
                 port_name are defined, port takes precedence.
             - !ruby/object:Api::Type::Enum
               name: 'proxyHeader'
+              at_least_one_of:
+                - tcp_health_check.0.request
+                - tcp_health_check.0.response
+                - tcp_health_check.0.port
+                - tcp_health_check.0.port_name
+                - tcp_health_check.0.proxy_header
+                - tcp_health_check.0.port_specification
               description: |
                 Specifies the type of proxy header to append before sending data to the
                 backend, either NONE or PROXY_V1. The default is NONE.
@@ -3737,6 +4338,13 @@ objects:
               default_value: :NONE
             - !ruby/object:Api::Type::Enum
               name: 'portSpecification'
+              at_least_one_of:
+                - tcp_health_check.0.request
+                - tcp_health_check.0.response
+                - tcp_health_check.0.port
+                - tcp_health_check.0.port_name
+                - tcp_health_check.0.proxy_header
+                - tcp_health_check.0.port_specification
               description: |
                 Specifies how port is selected for health checking, can be one of the
                 following values:
@@ -3758,14 +4366,22 @@ objects:
                 - :USE_SERVING_PORT
       - !ruby/object:Api::Type::NestedObject
         name: 'sslHealthCheck'
-        conflicts:
-          - httpHealthCheck
-          - http2HealthCheck
-          - httpsHealthCheck
-          - tcpHealthCheck
+        exactly_one_of:
+          - http_health_check
+          - https_health_check
+          - http2_health_check
+          - tcp_health_check
+          - ssl_health_check
         properties:
             - !ruby/object:Api::Type::String
               name: 'request'
+              at_least_one_of:
+                - ssl_health_check.0.request
+                - ssl_health_check.0.response
+                - ssl_health_check.0.port
+                - ssl_health_check.0.port_name
+                - ssl_health_check.0.proxy_header
+                - ssl_health_check.0.port_specification
               description: |
                 The application data to send once the SSL connection has been
                 established (default value is empty). If both request and response are
@@ -3773,22 +4389,50 @@ objects:
                 data can only be ASCII.
             - !ruby/object:Api::Type::String
               name: 'response'
+              at_least_one_of:
+                - ssl_health_check.0.request
+                - ssl_health_check.0.response
+                - ssl_health_check.0.port
+                - ssl_health_check.0.port_name
+                - ssl_health_check.0.proxy_header
+                - ssl_health_check.0.port_specification
               description: |
                 The bytes to match against the beginning of the response data. If left empty
                 (the default value), any response will indicate health. The response data
                 can only be ASCII.
             - !ruby/object:Api::Type::Integer
               name: 'port'
+              at_least_one_of:
+                - ssl_health_check.0.request
+                - ssl_health_check.0.response
+                - ssl_health_check.0.port
+                - ssl_health_check.0.port_name
+                - ssl_health_check.0.proxy_header
+                - ssl_health_check.0.port_specification
               description: |
                 The TCP port number for the SSL health check request.
                 The default value is 443.
             - !ruby/object:Api::Type::String
               name: 'portName'
+              at_least_one_of:
+                - ssl_health_check.0.request
+                - ssl_health_check.0.response
+                - ssl_health_check.0.port
+                - ssl_health_check.0.port_name
+                - ssl_health_check.0.proxy_header
+                - ssl_health_check.0.port_specification
               description: |
                 Port name as defined in InstanceGroup#NamedPort#name. If both port and
                 port_name are defined, port takes precedence.
             - !ruby/object:Api::Type::Enum
               name: 'proxyHeader'
+              at_least_one_of:
+                - ssl_health_check.0.request
+                - ssl_health_check.0.response
+                - ssl_health_check.0.port
+                - ssl_health_check.0.port_name
+                - ssl_health_check.0.proxy_header
+                - ssl_health_check.0.port_specification
               description: |
                 Specifies the type of proxy header to append before sending data to the
                 backend, either NONE or PROXY_V1. The default is NONE.
@@ -3798,6 +4442,13 @@ objects:
               default_value: :NONE
             - !ruby/object:Api::Type::Enum
               name: 'portSpecification'
+              at_least_one_of:
+                - ssl_health_check.0.request
+                - ssl_health_check.0.response
+                - ssl_health_check.0.port
+                - ssl_health_check.0.port_name
+                - ssl_health_check.0.proxy_header
+                - ssl_health_check.0.port_specification
               description: |
                 Specifies how port is selected for health checking, can be one of the
                 following values:
@@ -3819,42 +4470,91 @@ objects:
                 - :USE_SERVING_PORT
       - !ruby/object:Api::Type::NestedObject
         name: 'http2HealthCheck'
-        conflicts:
-          - httpHealthCheck
-          - sslHealthCheck
-          - httpsHealthCheck
-          - tcpHealthCheck
+        exactly_one_of:
+          - http_health_check
+          - https_health_check
+          - http2_health_check
+          - tcp_health_check
+          - ssl_health_check
         properties:
             - !ruby/object:Api::Type::String
               name: 'host'
+              at_least_one_of:
+                - http2_health_check.0.host
+                - http2_health_check.0.request_path
+                - http2_health_check.0.response
+                - http2_health_check.0.port
+                - http2_health_check.0.port_name
+                - http2_health_check.0.proxy_header
+                - http2_health_check.0.port_specification
               description: |
                 The value of the host header in the HTTP2 health check request.
                 If left empty (default value), the public IP on behalf of which this health
                 check is performed will be used.
             - !ruby/object:Api::Type::String
               name: 'requestPath'
+              at_least_one_of:
+                - http2_health_check.0.host
+                - http2_health_check.0.request_path
+                - http2_health_check.0.response
+                - http2_health_check.0.port
+                - http2_health_check.0.port_name
+                - http2_health_check.0.proxy_header
+                - http2_health_check.0.port_specification
               description: |
                 The request path of the HTTP2 health check request.
                 The default value is /.
               default_value: "/"
             - !ruby/object:Api::Type::String
               name: 'response'
+              at_least_one_of:
+                - http2_health_check.0.host
+                - http2_health_check.0.request_path
+                - http2_health_check.0.response
+                - http2_health_check.0.port
+                - http2_health_check.0.port_name
+                - http2_health_check.0.proxy_header
+                - http2_health_check.0.port_specification
               description: |
                 The bytes to match against the beginning of the response data. If left empty
                 (the default value), any response will indicate health. The response data
                 can only be ASCII.
             - !ruby/object:Api::Type::Integer
               name: 'port'
+              at_least_one_of:
+                - http2_health_check.0.host
+                - http2_health_check.0.request_path
+                - http2_health_check.0.response
+                - http2_health_check.0.port
+                - http2_health_check.0.port_name
+                - http2_health_check.0.proxy_header
+                - http2_health_check.0.port_specification
               description: |
                 The TCP port number for the HTTP2 health check request.
                 The default value is 443.
             - !ruby/object:Api::Type::String
               name: 'portName'
+              at_least_one_of:
+                - http2_health_check.0.host
+                - http2_health_check.0.request_path
+                - http2_health_check.0.response
+                - http2_health_check.0.port
+                - http2_health_check.0.port_name
+                - http2_health_check.0.proxy_header
+                - http2_health_check.0.port_specification
               description: |
                 Port name as defined in InstanceGroup#NamedPort#name. If both port and
                 port_name are defined, port takes precedence.
             - !ruby/object:Api::Type::Enum
               name: 'proxyHeader'
+              at_least_one_of:
+                - http2_health_check.0.host
+                - http2_health_check.0.request_path
+                - http2_health_check.0.response
+                - http2_health_check.0.port
+                - http2_health_check.0.port_name
+                - http2_health_check.0.proxy_header
+                - http2_health_check.0.port_specification
               description: |
                 Specifies the type of proxy header to append before sending data to the
                 backend, either NONE or PROXY_V1. The default is NONE.
@@ -3864,6 +4564,14 @@ objects:
               default_value: :NONE
             - !ruby/object:Api::Type::Enum
               name: 'portSpecification'
+              at_least_one_of:
+                - http2_health_check.0.host
+                - http2_health_check.0.request_path
+                - http2_health_check.0.response
+                - http2_health_check.0.port
+                - http2_health_check.0.port_name
+                - http2_health_check.0.proxy_header
+                - http2_health_check.0.port_specification
               description: |
                 Specifies how port is selected for health checking, can be one of the
                 following values:
@@ -4546,6 +5254,7 @@ objects:
           properties:
             - !ruby/object:Api::Type::Enum
               name: 'type'
+              required: true
               description: |
                 The type of supported feature. Read [Enabling guest operating system features](https://cloud.google.com/compute/docs/images/create-delete-deprecate-private-images#guest-os-features) to see a list of available options.
               values:
@@ -5934,25 +6643,6 @@ objects:
         description: 'The unique identifier for the resource.'
         output: true
       - !ruby/object:Api::Type::String
-        name: 'ipv4_range'
-        # We override this in api.yaml so that the name is more aesthetic
-        api_name: 'IPv4Range'
-        deprecation_message: >-
-          Legacy Networks are deprecated and you will no longer be able to
-          create them using this field from Feb 1, 2020 onwards.
-        input: true
-        conflicts:
-          - autoCreateSubnetworks
-        description: |
-          If this field is specified, a deprecated legacy network is created.
-          You will no longer be able to create a legacy network on Feb 1, 2020.
-          See the [legacy network docs](https://cloud.google.com/vpc/docs/legacy)
-          for more details.
-
-          The range of internal addresses that are legal on this legacy network.
-          This range is a CIDR specification, for example: `192.168.0.0/16`.
-          The resource must be recreated to modify this field.
-      - !ruby/object:Api::Type::String
         name: 'name'
         description: |
           Name of the resource. Provided by the client when the resource is
@@ -6341,10 +7031,16 @@ objects:
         properties:
           - !ruby/object:Api::Type::String
             name: cpus
+            at_least_one_of:
+              - node_type_flexibility.0.cpus
+              - node_type_flexibility.0.memory
             description: |
                Number of virtual CPUs to use.
           - !ruby/object:Api::Type::String
             name: memory
+            at_least_one_of:
+              - node_type_flexibility.0.cpus
+              - node_type_flexibility.0.memory
             description: |
               Physical memory available to the node, defined in MB.
           - !ruby/object:Api::Type::String
@@ -7340,42 +8036,91 @@ objects:
           - :HTTP2
       - !ruby/object:Api::Type::NestedObject
         name: 'httpHealthCheck'
-        conflicts:
-          - httpsHealthCheck
-          - http2HealthCheck
-          - tcpHealthCheck
-          - sslHealthCheck
+        exactly_one_of:
+          - http_health_check
+          - https_health_check
+          - http2_health_check
+          - tcp_health_check
+          - ssl_health_check
         properties:
             - !ruby/object:Api::Type::String
               name: 'host'
+              at_least_one_of:
+                - http_health_check.0.host
+                - http_health_check.0.request_path
+                - http_health_check.0.response
+                - http_health_check.0.port
+                - http_health_check.0.port_name
+                - http_health_check.0.proxy_header
+                - http_health_check.0.port_specification
               description: |
                 The value of the host header in the HTTP health check request.
                 If left empty (default value), the public IP on behalf of which this health
                 check is performed will be used.
             - !ruby/object:Api::Type::String
               name: 'requestPath'
+              at_least_one_of:
+                - http_health_check.0.host
+                - http_health_check.0.request_path
+                - http_health_check.0.response
+                - http_health_check.0.port
+                - http_health_check.0.port_name
+                - http_health_check.0.proxy_header
+                - http_health_check.0.port_specification
               description: |
                 The request path of the HTTP health check request.
                 The default value is /.
               default_value: "/"
             - !ruby/object:Api::Type::String
               name: 'response'
+              at_least_one_of:
+                - http_health_check.0.host
+                - http_health_check.0.request_path
+                - http_health_check.0.response
+                - http_health_check.0.port
+                - http_health_check.0.port_name
+                - http_health_check.0.proxy_header
+                - http_health_check.0.port_specification
               description: |
                 The bytes to match against the beginning of the response data. If left empty
                 (the default value), any response will indicate health. The response data
                 can only be ASCII.
             - !ruby/object:Api::Type::Integer
               name: 'port'
+              at_least_one_of:
+                - http_health_check.0.host
+                - http_health_check.0.request_path
+                - http_health_check.0.response
+                - http_health_check.0.port
+                - http_health_check.0.port_name
+                - http_health_check.0.proxy_header
+                - http_health_check.0.port_specification
               description: |
                 The TCP port number for the HTTP health check request.
                 The default value is 80.
             - !ruby/object:Api::Type::String
               name: 'portName'
+              at_least_one_of:
+                - http_health_check.0.host
+                - http_health_check.0.request_path
+                - http_health_check.0.response
+                - http_health_check.0.port
+                - http_health_check.0.port_name
+                - http_health_check.0.proxy_header
+                - http_health_check.0.port_specification
               description: |
                 Port name as defined in InstanceGroup#NamedPort#name. If both port and
                 port_name are defined, port takes precedence.
             - !ruby/object:Api::Type::Enum
               name: 'proxyHeader'
+              at_least_one_of:
+                - http_health_check.0.host
+                - http_health_check.0.request_path
+                - http_health_check.0.response
+                - http_health_check.0.port
+                - http_health_check.0.port_name
+                - http_health_check.0.proxy_header
+                - http_health_check.0.port_specification
               description: |
                 Specifies the type of proxy header to append before sending data to the
                 backend, either NONE or PROXY_V1. The default is NONE.
@@ -7385,6 +8130,14 @@ objects:
               default_value: :NONE
             - !ruby/object:Api::Type::Enum
               name: 'portSpecification'
+              at_least_one_of:
+                - http_health_check.0.host
+                - http_health_check.0.request_path
+                - http_health_check.0.response
+                - http_health_check.0.port
+                - http_health_check.0.port_name
+                - http_health_check.0.proxy_header
+                - http_health_check.0.port_specification
               description: |
                 Specifies how port is selected for health checking, can be one of the
                 following values:
@@ -7406,42 +8159,91 @@ objects:
                 - :USE_SERVING_PORT
       - !ruby/object:Api::Type::NestedObject
         name: 'httpsHealthCheck'
-        conflicts:
-          - httpHealthCheck
-          - http2HealthCheck
-          - tcpHealthCheck
-          - sslHealthCheck
+        exactly_one_of:
+          - http_health_check
+          - https_health_check
+          - http2_health_check
+          - tcp_health_check
+          - ssl_health_check
         properties:
             - !ruby/object:Api::Type::String
               name: 'host'
+              at_least_one_of:
+                - https_health_check.0.host
+                - https_health_check.0.request_path
+                - https_health_check.0.response
+                - https_health_check.0.port
+                - https_health_check.0.port_name
+                - https_health_check.0.proxy_header
+                - https_health_check.0.port_specification
               description: |
                 The value of the host header in the HTTPS health check request.
                 If left empty (default value), the public IP on behalf of which this health
                 check is performed will be used.
             - !ruby/object:Api::Type::String
               name: 'requestPath'
+              at_least_one_of:
+                - https_health_check.0.host
+                - https_health_check.0.request_path
+                - https_health_check.0.response
+                - https_health_check.0.port
+                - https_health_check.0.port_name
+                - https_health_check.0.proxy_header
+                - https_health_check.0.port_specification
               description: |
                 The request path of the HTTPS health check request.
                 The default value is /.
               default_value: "/"
             - !ruby/object:Api::Type::String
               name: 'response'
+              at_least_one_of:
+                - https_health_check.0.host
+                - https_health_check.0.request_path
+                - https_health_check.0.response
+                - https_health_check.0.port
+                - https_health_check.0.port_name
+                - https_health_check.0.proxy_header
+                - https_health_check.0.port_specification
               description: |
                 The bytes to match against the beginning of the response data. If left empty
                 (the default value), any response will indicate health. The response data
                 can only be ASCII.
             - !ruby/object:Api::Type::Integer
               name: 'port'
+              at_least_one_of:
+                - https_health_check.0.host
+                - https_health_check.0.request_path
+                - https_health_check.0.response
+                - https_health_check.0.port
+                - https_health_check.0.port_name
+                - https_health_check.0.proxy_header
+                - https_health_check.0.port_specification
               description: |
                 The TCP port number for the HTTPS health check request.
                 The default value is 443.
             - !ruby/object:Api::Type::String
               name: 'portName'
+              at_least_one_of:
+                - https_health_check.0.host
+                - https_health_check.0.request_path
+                - https_health_check.0.response
+                - https_health_check.0.port
+                - https_health_check.0.port_name
+                - https_health_check.0.proxy_header
+                - https_health_check.0.port_specification
               description: |
                 Port name as defined in InstanceGroup#NamedPort#name. If both port and
                 port_name are defined, port takes precedence.
             - !ruby/object:Api::Type::Enum
               name: 'proxyHeader'
+              at_least_one_of:
+                - https_health_check.0.host
+                - https_health_check.0.request_path
+                - https_health_check.0.response
+                - https_health_check.0.port
+                - https_health_check.0.port_name
+                - https_health_check.0.proxy_header
+                - https_health_check.0.port_specification
               description: |
                 Specifies the type of proxy header to append before sending data to the
                 backend, either NONE or PROXY_V1. The default is NONE.
@@ -7451,6 +8253,14 @@ objects:
               default_value: :NONE
             - !ruby/object:Api::Type::Enum
               name: 'portSpecification'
+              at_least_one_of:
+                - https_health_check.0.host
+                - https_health_check.0.request_path
+                - https_health_check.0.response
+                - https_health_check.0.port
+                - https_health_check.0.port_name
+                - https_health_check.0.proxy_header
+                - https_health_check.0.port_specification
               description: |
                 Specifies how port is selected for health checking, can be one of the
                 following values:
@@ -7472,14 +8282,22 @@ objects:
                 - :USE_SERVING_PORT
       - !ruby/object:Api::Type::NestedObject
         name: 'tcpHealthCheck'
-        conflicts:
-          - httpHealthCheck
-          - http2HealthCheck
-          - httpsHealthCheck
-          - sslHealthCheck
+        exactly_one_of:
+          - http_health_check
+          - https_health_check
+          - http2_health_check
+          - tcp_health_check
+          - ssl_health_check
         properties:
             - !ruby/object:Api::Type::String
               name: 'request'
+              at_least_one_of:
+                - tcp_health_check.0.request
+                - tcp_health_check.0.response
+                - tcp_health_check.0.port
+                - tcp_health_check.0.port_name
+                - tcp_health_check.0.proxy_header
+                - tcp_health_check.0.port_specification
               description: |
                 The application data to send once the TCP connection has been
                 established (default value is empty). If both request and response are
@@ -7487,22 +8305,50 @@ objects:
                 data can only be ASCII.
             - !ruby/object:Api::Type::String
               name: 'response'
+              at_least_one_of:
+                - tcp_health_check.0.request
+                - tcp_health_check.0.response
+                - tcp_health_check.0.port
+                - tcp_health_check.0.port_name
+                - tcp_health_check.0.proxy_header
+                - tcp_health_check.0.port_specification
               description: |
                 The bytes to match against the beginning of the response data. If left empty
                 (the default value), any response will indicate health. The response data
                 can only be ASCII.
             - !ruby/object:Api::Type::Integer
               name: 'port'
+              at_least_one_of:
+                - tcp_health_check.0.request
+                - tcp_health_check.0.response
+                - tcp_health_check.0.port
+                - tcp_health_check.0.port_name
+                - tcp_health_check.0.proxy_header
+                - tcp_health_check.0.port_specification
               description: |
                 The TCP port number for the TCP health check request.
                 The default value is 80.
             - !ruby/object:Api::Type::String
               name: 'portName'
+              at_least_one_of:
+                - tcp_health_check.0.request
+                - tcp_health_check.0.response
+                - tcp_health_check.0.port
+                - tcp_health_check.0.port_name
+                - tcp_health_check.0.proxy_header
+                - tcp_health_check.0.port_specification
               description: |
                 Port name as defined in InstanceGroup#NamedPort#name. If both port and
                 port_name are defined, port takes precedence.
             - !ruby/object:Api::Type::Enum
               name: 'proxyHeader'
+              at_least_one_of:
+                - tcp_health_check.0.request
+                - tcp_health_check.0.response
+                - tcp_health_check.0.port
+                - tcp_health_check.0.port_name
+                - tcp_health_check.0.proxy_header
+                - tcp_health_check.0.port_specification
               description: |
                 Specifies the type of proxy header to append before sending data to the
                 backend, either NONE or PROXY_V1. The default is NONE.
@@ -7512,6 +8358,13 @@ objects:
               default_value: :NONE
             - !ruby/object:Api::Type::Enum
               name: 'portSpecification'
+              at_least_one_of:
+                - tcp_health_check.0.request
+                - tcp_health_check.0.response
+                - tcp_health_check.0.port
+                - tcp_health_check.0.port_name
+                - tcp_health_check.0.proxy_header
+                - tcp_health_check.0.port_specification
               description: |
                 Specifies how port is selected for health checking, can be one of the
                 following values:
@@ -7533,14 +8386,22 @@ objects:
                 - :USE_SERVING_PORT
       - !ruby/object:Api::Type::NestedObject
         name: 'sslHealthCheck'
-        conflicts:
-          - httpHealthCheck
-          - http2HealthCheck
-          - httpsHealthCheck
-          - tcpHealthCheck
+        exactly_one_of:
+          - http_health_check
+          - https_health_check
+          - http2_health_check
+          - tcp_health_check
+          - ssl_health_check
         properties:
             - !ruby/object:Api::Type::String
               name: 'request'
+              at_least_one_of:
+                - ssl_health_check.0.request
+                - ssl_health_check.0.response
+                - ssl_health_check.0.port
+                - ssl_health_check.0.port_name
+                - ssl_health_check.0.proxy_header
+                - ssl_health_check.0.port_specification
               description: |
                 The application data to send once the SSL connection has been
                 established (default value is empty). If both request and response are
@@ -7548,22 +8409,50 @@ objects:
                 data can only be ASCII.
             - !ruby/object:Api::Type::String
               name: 'response'
+              at_least_one_of:
+                - ssl_health_check.0.request
+                - ssl_health_check.0.response
+                - ssl_health_check.0.port
+                - ssl_health_check.0.port_name
+                - ssl_health_check.0.proxy_header
+                - ssl_health_check.0.port_specification
               description: |
                 The bytes to match against the beginning of the response data. If left empty
                 (the default value), any response will indicate health. The response data
                 can only be ASCII.
             - !ruby/object:Api::Type::Integer
               name: 'port'
+              at_least_one_of:
+                - ssl_health_check.0.request
+                - ssl_health_check.0.response
+                - ssl_health_check.0.port
+                - ssl_health_check.0.port_name
+                - ssl_health_check.0.proxy_header
+                - ssl_health_check.0.port_specification
               description: |
                 The TCP port number for the SSL health check request.
                 The default value is 443.
             - !ruby/object:Api::Type::String
               name: 'portName'
+              at_least_one_of:
+                - ssl_health_check.0.request
+                - ssl_health_check.0.response
+                - ssl_health_check.0.port
+                - ssl_health_check.0.port_name
+                - ssl_health_check.0.proxy_header
+                - ssl_health_check.0.port_specification
               description: |
                 Port name as defined in InstanceGroup#NamedPort#name. If both port and
                 port_name are defined, port takes precedence.
             - !ruby/object:Api::Type::Enum
               name: 'proxyHeader'
+              at_least_one_of:
+                - ssl_health_check.0.request
+                - ssl_health_check.0.response
+                - ssl_health_check.0.port
+                - ssl_health_check.0.port_name
+                - ssl_health_check.0.proxy_header
+                - ssl_health_check.0.port_specification
               description: |
                 Specifies the type of proxy header to append before sending data to the
                 backend, either NONE or PROXY_V1. The default is NONE.
@@ -7573,6 +8462,13 @@ objects:
               default_value: :NONE
             - !ruby/object:Api::Type::Enum
               name: 'portSpecification'
+              at_least_one_of:
+                - ssl_health_check.0.request
+                - ssl_health_check.0.response
+                - ssl_health_check.0.port
+                - ssl_health_check.0.port_name
+                - ssl_health_check.0.proxy_header
+                - ssl_health_check.0.port_specification
               description: |
                 Specifies how port is selected for health checking, can be one of the
                 following values:
@@ -7594,42 +8490,91 @@ objects:
                 - :USE_SERVING_PORT
       - !ruby/object:Api::Type::NestedObject
         name: 'http2HealthCheck'
-        conflicts:
-          - httpHealthCheck
-          - sslHealthCheck
-          - httpsHealthCheck
-          - tcpHealthCheck
+        exactly_one_of:
+          - http_health_check
+          - https_health_check
+          - http2_health_check
+          - tcp_health_check
+          - ssl_health_check
         properties:
             - !ruby/object:Api::Type::String
               name: 'host'
+              at_least_one_of:
+                - http2_health_check.0.host
+                - http2_health_check.0.request_path
+                - http2_health_check.0.response
+                - http2_health_check.0.port
+                - http2_health_check.0.port_name
+                - http2_health_check.0.proxy_header
+                - http2_health_check.0.port_specification
               description: |
                 The value of the host header in the HTTP2 health check request.
                 If left empty (default value), the public IP on behalf of which this health
                 check is performed will be used.
             - !ruby/object:Api::Type::String
               name: 'requestPath'
+              at_least_one_of:
+                - http2_health_check.0.host
+                - http2_health_check.0.request_path
+                - http2_health_check.0.response
+                - http2_health_check.0.port
+                - http2_health_check.0.port_name
+                - http2_health_check.0.proxy_header
+                - http2_health_check.0.port_specification
               description: |
                 The request path of the HTTP2 health check request.
                 The default value is /.
               default_value: "/"
             - !ruby/object:Api::Type::String
               name: 'response'
+              at_least_one_of:
+                - http2_health_check.0.host
+                - http2_health_check.0.request_path
+                - http2_health_check.0.response
+                - http2_health_check.0.port
+                - http2_health_check.0.port_name
+                - http2_health_check.0.proxy_header
+                - http2_health_check.0.port_specification
               description: |
                 The bytes to match against the beginning of the response data. If left empty
                 (the default value), any response will indicate health. The response data
                 can only be ASCII.
             - !ruby/object:Api::Type::Integer
               name: 'port'
+              at_least_one_of:
+                - http2_health_check.0.host
+                - http2_health_check.0.request_path
+                - http2_health_check.0.response
+                - http2_health_check.0.port
+                - http2_health_check.0.port_name
+                - http2_health_check.0.proxy_header
+                - http2_health_check.0.port_specification
               description: |
                 The TCP port number for the HTTP2 health check request.
                 The default value is 443.
             - !ruby/object:Api::Type::String
               name: 'portName'
+              at_least_one_of:
+                - http2_health_check.0.host
+                - http2_health_check.0.request_path
+                - http2_health_check.0.response
+                - http2_health_check.0.port
+                - http2_health_check.0.port_name
+                - http2_health_check.0.proxy_header
+                - http2_health_check.0.port_specification
               description: |
                 Port name as defined in InstanceGroup#NamedPort#name. If both port and
                 port_name are defined, port takes precedence.
             - !ruby/object:Api::Type::Enum
               name: 'proxyHeader'
+              at_least_one_of:
+                - http2_health_check.0.host
+                - http2_health_check.0.request_path
+                - http2_health_check.0.response
+                - http2_health_check.0.port
+                - http2_health_check.0.port_name
+                - http2_health_check.0.proxy_header
+                - http2_health_check.0.port_specification
               description: |
                 Specifies the type of proxy header to append before sending data to the
                 backend, either NONE or PROXY_V1. The default is NONE.
@@ -7639,6 +8584,14 @@ objects:
               default_value: :NONE
             - !ruby/object:Api::Type::Enum
               name: 'portSpecification'
+              at_least_one_of:
+                - http2_health_check.0.host
+                - http2_health_check.0.request_path
+                - http2_health_check.0.response
+                - http2_health_check.0.port
+                - http2_health_check.0.port_name
+                - http2_health_check.0.proxy_header
+                - http2_health_check.0.port_specification
               description: |
                 Specifies how port is selected for health checking, can be one of the
                 following values:
@@ -7719,6 +8672,10 @@ objects:
                 name: 'hourlySchedule'
                 description: |
                   The policy will execute every nth hour starting at the specified time.
+                exactly_one_of:
+                  - snapshot_schedule_policy.0.schedule.0.hourly_schedule
+                  - snapshot_schedule_policy.0.schedule.0.daily_schedule
+                  - snapshot_schedule_policy.0.schedule.0.weekly_schedule
                 properties:
                   - !ruby/object:Api::Type::Integer
                     name: 'hoursInCycle'
@@ -7736,6 +8693,10 @@ objects:
                 name: 'dailySchedule'
                 description: |
                   The policy will execute every nth day at the specified time.
+                exactly_one_of:
+                  - snapshot_schedule_policy.0.schedule.0.hourly_schedule
+                  - snapshot_schedule_policy.0.schedule.0.daily_schedule
+                  - snapshot_schedule_policy.0.schedule.0.weekly_schedule
                 properties:
                   - !ruby/object:Api::Type::Integer
                     name: 'daysInCycle'
@@ -7753,6 +8714,10 @@ objects:
                 name: 'weeklySchedule'
                 description: |
                   Allows specifying a snapshot time for each day of the week.
+                exactly_one_of:
+                  - snapshot_schedule_policy.0.schedule.0.hourly_schedule
+                  - snapshot_schedule_policy.0.schedule.0.daily_schedule
+                  - snapshot_schedule_policy.0.schedule.0.weekly_schedule
                 properties:
                   - !ruby/object:Api::Type::Array
                     name: 'dayOfWeeks'
@@ -7809,16 +8774,28 @@ objects:
             properties:
               - !ruby/object:Api::Type::KeyValuePairs
                 name: 'labels'
+                at_least_one_of:
+                  - snapshot_schedule_policy.0.snapshot_properties.0.labels
+                  - snapshot_schedule_policy.0.snapshot_properties.0.storage_locations
+                  - snapshot_schedule_policy.0.snapshot_properties.0.guest_flush
                 description: |
                   A set of key-value pairs.
               - !ruby/object:Api::Type::Array
                 name: 'storageLocations'
+                at_least_one_of:
+                  - snapshot_schedule_policy.0.snapshot_properties.0.labels
+                  - snapshot_schedule_policy.0.snapshot_properties.0.storage_locations
+                  - snapshot_schedule_policy.0.snapshot_properties.0.guest_flush
                 max_size: 1
                 description: |
                   GCS bucket location in which to store the snapshot (regional or multi-regional).
                 item_type: Api::Type::String
               - !ruby/object:Api::Type::Boolean
                 name: 'guestFlush'
+                at_least_one_of:
+                  - snapshot_schedule_policy.0.snapshot_properties.0.labels
+                  - snapshot_schedule_policy.0.snapshot_properties.0.storage_locations
+                  - snapshot_schedule_policy.0.snapshot_properties.0.guest_flush
                 description: |
                   Whether to perform a 'guest aware' snapshot.
   - !ruby/object:Api::Resource
@@ -7849,7 +8826,8 @@ objects:
       sending virtual machine's routing table will be dropped.
 
       A Route resource must have exactly one specification of either
-      nextHopGateway, nextHopInstance, nextHopIp, or nextHopVpnTunnel.
+      nextHopGateway, nextHopInstance, nextHopIp, nextHopVpnTunnel, or
+      nextHopIlb.
 
     references: !ruby/object:Api::Resource::ReferenceLinks
           guides:
@@ -7922,6 +8900,12 @@ objects:
       - !ruby/object:Api::Type::String
         name: 'nextHopGateway'
         input: true
+        exactly_one_of:
+          - next_hop_gateway
+          - next_hop_instance
+          - next_hop_ip
+          - next_hop_vpn_tunnel
+          - next_hop_ilb
         description: |
           URL to a gateway that should handle matching packets.
 
@@ -7937,6 +8921,12 @@ objects:
         resource: 'Instance'
         imports: 'selfLink'
         input: true
+        exactly_one_of:
+          - next_hop_gateway
+          - next_hop_instance
+          - next_hop_ip
+          - next_hop_vpn_tunnel
+          - next_hop_ilb
         description: |
           URL to an instance that should handle matching packets.
           You can specify this as a full or partial URL. For example:
@@ -7950,11 +8940,23 @@ objects:
         description: |
           Network IP address of an instance that should handle matching packets.
         input: true
+        exactly_one_of:
+          - next_hop_gateway
+          - next_hop_instance
+          - next_hop_ip
+          - next_hop_vpn_tunnel
+          - next_hop_ilb
       - !ruby/object:Api::Type::ResourceRef
         name: 'nextHopVpnTunnel'
         resource: 'VpnTunnel'
         imports: 'selfLink'
         input: true
+        exactly_one_of:
+          - next_hop_gateway
+          - next_hop_instance
+          - next_hop_ip
+          - next_hop_vpn_tunnel
+          - next_hop_ilb
         description: |
           URL to a VpnTunnel that should handle matching packets.
       - !ruby/object:Api::Type::String
@@ -7973,6 +8975,12 @@ objects:
           regions/region/forwardingRules/forwardingRule
           Note that this can only be used when the destinationRange is a public (non-RFC 1918) IP CIDR range.
         input: true
+        exactly_one_of:
+          - next_hop_gateway
+          - next_hop_instance
+          - next_hop_ip
+          - next_hop_vpn_tunnel
+          - next_hop_ilb
         min_version: beta
   - !ruby/object:Api::Resource
     name: 'Router'
@@ -8105,6 +9113,7 @@ objects:
                 properties:
                   - !ruby/object:Api::Type::String
                     name: range
+                    required: true
                     description: |
                       The IP range to advertise. The value must be a
                       CIDR-formatted string.
@@ -9123,18 +10132,6 @@ objects:
           Only networks that are in the distributed mode can have subnetworks.
         input: true
         required: true
-      - !ruby/object:Api::Type::Boolean
-        name: 'enableFlowLogs'
-        description: |
-          Whether to enable flow logging for this subnetwork.
-        update_verb: :PATCH
-        update_url:  projects/{{project}}/regions/{{region}}/subnetworks/{{name}}
-        update_id: 'enableFlowLogs'
-        fingerprint_name: 'fingerprint'
-        send_empty_value: true
-        deprecation_message: >-
-          This field is being removed in favor of log_config. If log_config is present,
-          flow logs are enabled.
       # TODO(rileykarson): Work with rambleraptor to remove this field from downstreams.
       - !ruby/object:Api::Type::Fingerprint
         name: 'fingerprint'
@@ -9224,10 +10221,15 @@ objects:
         update_id: 'logConfig'
         description: |
           Denotes the logging options for the subnetwork flow logs. If logging is enabled
-          logs will be exported to Stackdriver.
+          logs will be exported to Stackdriver. This field cannot be set if the `purpose` of this
+          subnetwork is `INTERNAL_HTTPS_LOAD_BALANCER`
         properties:
           - !ruby/object:Api::Type::Enum
             name: 'aggregationInterval'
+            at_least_one_of:
+              - log_config.0.aggregation_interval
+              - log_config.0.flow_sampling
+              - log_config.0.metadata
             description: |
               Can only be specified if VPC flow logging for this subnetwork is enabled.
               Toggles the aggregation interval for collecting flow logs. Increasing the
@@ -9245,6 +10247,10 @@ objects:
             default_value: :INTERVAL_5_SEC
           - !ruby/object:Api::Type::Double
             name: 'flowSampling'
+            at_least_one_of:
+              - log_config.0.aggregation_interval
+              - log_config.0.flow_sampling
+              - log_config.0.metadata
             description: |
               Can only be specified if VPC flow logging for this subnetwork is enabled.
               The value of the field must be in [0, 1]. Set the sampling rate of VPC
@@ -9254,6 +10260,10 @@ objects:
             default_value: 0.5
           - !ruby/object:Api::Type::Enum
             name: 'metadata'
+            at_least_one_of:
+              - log_config.0.aggregation_interval
+              - log_config.0.flow_sampling
+              - log_config.0.metadata
             description: |
               Can only be specified if VPC flow logging for this subnetwork is enabled.
               Configures whether metadata fields should be added to the reported VPC

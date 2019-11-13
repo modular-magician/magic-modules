@@ -341,7 +341,7 @@ objects:
                 - !ruby/object:Api::Type::NestedObject
                   name: configMapRef
                   description: |-
-                    The ConfigMap to select from
+                    The ConfigMap to select from.
                   properties:
                   - !ruby/object:Api::Type::Boolean
                     name: optional
@@ -353,6 +353,7 @@ objects:
                     properties:
                     - !ruby/object:Api::Type::String
                       name: name
+                      required: true
                       description: |-
                         Name of the referent.
                         More info:
@@ -360,7 +361,7 @@ objects:
                 - !ruby/object:Api::Type::NestedObject
                   name: secretRef
                   description: |-
-                    The Secret to select from
+                    The Secret to select from.
                   properties:
                   - !ruby/object:Api::Type::NestedObject
                     name: localObjectReference
@@ -368,6 +369,7 @@ objects:
                     properties:
                     - !ruby/object:Api::Type::String
                       name: name
+                      required: true
                       description: |-
                         Name of the referent.
                         More info:

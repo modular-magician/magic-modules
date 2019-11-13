@@ -14,7 +14,6 @@
 --- !ruby/object:Provider::Terraform::Config
 overrides: !ruby/object:Overrides::ResourceOverrides
   Address: !ruby/object:Overrides::Terraform::ResourceOverride
-    id_format: "{{project}}/{{region}}/{{name}}"
     examples:
       - !ruby/object:Provider::Terraform::Examples
         name: "address_basic"
@@ -71,7 +70,6 @@ overrides: !ruby/object:Overrides::ResourceOverrides
     custom_code: !ruby/object:Provider::Terraform::CustomCode
       post_create: templates/terraform/post_create/labels.erb
   Autoscaler: !ruby/object:Overrides::Terraform::ResourceOverride
-    id_format: "{{zone}}/{{name}}"
     examples:
       - !ruby/object:Provider::Terraform::Examples
         name: "autoscaler_single_instance"
@@ -435,7 +433,6 @@ overrides: !ruby/object:Overrides::ResourceOverrides
       pre_delete: templates/terraform/pre_delete/detach_disk.erb
       constants: templates/terraform/constants/disk.erb
       encoder: templates/terraform/encoders/disk.erb
-      extra_schema_entry: templates/terraform/extra_schema_entry/disk.erb
       decoder: templates/terraform/decoders/disk.erb
       resource_definition: templates/terraform/resource_definition/disk.erb
     docs: !ruby/object:Provider::Terraform::Docs
@@ -526,6 +523,7 @@ overrides: !ruby/object:Overrides::ResourceOverrides
           network_name: "website-net"
     custom_code: !ruby/object:Provider::Terraform::CustomCode
       post_create: templates/terraform/post_create/labels.erb
+      extra_schema_entry: templates/terraform/extra_schema_entry/forwarding_rule.erb
     properties:
       id: !ruby/object:Overrides::Terraform::PropertyOverride
         exclude: true
@@ -536,6 +534,8 @@ overrides: !ruby/object:Overrides::ResourceOverrides
         default_from_api: true
       IPAddress: !ruby/object:Overrides::Terraform::PropertyOverride
         default_from_api: true
+        validation: !ruby/object:Provider::Terraform::Validation
+          function: 'validateIpAddress'
         description: |
           The IP address that this forwarding rule is serving on behalf of.
 
@@ -556,15 +556,11 @@ overrides: !ruby/object:Overrides::ResourceOverrides
           internal IP address will be automatically allocated from the IP range
           of the subnet or network configured for this forwarding rule.
 
-          ~> **NOTE** The address should be specified as a literal IP address,
-          e.g. `100.1.2.3` to avoid a permanent diff, as the server returns the
-          IP address regardless of the input value.
-
-          The server accepts a literal IP address or a URL reference to an existing
-          Address resource. The following examples are all valid but only the first
-          will prevent a permadiff. If you are using `google_compute_address` or
-          similar, interpolate using `.address` instead of `.self_link` or similar
-          to prevent a diff on re-apply.
+          An address must be specified by a literal IP address. ~> **NOTE**: While
+          the API allows you to specify various resource paths for an address resource
+          instead, Terraform requires this to specifically be an IP address to
+          avoid needing to fetching the IP address from resource paths on refresh
+          or unnecessary diffs.
       IPProtocol: !ruby/object:Overrides::Terraform::PropertyOverride
         diff_suppress_func: 'caseDiffSuppress'
         default_from_api: true
@@ -639,6 +635,8 @@ overrides: !ruby/object:Overrides::ResourceOverrides
         exclude: true
       IPAddress: !ruby/object:Overrides::Terraform::PropertyOverride
         default_from_api: true
+        validation: !ruby/object:Provider::Terraform::Validation
+          function: 'validateIpAddress'
         description: |
           The IP address that this forwarding rule is serving on behalf of.
 
@@ -659,15 +657,11 @@ overrides: !ruby/object:Overrides::ResourceOverrides
           internal IP address will be automatically allocated from the IP range
           of the subnet or network configured for this forwarding rule.
 
-          ~> **NOTE** The address should be specified as a literal IP address,
-          e.g. `100.1.2.3` to avoid a permanent diff, as the server returns the
-          IP address regardless of the input value.
-
-          The server accepts a literal IP address or a URL reference to an existing
-          Address resource. The following examples are all valid but only the first
-          will prevent a permadiff. If you are using `google_compute_address` or
-          similar, interpolate using `.address` instead of `.self_link` or similar
-          to prevent a diff on re-apply.
+          An address must be specified by a literal IP address. ~> **NOTE**: While
+          the API allows you to specify various resource paths for an address resource
+          instead, Terraform requires this to specifically be an IP address to
+          avoid needing to fetching the IP address from resource paths on refresh
+          or unnecessary diffs.
       IPProtocol: !ruby/object:Overrides::Terraform::PropertyOverride
         diff_suppress_func: 'caseDiffSuppress'
         default_from_api: true
@@ -933,9 +927,7 @@ overrides: !ruby/object:Overrides::ResourceOverrides
         exclude: true
       autoCreateSubnetworks: !ruby/object:Overrides::Terraform::PropertyOverride
         default_value: True
-        # autoCreateSubnetworks defaults to true, so we need to disable it explicitly
-        conflicts: []
-      ipv4_range: !ruby/object:Overrides::Terraform::PropertyOverride
+        send_empty_value: true
         # autoCreateSubnetworks defaults to true, so we need to disable it explicitly
         conflicts: []
       routingConfig: !ruby/object:Overrides::Terraform::PropertyOverride
@@ -951,7 +943,7 @@ overrides: !ruby/object:Overrides::ResourceOverrides
         default_from_api: true
     custom_code: !ruby/object:Provider::Terraform::CustomCode
       post_create: templates/terraform/post_create/compute_network_delete_default_route.erb
-      encoder: templates/terraform/encoders/network.erb
+      extra_schema_entry: templates/terraform/extra_schema_entry/network.erb
   NetworkEndpoint: !ruby/object:Overrides::Terraform::ResourceOverride
     id_format: "{{project}}/{{zone}}/{{network_endpoint_group}}/{{instance}}/{{ip_address}}/{{port}}"
     mutex: networkEndpoint/{{project}}/{{zone}}/{{network_endpoint_group}}
@@ -1050,7 +1042,6 @@ overrides: !ruby/object:Overrides::ResourceOverrides
   Region: !ruby/object:Overrides::Terraform::ResourceOverride
     exclude: true
   RegionAutoscaler: !ruby/object:Overrides::Terraform::ResourceOverride
-    id_format: "{{region}}/{{name}}"
     examples:
       - !ruby/object:Provider::Terraform::Examples
         name: "region_autoscaler_beta"
@@ -1363,7 +1354,6 @@ overrides: !ruby/object:Overrides::ResourceOverrides
             `next_hop_instance`.  Omit if `next_hop_instance` is specified as
             a URL.
   Router: !ruby/object:Overrides::Terraform::ResourceOverride
-    id_format: "{{region}}/{{name}}"
     mutex: router/{{region}}/{{name}}
     examples:
       - !ruby/object:Provider::Terraform::Examples
@@ -1458,6 +1448,7 @@ overrides: !ruby/object:Overrides::ResourceOverrides
         # https://github.com/GoogleCloudPlatform/magic-modules/issues/1019
         ignore_read: true
         sensitive: true
+        required: true
         custom_flatten: templates/terraform/custom_flatten/compute_snapshot_snapshot_encryption_raw_key.go.erb
       snapshotEncryptionKey.kmsKeyName: !ruby/object:Overrides::Terraform::PropertyOverride
         # This is a beta field that showed up in GA. Removed from both.
@@ -1701,10 +1692,8 @@ overrides: !ruby/object:Overrides::ResourceOverrides
           function: 'validateIpCidrRange'
       fingerprint: !ruby/object:Overrides::Terraform::PropertyOverride
         exclude: false
-      enableFlowLogs: !ruby/object:Overrides::Terraform::PropertyOverride
-        default_from_api: true
       logConfig: !ruby/object:Overrides::Terraform::PropertyOverride
-        default_from_api: true
+        send_empty_value: true
         custom_expand: 'templates/terraform/custom_expand/subnetwork_log_config.go.erb'
         custom_flatten: 'templates/terraform/custom_flatten/subnetwork_log_config.go.erb'
       ipCidrRange: !ruby/object:Overrides::Terraform::PropertyOverride
@@ -1720,6 +1709,7 @@ overrides: !ruby/object:Overrides::ResourceOverrides
     custom_code: !ruby/object:Provider::Terraform::CustomCode
       constants: templates/terraform/constants/subnetwork.erb
       resource_definition: templates/terraform/resource_definition/subnetwork.erb
+      extra_schema_entry: templates/terraform/extra_schema_entry/subnetwork.erb
     examples:
       - !ruby/object:Provider::Terraform::Examples
         name: "subnetwork_basic"
@@ -1961,7 +1951,9 @@ overrides: !ruby/object:Overrides::ResourceOverrides
       id: !ruby/object:Overrides::Terraform::PropertyOverride
         name: "map_id"
       defaultService: !ruby/object:Overrides::Terraform::PropertyOverride
-        custom_expand: 'templates/terraform/custom_expand/url_map_only_set_string.go.erb'
+        # ResourceRef only supports 1 type and UrlMap has references to a BackendBucket or BackendService.
+        # Just read the self_link string instead of extracting the name and making a self_link out of it.
+        custom_expand: 'templates/terraform/custom_expand/resourceref_as_string.go.erb'
         description: The backend service or backend bucket to use when none of the given rules match.
       hostRules: !ruby/object:Overrides::Terraform::PropertyOverride
         name: "host_rule"
@@ -1971,17 +1963,23 @@ overrides: !ruby/object:Overrides::ResourceOverrides
       pathMatchers: !ruby/object:Overrides::Terraform::PropertyOverride
         name: "path_matcher"
       pathMatchers.defaultService: !ruby/object:Overrides::Terraform::PropertyOverride
-        custom_expand: 'templates/terraform/custom_expand/url_map_only_set_string.go.erb'
+        # ResourceRef only supports 1 type and UrlMap has references to a BackendBucket or BackendService.
+        # Just read the self_link string instead of extracting the name and making a self_link out of it.
+        custom_expand: 'templates/terraform/custom_expand/resourceref_as_string.go.erb'
         description: The backend service or backend bucket to use when none of the given paths match.
       pathMatchers.pathRules: !ruby/object:Overrides::Terraform::PropertyOverride
         name: "path_rule"
       pathMatchers.pathRules.paths: !ruby/object:Overrides::Terraform::PropertyOverride
         is_set: true
       pathMatchers.pathRules.service: !ruby/object:Overrides::Terraform::PropertyOverride
-        custom_expand: 'templates/terraform/custom_expand/url_map_only_set_string.go.erb'
+        # ResourceRef only supports 1 type and UrlMap has references to a BackendBucket or BackendService.
+        # Just read the self_link string instead of extracting the name and making a self_link out of it.
+        custom_expand: 'templates/terraform/custom_expand/resourceref_as_string.go.erb'
         description: The backend service or backend bucket to use if any of the given paths match.
       tests.service: !ruby/object:Overrides::Terraform::PropertyOverride
-        custom_expand: 'templates/terraform/custom_expand/url_map_only_set_string.go.erb'
+        # ResourceRef only supports 1 type and UrlMap has references to a BackendBucket or BackendService.
+        # Just read the self_link string instead of extracting the name and making a self_link out of it.
+        custom_expand: 'templates/terraform/custom_expand/resourceref_as_string.go.erb'
         description: The backend service or backend bucket link that should be matched by this test.
       tests: !ruby/object:Overrides::Terraform::PropertyOverride
         name: "test"
