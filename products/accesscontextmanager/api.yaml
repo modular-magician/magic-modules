@@ -267,14 +267,15 @@ objects:
                           Format: "major.minor.patch" such as "10.5.301", "9.2.1".
                       - !ruby/object:Api::Type::Enum
                         name: 'osType'
+                        required: true
                         description: |
                           The operating system type of the device.
                         values:
-                        - :OS_UNSPECIFIED
-                        - :DESKTOP_MAC
-                        - :DESKTOP_WINDOWS
-                        - :DESKTOP_LINUX
-                        - :DESKTOP_CHROME_OS
+                          - :OS_UNSPECIFIED
+                          - :DESKTOP_MAC
+                          - :DESKTOP_WINDOWS
+                          - :DESKTOP_LINUX
+                          - :DESKTOP_CHROME_OS
   - !ruby/object:Api::Resource
     name: 'ServicePerimeter'
     # This is an unusual API, so we need to use a few fields to map the methods
@@ -376,6 +377,10 @@ objects:
               A list of GCP resources that are inside of the service perimeter.
               Currently only projects are allowed.
               Format: projects/{project_number}
+            at_least_one_of:
+              - status.0.resources
+              - status.0.access_levels
+              - status.0.restricted_services
             item_type: Api::Type::String
           - !ruby/object:Api::Type::Array
             name: 'accessLevels'
@@ -390,6 +395,10 @@ objects:
               be empty.
 
               Format: accessPolicies/{policy_id}/accessLevels/{access_level_name}
+            at_least_one_of:
+              - status.0.resources
+              - status.0.access_levels
+              - status.0.restricted_services
             item_type: Api::Type::String
           - !ruby/object:Api::Type::Array
             name: 'restrictedServices'
@@ -399,4 +408,8 @@ objects:
               `storage.googleapis.com` is specified, access to the storage
               buckets inside the perimeter must meet the perimeter's access
               restrictions.
+            at_least_one_of:
+              - status.0.resources
+              - status.0.access_levels
+              - status.0.restricted_services
             item_type: Api::Type::String

@@ -70,6 +70,12 @@ module Api
       # A list of properties that conflict with this property.
       attr_reader :conflicts
 
+      # A list of properties that at least one of must be set.
+      attr_reader :at_least_one_of
+
+      # A list of properties that exactly one of must be set.
+      attr_reader :exactly_one_of
+
       # Can only be overridden - we should never set this ourselves.
       attr_reader :new_type
 
@@ -109,6 +115,8 @@ module Api
 
       check_default_value_property
       check_conflicts
+      check_at_least_one_of
+      check_exactly_one_of
     end
 
     def to_s
@@ -135,6 +143,10 @@ module Api
       instance_variables.each do |v|
         if v == :@conflicts && instance_variable_get(v).empty?
           # ignore empty conflict arrays
+        elsif v == :@at_least_one_of && instance_variable_get(v).empty?
+          # ignore empty at_least_one_of arrays
+        elsif v == :@exactly_one_of && instance_variable_get(v).empty?
+          # ignore empty exactly_one_of arrays
         elsif instance_variable_get(v) == false || instance_variable_get(v).nil?
           # ignore false booleans as non-existence indicates falsey
         elsif !ignored_fields.include? v
@@ -192,6 +204,38 @@ module Api
 
       (@__resource.all_user_properties.select { |p| @conflicts.include?(p.api_name) } +
        @__resource.all_user_properties.select { |p| p.conflicts.include?(@api_name) }).uniq
+    end
+
+    # Checks that all properties that needs at least one of their fields actually exist.
+    # This currently just returns if empty, because we don't want to do the check, since
+    # this list will have a full path for nested attributes.
+    def check_at_least_one_of
+      check :at_least_one_of, type: ::Array, default: [], item_type: ::String
+
+      return if @at_least_one_of.empty?
+    end
+
+    # Returns list of properties that needs at least one of their fields set.
+    def at_least_one_of_list
+      return [] unless @__resource
+
+      @at_least_one_of
+    end
+
+    # Checks that all properties that needs exactly one of their fields actually exist.
+    # This currently just returns if empty, because we don't want to do the check, since
+    # this list will have a full path for nested attributes.
+    def check_exactly_one_of
+      check :exactly_one_of, type: ::Array, default: [], item_type: ::String
+
+      return if @exactly_one_of.empty?
+    end
+
+    # Returns list of properties that needs exactly one of their fields set.
+    def exactly_one_of_list
+      return [] unless @__resource
+
+      @exactly_one_of
     end
 
     def type
@@ -289,6 +333,8 @@ module Api
 
       def validate
         @conflicts ||= []
+        @at_least_one_of ||= []
+        @exactly_one_of ||= []
       end
 
       def api_name
