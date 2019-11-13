@@ -94,6 +94,7 @@ objects:
               Example: 12345.
           - !ruby/object:Api::Type::Enum
             name: 'sslManagementType'
+            required: true
             description: |
               SSL management type for this domain. If `AUTOMATIC`, a managed certificate is automatically provisioned.
               If `MANUAL`, `certificateId` must be manually specified in order to configure SSL for this domain.
@@ -331,16 +332,19 @@ objects:
               - :REDIRECT_HTTP_RESPONSE_CODE_307
           - !ruby/object:Api::Type::NestedObject
             name: 'script'
+            # TODO (mbang): Exactly one of script, staticFiles, or apiEndpoint must be set
             description: |
               Executes a script to handle the requests that match this URL pattern. 
               Only the auto value is supported for Node.js in the App Engine standard environment, for example "script:" "auto".
             properties:
             - !ruby/object:Api::Type::String
               name: 'scriptPath'
+              required: true
               description: |
                 Path to the script from the application root directory.
           - !ruby/object:Api::Type::NestedObject
             name: 'staticFiles'
+            # TODO (mbang): Exactly one of script, staticFiles, or apiEndpoint must be set
             description: |
               Files served directly to the user for a given URL, such as images, CSS stylesheets, or JavaScript source files. Static file handlers describe which files in the application directory are static files, and which URLs serve them.
             properties:
@@ -403,10 +407,14 @@ objects:
             name: 'zip'
             description: 'Zip File'
             required: false
+            at_least_one_of:
+              - deployment.0.zip
+              - deployment.0.files
             properties:
               - !ruby/object:Api::Type::String
                 name: 'sourceUrl'
                 description: 'Source URL'
+                required: true
               - !ruby/object:Api::Type::Integer
                 name: 'filesCount'
                 description: 'files count'
@@ -417,6 +425,9 @@ objects:
               Manifest of the files stored in Google Cloud Storage that are included as part of this version.
               All files must be readable using the credentials supplied with this call.
             required: false
+            at_least_one_of:
+              - deployment.0.zip
+              - deployment.0.files
             key_name: 'name'
             key_description: |
               name of file
@@ -428,6 +439,7 @@ objects:
                     SHA1 checksum of the file
                 - !ruby/object:Api::Type::String
                   name: 'sourceUrl'
+                  required: true
                   description: |
                     Source URL
       - !ruby/object:Api::Type::NestedObject
@@ -438,6 +450,7 @@ objects:
         properties:
           - !ruby/object:Api::Type::String
             name: 'shell'
+            required: true
             description: |
               The format should be a shell command that can be fed to bash -c.
       - !ruby/object:Api::Type::String

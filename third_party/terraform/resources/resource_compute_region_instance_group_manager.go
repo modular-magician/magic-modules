@@ -1,10 +1,8 @@
-<% autogen_exception -%>
 package google
 
 import (
 	"fmt"
 	"log"
-	"regexp"
 	"strings"
 	"time"
 
@@ -14,11 +12,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 
 	computeBeta "google.golang.org/api/compute/v0.beta"
-)
-
-var (
-	regionInstanceGroupManagerIdRegex     = regexp.MustCompile("^" + ProjectRegex + "/[a-z0-9-]+/[a-z0-9-]+$")
-	regionInstanceGroupManagerIdNameRegex = regexp.MustCompile("^[a-z0-9-]+$")
 )
 
 func resourceComputeRegionInstanceGroupManager() *schema.Resource {
@@ -37,57 +30,46 @@ func resourceComputeRegionInstanceGroupManager() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"base_instance_name": &schema.Schema{
+			"base_instance_name": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
 
-			<% if version == 'ga' -%>
-			"instance_template": &schema.Schema{
-				Type:             schema.TypeString,
-				Optional:         true,
-				Computed:         true,
-				Deprecated:         "This field will be replaced by `version.instance_template` in 3.0.0",
-				ConflictsWith: []string{"version"},
-				DiffSuppressFunc: compareSelfLinkRelativePaths,
-			},
-			<% end -%>
-
-			"version": &schema.Schema{
-				<%# TODO 3.0.0 - mark as required -%>
-				Type:       schema.TypeList,
-				<% if version == 'ga' -%>
+			"instance_template": {
+				Type:     schema.TypeString,
 				Optional: true,
-				Computed: true,
-				<% else -%>
+				Removed:  "This field has been replaced by `version.instance_template` in 3.0.0",
+			},
+
+			"version": {
+				Type:     schema.TypeList,
 				Required: true,
-				<% end -%>
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"name": &schema.Schema{
+						"name": {
 							Type:     schema.TypeString,
 							Optional: true,
 						},
 
-						"instance_template": &schema.Schema{
+						"instance_template": {
 							Type:             schema.TypeString,
 							Required:         true,
 							DiffSuppressFunc: compareSelfLinkRelativePaths,
 						},
 
-						"target_size": &schema.Schema{
+						"target_size": {
 							Type:     schema.TypeList,
 							Optional: true,
 							MaxItems: 1,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
-									"fixed": &schema.Schema{
+									"fixed": {
 										Type:     schema.TypeInt,
 										Optional: true,
 									},
 
-									"percent": &schema.Schema{
+									"percent": {
 										Type:         schema.TypeInt,
 										Optional:     true,
 										ValidateFunc: validation.IntBetween(0, 100),
@@ -99,45 +81,45 @@ func resourceComputeRegionInstanceGroupManager() *schema.Resource {
 				},
 			},
 
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
 
-			"region": &schema.Schema{
+			"region": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
 
-			"description": &schema.Schema{
+			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
 			},
 
-			"fingerprint": &schema.Schema{
+			"fingerprint": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
 
-			"instance_group": &schema.Schema{
+			"instance_group": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
 
-			"named_port": &schema.Schema{
+			"named_port": {
 				Type:     schema.TypeSet,
 				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"name": &schema.Schema{
+						"name": {
 							Type:     schema.TypeString,
 							Required: true,
 						},
 
-						"port": &schema.Schema{
+						"port": {
 							Type:     schema.TypeInt,
 							Required: true,
 						},
@@ -145,28 +127,25 @@ func resourceComputeRegionInstanceGroupManager() *schema.Resource {
 				},
 			},
 
-			"project": &schema.Schema{
+			"project": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
 				Computed: true,
 			},
 
-			"self_link": &schema.Schema{
+			"self_link": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
 
-<% if version == 'ga' -%>
-			"update_strategy": &schema.Schema{
-				Type:         schema.TypeString,
-				Deprecated:   "This field will be replaced by `update_policy` in 3.0.0",
-				Optional:     true,
-				ConflictsWith: []string{"update_policy"},
+			"update_strategy": {
+				Type:     schema.TypeString,
+				Removed:  "This field is removed.",
+				Optional: true,
 			},
-<% end -%>
 
-			"target_pools": &schema.Schema{
+			"target_pools": {
 				Type:     schema.TypeSet,
 				Optional: true,
 				Elem: &schema.Schema{
@@ -174,7 +153,7 @@ func resourceComputeRegionInstanceGroupManager() *schema.Resource {
 				},
 				Set: selfLinkRelativePathHash,
 			},
-			"target_size": &schema.Schema{
+			"target_size": {
 				Type:     schema.TypeInt,
 				Computed: true,
 				Optional: true,
@@ -183,25 +162,25 @@ func resourceComputeRegionInstanceGroupManager() *schema.Resource {
 			// If true, the resource will report ready only after no instances are being created.
 			// This will not block future reads if instances are being recreated, and it respects
 			// the "createNoRetry" parameter that's available for this resource.
-			"wait_for_instances": &schema.Schema{
+			"wait_for_instances": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Default:  false,
 			},
 
-			"auto_healing_policies": &schema.Schema{
+			"auto_healing_policies": {
 				Type:     schema.TypeList,
 				Optional: true,
 				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"health_check": &schema.Schema{
+						"health_check": {
 							Type:             schema.TypeString,
 							Required:         true,
 							DiffSuppressFunc: compareSelfLinkRelativePaths,
 						},
 
-						"initial_delay_sec": &schema.Schema{
+						"initial_delay_sec": {
 							Type:         schema.TypeInt,
 							Required:     true,
 							ValidateFunc: validation.IntBetween(0, 3600),
@@ -210,7 +189,7 @@ func resourceComputeRegionInstanceGroupManager() *schema.Resource {
 				},
 			},
 
-			"distribution_policy_zones": &schema.Schema{
+			"distribution_policy_zones": {
 				Type:     schema.TypeSet,
 				Optional: true,
 				ForceNew: true,
@@ -222,123 +201,62 @@ func resourceComputeRegionInstanceGroupManager() *schema.Resource {
 				},
 			},
 
-			<% if version == 'ga' -%>
-			"rolling_update_policy": &schema.Schema{
-				Type:       schema.TypeList,
-				Computed:   true,
-				Removed:    "This field has been replaced by update_policy.",
-				Optional:   true,
-				MaxItems:   1,
+			"update_policy": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Optional: true,
+				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"minimal_action": &schema.Schema{
+						"minimal_action": {
 							Type:         schema.TypeString,
 							Required:     true,
 							ValidateFunc: validation.StringInSlice([]string{"RESTART", "REPLACE"}, false),
 						},
 
-						"type": &schema.Schema{
+						"type": {
 							Type:         schema.TypeString,
 							Required:     true,
 							ValidateFunc: validation.StringInSlice([]string{"OPPORTUNISTIC", "PROACTIVE"}, false),
 						},
 
-						"max_surge_fixed": &schema.Schema{
-							Type:          schema.TypeInt,
-							Optional:      true,
-							Computed:      true,
-						},
-
-						"max_surge_percent": &schema.Schema{
-							Type:          schema.TypeInt,
-							Optional:      true,
-							ValidateFunc:  validation.IntBetween(0, 100),
-						},
-
-						"max_unavailable_fixed": &schema.Schema{
-							Type:          schema.TypeInt,
-							Optional:      true,
-							Computed:      true,
-						},
-
-						"max_unavailable_percent": &schema.Schema{
-							Type:          schema.TypeInt,
-							Optional:      true,
-							ValidateFunc:  validation.IntBetween(0, 100),
-						},
-
-						"min_ready_sec": &schema.Schema{
-							Type:         schema.TypeInt,
-							Optional:     true,
-							ValidateFunc: validation.IntBetween(0, 3600),
-						},
-						"instance_redistribution_type": {
-							Type:         schema.TypeString,
-							Optional:     true,
-							ValidateFunc: validation.StringInSlice([]string{"PROACTIVE", "NONE", ""}, false),
-							DiffSuppressFunc: emptyOrDefaultStringSuppress("PROACTIVE"),
-						},
-					},
-				},
-			},
-			<% end -%>
-
-			"update_policy": &schema.Schema{
-				Type:       schema.TypeList,
-				Computed:   true,
-				Optional:   true,
-				MaxItems:   1,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"minimal_action": &schema.Schema{
-							Type:         schema.TypeString,
-							Required:     true,
-							ValidateFunc: validation.StringInSlice([]string{"RESTART", "REPLACE"}, false),
-						},
-
-						"type": &schema.Schema{
-							Type:         schema.TypeString,
-							Required:     true,
-							ValidateFunc: validation.StringInSlice([]string{"OPPORTUNISTIC", "PROACTIVE"}, false),
-						},
-
-						"max_surge_fixed": &schema.Schema{
+						"max_surge_fixed": {
 							Type:          schema.TypeInt,
 							Optional:      true,
 							Computed:      true,
 							ConflictsWith: []string{"update_policy.0.max_surge_percent"},
 						},
 
-						"max_surge_percent": &schema.Schema{
+						"max_surge_percent": {
 							Type:          schema.TypeInt,
 							Optional:      true,
 							ConflictsWith: []string{"update_policy.0.max_surge_fixed"},
 							ValidateFunc:  validation.IntBetween(0, 100),
 						},
 
-						"max_unavailable_fixed": &schema.Schema{
+						"max_unavailable_fixed": {
 							Type:          schema.TypeInt,
 							Optional:      true,
 							Computed:      true,
 							ConflictsWith: []string{"update_policy.0.max_unavailable_percent"},
 						},
 
-						"max_unavailable_percent": &schema.Schema{
+						"max_unavailable_percent": {
 							Type:          schema.TypeInt,
 							Optional:      true,
 							ConflictsWith: []string{"update_policy.0.max_unavailable_fixed"},
 							ValidateFunc:  validation.IntBetween(0, 100),
 						},
 
-						"min_ready_sec": &schema.Schema{
+						"min_ready_sec": {
 							Type:         schema.TypeInt,
 							Optional:     true,
 							ValidateFunc: validation.IntBetween(0, 3600),
 						},
 						"instance_redistribution_type": {
-							Type:         schema.TypeString,
-							Optional:     true,
-							ValidateFunc: validation.StringInSlice([]string{"PROACTIVE", "NONE", ""}, false),
+							Type:             schema.TypeString,
+							Optional:         true,
+							ValidateFunc:     validation.StringInSlice([]string{"PROACTIVE", "NONE", ""}, false),
 							DiffSuppressFunc: emptyOrDefaultStringSuppress("PROACTIVE"),
 						},
 					},
@@ -365,9 +283,6 @@ func resourceComputeRegionInstanceGroupManagerCreate(d *schema.ResourceData, met
 		Name:                d.Get("name").(string),
 		Description:         d.Get("description").(string),
 		BaseInstanceName:    d.Get("base_instance_name").(string),
-	<% if version == 'ga' -%>
-		InstanceTemplate:    d.Get("instance_template").(string),
-	<% end -%>
 		TargetSize:          int64(d.Get("target_size").(int)),
 		NamedPorts:          getNamedPortsBeta(d.Get("named_port").(*schema.Set).List()),
 		TargetPools:         convertStringSet(d.Get("target_pools").(*schema.Set)),
@@ -385,7 +300,11 @@ func resourceComputeRegionInstanceGroupManagerCreate(d *schema.ResourceData, met
 		return fmt.Errorf("Error creating RegionInstanceGroupManager: %s", err)
 	}
 
-	d.SetId(regionInstanceGroupManagerId{Project: project, Region: region, Name: manager.Name}.terraformId())
+	id, err := replaceVars(d, config, "projects/{{project}}/regions/{{region}}/instanceGroupManagers/{{name}}")
+	if err != nil {
+		return fmt.Errorf("Error constructing id: %s", err)
+	}
+	d.SetId(id)
 
 	// Wait for the operation to complete
 	timeoutInMinutes := int(d.Timeout(schema.TimeoutCreate).Minutes())
@@ -401,28 +320,20 @@ type getInstanceManagerFunc func(*schema.ResourceData, interface{}) (*computeBet
 func getRegionalManager(d *schema.ResourceData, meta interface{}) (*computeBeta.InstanceGroupManager, error) {
 	config := meta.(*Config)
 
-	regionalID, err := parseRegionInstanceGroupManagerId(d.Id())
+	project, err := getProject(d, config)
 	if err != nil {
 		return nil, err
 	}
 
-	if regionalID.Project == "" {
-		regionalID.Project, err = getProject(d, config)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if regionalID.Region == "" {
-		regionalID.Region, err = getRegion(d, config)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	manager, err := config.clientComputeBeta.RegionInstanceGroupManagers.Get(regionalID.Project, regionalID.Region, regionalID.Name).Do()
+	region, err := getRegion(d, config)
 	if err != nil {
-		return nil, handleNotFoundError(err, d, fmt.Sprintf("Region Instance Manager %q", regionalID.Name))
+		return nil, err
+	}
+
+	name := d.Get("name").(string)
+	manager, err := config.clientComputeBeta.RegionInstanceGroupManagers.Get(project, region, name).Do()
+	if err != nil {
+		return nil, handleNotFoundError(err, d, fmt.Sprintf("Region Instance Manager %q", name))
 	}
 
 	return manager, nil
@@ -455,25 +366,16 @@ func resourceComputeRegionInstanceGroupManagerRead(d *schema.ResourceData, meta 
 		return nil
 	}
 
-	regionalID, err := parseRegionInstanceGroupManagerId(d.Id())
+	project, err := getProject(d, config)
 	if err != nil {
 		return err
 	}
-	if regionalID.Project == "" {
-		regionalID.Project, err = getProject(d, config)
-		if err != nil {
-			return err
-		}
-	}
 
 	d.Set("base_instance_name", manager.BaseInstanceName)
-	<% if version == 'ga' -%>
-	d.Set("instance_template", ConvertSelfLinkToV1(manager.InstanceTemplate))
-	<% end -%>
 	d.Set("name", manager.Name)
 	d.Set("region", GetResourceNameFromSelfLink(manager.Region))
 	d.Set("description", manager.Description)
-	d.Set("project", regionalID.Project)
+	d.Set("project", project)
 	d.Set("target_size", manager.TargetSize)
 	if err := d.Set("target_pools", mapStringArr(manager.TargetPools, ConvertSelfLinkToV1)); err != nil {
 		return fmt.Errorf("Error setting target_pools in state: %s", err.Error())
@@ -487,10 +389,6 @@ func resourceComputeRegionInstanceGroupManagerRead(d *schema.ResourceData, meta 
 		return err
 	}
 	d.Set("self_link", ConvertSelfLinkToV1(manager.SelfLink))
-
-	<% if version == 'ga' -%>
-	d.Set("rolling_update_policy" , nil)
-	<% end -%>
 
 	if err := d.Set("auto_healing_policies", flattenAutoHealingPolicies(manager.AutoHealingPolicies)); err != nil {
 		return fmt.Errorf("Error setting auto_healing_policies in state: %s", err.Error())
@@ -613,32 +511,6 @@ func resourceComputeRegionInstanceGroupManagerUpdate(d *schema.ResourceData, met
 		d.SetPartial("target_size")
 	}
 
-	<% if version == 'ga' -%>
-	if d.HasChange("instance_template") {
-		d.Partial(true)
-		// Build the parameter
-		setInstanceTemplate := &computeBeta.RegionInstanceGroupManagersSetTemplateRequest{
-			InstanceTemplate: d.Get("instance_template").(string),
-		}
-
-		op, err := config.clientComputeBeta.RegionInstanceGroupManagers.SetInstanceTemplate(
-			project, region, d.Get("name").(string), setInstanceTemplate).Do()
-
-		if err != nil {
-			return fmt.Errorf("Error updating RegionInstanceGroupManager: %s", err)
-		}
-
-		// Wait for the operation to complete
-		timeoutInMinutes := int(d.Timeout(schema.TimeoutUpdate).Minutes())
-		err = computeSharedOperationWaitTime(config.clientCompute, op, project, timeoutInMinutes, "Updating InstanceGroupManager")
-		if err != nil {
-			return err
-		}
-
-		d.SetPartial("instance_template")
-	}
-	<% end -%>
-
 	d.Partial(false)
 
 	return resourceComputeRegionInstanceGroupManagerRead(d, meta)
@@ -647,26 +519,19 @@ func resourceComputeRegionInstanceGroupManagerUpdate(d *schema.ResourceData, met
 func resourceComputeRegionInstanceGroupManagerDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
-	regionalID, err := parseRegionInstanceGroupManagerId(d.Id())
+	project, err := getProject(d, config)
 	if err != nil {
 		return err
 	}
 
-	if regionalID.Project == "" {
-		regionalID.Project, err = getProject(d, config)
-		if err != nil {
-			return err
-		}
+	region, err := getRegion(d, config)
+	if err != nil {
+		return err
 	}
 
-	if regionalID.Region == "" {
-		regionalID.Region, err = getRegion(d, config)
-		if err != nil {
-			return err
-		}
-	}
+	name := d.Get("name").(string)
 
-	op, err := config.clientComputeBeta.RegionInstanceGroupManagers.Delete(regionalID.Project, regionalID.Region, regionalID.Name).Do()
+	op, err := config.clientComputeBeta.RegionInstanceGroupManagers.Delete(project, region, name).Do()
 
 	if err != nil {
 		return fmt.Errorf("Error deleting region instance group manager: %s", err)
@@ -674,7 +539,7 @@ func resourceComputeRegionInstanceGroupManagerDelete(d *schema.ResourceData, met
 
 	// Wait for the operation to complete
 	timeoutInMinutes := int(d.Timeout(schema.TimeoutDelete).Minutes())
-	err = computeSharedOperationWaitTime(config.clientCompute, op, regionalID.Project, timeoutInMinutes, "Deleting RegionInstanceGroupManager")
+	err = computeSharedOperationWaitTime(config.clientCompute, op, project, timeoutInMinutes, "Deleting RegionInstanceGroupManager")
 	if err != nil {
 		return fmt.Errorf("Error waiting for delete to complete: %s", err)
 	}
@@ -697,7 +562,7 @@ func expandRegionUpdatePolicy(configured []interface{}) *computeBeta.InstanceGro
 		// when the percent values are set, the fixed values will be ignored
 		if v := data["max_surge_percent"]; v.(int) > 0 {
 			updatePolicy.MaxSurge = &computeBeta.FixedOrPercent{
-				Percent: int64(v.(int)),
+				Percent:    int64(v.(int)),
 				NullFields: []string{"Fixed"},
 			}
 		} else {
@@ -711,7 +576,7 @@ func expandRegionUpdatePolicy(configured []interface{}) *computeBeta.InstanceGro
 
 		if v := data["max_unavailable_percent"]; v.(int) > 0 {
 			updatePolicy.MaxUnavailable = &computeBeta.FixedOrPercent{
-				Percent: int64(v.(int)),
+				Percent:    int64(v.(int)),
 				NullFields: []string{"Fixed"},
 			}
 		} else {
@@ -796,40 +661,17 @@ func hashZoneFromSelfLinkOrResourceName(value interface{}) int {
 
 func resourceRegionInstanceGroupManagerStateImporter(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	d.Set("wait_for_instances", false)
-	regionalID, err := parseRegionInstanceGroupManagerId(d.Id())
-	if err != nil {
+	config := meta.(*Config)
+	if err := parseImportId([]string{"projects/(?P<project>[^/]+)/regions/(?P<region>[^/]+)/instanceGroupManagers/(?P<name>[^/]+)", "(?P<project>[^/]+)/(?P<region>[^/]+)/(?P<name>[^/]+)", "(?P<region>[^/]+)/(?P<name>[^/]+)", "(?P<name>[^/]+)"}, d, config); err != nil {
 		return nil, err
 	}
-	d.Set("project", regionalID.Project)
-	d.Set("region", regionalID.Region)
-	d.Set("name", regionalID.Name)
-	return []*schema.ResourceData{d}, nil
-}
 
-type regionInstanceGroupManagerId struct {
-	Project string
-	Region  string
-	Name    string
-}
-
-func (r regionInstanceGroupManagerId) terraformId() string {
-	return fmt.Sprintf("%s/%s/%s", r.Project, r.Region, r.Name)
-}
-
-func parseRegionInstanceGroupManagerId(id string) (*regionInstanceGroupManagerId, error) {
-	switch {
-	case regionInstanceGroupManagerIdRegex.MatchString(id):
-		parts := strings.Split(id, "/")
-		return &regionInstanceGroupManagerId{
-			Project: parts[0],
-			Region:  parts[1],
-			Name:    parts[2],
-		}, nil
-	case regionInstanceGroupManagerIdNameRegex.MatchString(id):
-		return &regionInstanceGroupManagerId{
-			Name: id,
-		}, nil
-	default:
-		return nil, fmt.Errorf("Invalid region instance group manager specifier. Expecting either {projectId}/{region}/{name} or {name}, where {projectId} and {region} will be derived from the provider.")
+	// Replace import id for the resource id
+	id, err := replaceVars(d, config, "projects/{{project}}/regions/{{region}}/instanceGroupManagers/{{name}}")
+	if err != nil {
+		return nil, fmt.Errorf("Error constructing id: %s", err)
 	}
+	d.SetId(id)
+
+	return []*schema.ResourceData{d}, nil
 }
