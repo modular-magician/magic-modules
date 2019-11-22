@@ -212,6 +212,8 @@ The following arguments are supported:
 
 * `replica_configuration` - (Optional) The configuration for replication. The
     configuration is detailed below.
+    
+* `root_password` - (Optional) Required for MS SQL Server, ignored MySQL and PostgreSQL.
 
 The required `settings` block supports:
 
