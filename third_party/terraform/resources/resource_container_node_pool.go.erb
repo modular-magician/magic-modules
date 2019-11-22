@@ -554,6 +554,7 @@ func expandNodePool(d *schema.ResourceData, prefix string) (*containerBeta.NodeP
 		}
 	}
 
+<% unless version == 'ga' -%>
 	if v, ok := d.GetOk(prefix + "upgrade_settings"); ok {
 		upgradeSettingsConfig := v.([]interface{})[0].(map[string]interface{})
 		np.UpgradeSettings = &containerBeta.UpgradeSettings{}
@@ -566,6 +567,7 @@ func expandNodePool(d *schema.ResourceData, prefix string) (*containerBeta.NodeP
 			np.UpgradeSettings.MaxUnavailable = int64(v.(int))
 		}
 	}
+<% end -%>
 
 	return np, nil
 }
@@ -624,6 +626,7 @@ func flattenNodePool(d *schema.ResourceData, config *Config, np *containerBeta.N
 		},
 	}
 
+<% unless version == 'ga' -%>
 	if np.UpgradeSettings != nil {
 		nodePool["upgrade_settings"] = []map[string]interface{}{
 			{
@@ -632,6 +635,7 @@ func flattenNodePool(d *schema.ResourceData, config *Config, np *containerBeta.N
 			},
 		}
 	}
+<% end -%>
 
 	return nodePool, nil
 }
