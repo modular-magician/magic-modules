@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 	"reflect"
@@ -177,7 +178,28 @@ func buildReplacementFunc(re *regexp.Regexp, d TerraformResourceData, config *Co
 		}
 	}
 
-	f := func(s string) string {
+	f := func(s string) (sub string) {
+
+		defer func() {
+			// Check if the value returned (the substitute) also contains a replaceable string. This must
+			// be done for baseUrls that contain Region such as CloudRun.
+			if re.Match([]byte(sub)) {
+				// If the substitution string contains the variable to be substituted it would
+				// recursive infintely so this will break out early. This won't catch chains of
+				// substitutions but this is a much smaller edge case.
+				if strings.Contains(sub, s) {
+					log.Printf("[ERROR] Infinite substition detected when [%s] replaces [%s] .\n", sub, s)
+					sub = "!RECURSIVE_VARIABLE_SUBSTITUTION_DETECTED!"
+				}
+
+				double, err := replaceVars(d, config, sub)
+				if err != nil {
+					log.Printf("[ERROR] Error during nested variable substitution. Exiting early. %s\n", err)
+				}
+				sub = double
+			}
+		}()
+
 		m := re.FindStringSubmatch(s)[1]
 		if m == "project" {
 			return project
@@ -214,7 +236,8 @@ func buildReplacementFunc(re *regexp.Regexp, d TerraformResourceData, config *Co
 			}
 		}
 
-		return ""
+		fmt.Printf("returning the replacement %s\n", sub)
+		return
 	}
 
 	return f, nil
