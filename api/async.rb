@@ -15,8 +15,12 @@ require 'api/object'
 require 'api/timeout'
 
 module Api
-  # Represents an asynchronous operation definition
+  # Base class from which other Async classes can inherit.
   class Async < Api::Object
+  end
+
+  # Represents an asynchronous operation definition
+  class OpAsync < Async
     attr_reader :operation
     attr_reader :result
     attr_reader :status
@@ -100,6 +104,42 @@ module Api
         super
         check :path, type: String, required: true
         check :message, type: String, required: true
+      end
+    end
+  end
+
+  # Many resources are async but do not provide a long running Operation that can be
+  # polled against. This class is meant to poll the resource itself until it can be
+  # determined that the resource is in a ready state.
+  class PollAsync < Async
+    attr_reader :operation
+    # The list of methods where operations are used.
+    attr_reader :actions
+
+    def validate
+      super
+
+      check :operation, type: PollAsync::Operation, required: true
+      check :actions, default: %w[create delete update], type: ::Array, item_type: ::String
+    end
+
+    def allow?(method)
+      @actions.include?(method.downcase)
+    end
+
+    # Operation class is just a light wrapper to call the resource itself in order to
+    # share a similar structure with AsycOp
+    class Operation < Api::Object
+      attr_reader :full_url
+      attr_reader :timeouts
+
+      def validate
+        super
+
+        check :full_url, type: String
+        check :timeouts, type: Api::Timeouts
+
+        conflicts %i[base_url full_url]
       end
     end
   end

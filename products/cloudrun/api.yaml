@@ -219,6 +219,11 @@ objects:
   name: Service
   kind: Service
   base_url: projects/{{project}}/locations/{{location}}/services
+  async: !ruby/object:Api::PollAsync
+    actions: ['create', 'update']
+    operation: !ruby/object:Api::PollAsync::Operation
+      # TODO chrisst - update to cloudrun v1 url structure once v1 PR is merged.
+      full_url: 'projects/{{project}}/locations/{{location}}/services/{{name}}'
   references: !ruby/object:Api::Resource::ReferenceLinks
       guides:
         'Official Documentation':
