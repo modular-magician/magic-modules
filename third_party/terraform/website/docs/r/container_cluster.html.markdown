@@ -258,7 +258,7 @@ region are guaranteed to support the same version.
     [PodSecurityPolicy](https://cloud.google.com/kubernetes-engine/docs/how-to/pod-security-policies) feature.
     Structure is documented below.
 
-* `authenticator_groups_config` - (Optional, [Beta](https://terraform.io/docs/providers/google/guides/provider_versions.html)) Configuration for the
+* `authenticator_groups_config` - (Optional) Configuration for the
     [Google Groups for GKE](https://cloud.google.com/kubernetes-engine/docs/how-to/role-based-access-control#groups-setup-gsuite) feature.
     Structure is documented below.
 
@@ -362,6 +362,9 @@ cluster. Configuring the `cpu` and `memory` types is required if node
 auto-provisioning is enabled. These limits will apply to node pool autoscaling
 in addition to node auto-provisioning. Structure is documented below.
 
+* `auto_provisioning_defaults` - (Optional) Contains defaults for a node pool created by NAP.
+Structure is documented below.
+
 The `resource_limits` block supports:
 
 * `resource_type` - (Required) The type of the resource. For example, `cpu` and
@@ -371,6 +374,16 @@ for a list of types.
 * `minimum` - (Optional) Minimum amount of the resource in the cluster.
 
 * `maximum` - (Optional) Maximum amount of the resource in the cluster.
+
+The `auto_provisioning_defaults` block supports:
+
+* `oauth_scopes` - (Optional) Scopes that are used by NAP when creating node pools.
+If `oauth_scopes` are specified, `service_account` must be empty.
+
+-> `monitoring.write` is always enabled regardless of user input.  `monitoring` and `logging.write` may also be enabled depending on the values for `monitoring_service` and `logging_service`.
+
+* `service_account` - (Optional) The Google Cloud Platform Service Account to be used by the node VMs.
+If `service_account` is specified, `oauth_scopes` must be empty.
 
 The `authenticator_groups_config` block supports:
 
