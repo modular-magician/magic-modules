@@ -405,7 +405,7 @@ data "google_iam_policy" "foo" {
   binding {
     role = "%{role}"
     members = ["user:admin@hashicorptest.com"]
-		condition {
+    condition {
       title       = "%{condition_title}"
       description = "Expiring at midnight of 2019-12-31"
       expression  = "%{condition_expr}"
