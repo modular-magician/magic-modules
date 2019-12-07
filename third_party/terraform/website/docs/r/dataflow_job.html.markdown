@@ -1,4 +1,5 @@
 ---
+subcategory: "Dataflow"
 layout: "google"
 page_title: "Google: google_dataflow_job"
 sidebar_current: "docs-google-dataflow-job"
@@ -17,13 +18,13 @@ the official documentation for
 
 ```hcl
 resource "google_dataflow_job" "big_data_job" {
-    name = "dataflow-job"
-    template_gcs_path = "gs://my-bucket/templates/template_file"
-    temp_gcs_location = "gs://my-bucket/tmp_dir"
-    parameters = {
-        foo = "bar"
-        baz = "qux"
-    }
+  name              = "dataflow-job"
+  template_gcs_path = "gs://my-bucket/templates/template_file"
+  temp_gcs_location = "gs://my-bucket/tmp_dir"
+  parameters = {
+    foo = "bar"
+    baz = "qux"
+  }
 }
 ```
 
@@ -54,7 +55,7 @@ The following arguments are supported:
 * `network` - (Optional) The network to which VMs will be assigned. If it is not provided, "default" will be used.
 * `subnetwork` - (Optional) The subnetwork to which VMs will be assigned. Should be of the form "regions/REGION/subnetworks/SUBNETWORK".
 * `machine_type` - (Optional) The machine type to use for the job.
-* `ip_configuration` - (Optional) The configuration for VM IPs.  Options are `"WORKER_IP_PUBLIC"` or `"WORKER_IP_PUBLIC"`.
+* `ip_configuration` - (Optional) The configuration for VM IPs.  Options are `"WORKER_IP_PUBLIC"` or `"WORKER_IP_PRIVATE"`.
 
 
 ## Attributes Reference

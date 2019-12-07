@@ -19,7 +19,6 @@ overrides: !ruby/object:Overrides::ResourceOverrides
       exclude: false
       method_name_separator: ':'
       parent_resource_attribute: 'repository'
-    id_format: '{{project}}/{{name}}'
     examples:
       - !ruby/object:Provider::Terraform::Examples
         name: "sourcerepo_repository_basic"
@@ -27,13 +26,25 @@ overrides: !ruby/object:Overrides::ResourceOverrides
         primary_resource_name: "fmt.Sprintf(\"my-repository%s\", context[\"random_suffix\"])"
         vars:
           repository_name: "my-repository"
+      - !ruby/object:Provider::Terraform::Examples
+        name: "sourcerepo_repository_full"
+        primary_resource_id: "my-repo"
+        vars:
+          repository_name: "my-repository"
+          account_id: "my-account"
+          topic_name: "my-topic"
     properties:
       name: !ruby/object:Overrides::Terraform::PropertyOverride
-        custom_expand: templates/terraform/custom_expand/repository_name_from_short_name.go.erb
+        custom_expand: templates/terraform/custom_expand/shortname_to_url.go.erb
         custom_flatten: templates/terraform/custom_flatten/repository_short_name_from_name.go.erb
         description: |
           Resource name of the repository, of the form `{{repo}}`.
           The repo name may contain slashes. eg, `name/with/slash`
+      pubsubConfigs.serviceAccountEmail: !ruby/object:Overrides::Terraform::PropertyOverride
+        default_from_api: true
+    custom_code: !ruby/object:Provider::Terraform::CustomCode
+      update_encoder: templates/terraform/update_encoder/source_repo_repository.erb
+      post_create: templates/terraform/post_create/source_repo_repository_update.go.erb
 # This is for copying files over
 files: !ruby/object:Provider::Config::Files
   # These files have templating (ERB) code that will be run.

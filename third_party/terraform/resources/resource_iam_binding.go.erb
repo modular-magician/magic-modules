@@ -5,9 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"regexp"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"google.golang.org/api/cloudresourcemanager/v1"
 )
 
@@ -23,6 +25,7 @@ var iamBindingSchema = map[string]*schema.Schema{
 		Elem: &schema.Schema{
 			Type:             schema.TypeString,
 			DiffSuppressFunc: caseDiffSuppress,
+			ValidateFunc:     validation.StringDoesNotMatch(regexp.MustCompile("^deleted:"), "Terraform does not support IAM bindings for deleted principals"),
 		},
 		Set: func(v interface{}) int {
 			return schema.HashString(strings.ToLower(v.(string)))
@@ -223,13 +226,11 @@ func iamBindingImport(newUpdaterFunc newResourceIamUpdaterFunc, resourceIdParser
 				binding = b
 			}
 		}
-		if binding == nil {
-			return nil, fmt.Errorf("Cannot find binding for %q with role %q and condition title %q", updater.DescribeResource(), role, conditionTitle)
-		}
-
-		d.Set("condition", flattenIamCondition(binding.Condition))
-		if k := conditionKeyFromCondition(binding.Condition); !k.Empty() {
-			d.SetId(d.Id() + "/" + k.String())
+		if binding != nil {
+			d.Set("condition", flattenIamCondition(binding.Condition))
+			if k := conditionKeyFromCondition(binding.Condition); !k.Empty() {
+				d.SetId(d.Id() + "/" + k.String())
+			}
 		}
 <% end -%>
 

@@ -1,4 +1,5 @@
 ---
+subcategory: "Cloud Dataproc"
 layout: "google"
 page_title: "Google: google_dataproc_cluster"
 sidebar_current: "docs-google-dataproc-cluster"
@@ -20,8 +21,8 @@ whole cluster!
 
 ```hcl
 resource "google_dataproc_cluster" "simplecluster" {
-    name       = "simplecluster"
-    region     = "us-central1"
+  name   = "simplecluster"
+  region = "us-central1"
 }
 ```
 
@@ -29,69 +30,62 @@ resource "google_dataproc_cluster" "simplecluster" {
 
 ```hcl
 resource "google_dataproc_cluster" "mycluster" {
-    name       = "mycluster"
-    region     = "us-central1"
-    labels = {
-        foo = "bar"
+  name     = "mycluster"
+  region   = "us-central1"
+  labels = {
+    foo = "bar"
+  }
+
+  cluster_config {
+    staging_bucket = "dataproc-staging-bucket"
+
+    master_config {
+      num_instances = 1
+      machine_type  = "n1-standard-1"
+      disk_config {
+        boot_disk_type    = "pd-ssd"
+        boot_disk_size_gb = 15
+      }
     }
 
-    cluster_config {
-        staging_bucket        = "dataproc-staging-bucket"
-
-        master_config {
-            num_instances     = 1
-            machine_type      = "n1-standard-1"
-            disk_config {
-                boot_disk_type = "pd-ssd"
-                boot_disk_size_gb = 15
-            }
-        }
-
-        worker_config {
-            num_instances     = 2
-            machine_type      = "n1-standard-1"
-            min_cpu_platform  = "Intel Skylake"
-            disk_config {
-                boot_disk_size_gb = 15
-                num_local_ssds    = 1
-            }
-        }
-
-        preemptible_worker_config {
-            num_instances     = 0
-        }
-
-        # Override or set some custom properties
-        software_config {
-            image_version       = "1.3.7-deb9"
-            override_properties = {
-                "dataproc:dataproc.allow.zero.workers" = "true"
-            }
-        }
-
-        gce_cluster_config {
-            #network = "${google_compute_network.dataproc_network.name}"
-            tags    = ["foo", "bar"]
-			service_account_scopes = [
-				#	User supplied scopes
-				"https://www.googleapis.com/auth/monitoring",
-
-				#	The following scopes necessary for the cluster to function properly are
-				#	always added, even if not explicitly specified:
-				#		useraccounts-ro: https://www.googleapis.com/auth/cloud.useraccounts.readonly
-				#		storage-rw:      https://www.googleapis.com/auth/devstorage.read_write
-				#		logging-write:   https://www.googleapis.com/auth/logging.write
-				"useraccounts-ro","storage-rw","logging-write"
-			]
-        }
-
-        # You can define multiple initialization_action blocks
-        initialization_action {
-            script      = "gs://dataproc-initialization-actions/stackdriver/stackdriver.sh"
-            timeout_sec = 500
-        }
-
+    worker_config {
+      num_instances    = 2
+      machine_type     = "n1-standard-1"
+      min_cpu_platform = "Intel Skylake"
+      disk_config {
+        boot_disk_size_gb = 15
+        num_local_ssds    = 1
+      }
     }
+
+    preemptible_worker_config {
+      num_instances = 0
+    }
+
+    # Override or set some custom properties
+    software_config {
+      image_version = "1.3.7-deb9"
+      override_properties = {
+        "dataproc:dataproc.allow.zero.workers" = "true"
+      }
+    }
+
+    gce_cluster_config {
+      tags = ["foo", "bar"]
+      service_account_scopes = [
+        "https://www.googleapis.com/auth/monitoring",
+        "useraccounts-ro",
+        "storage-rw",
+        "logging-write",
+      ]
+    }
+
+    # You can define multiple initialization_action blocks
+    initialization_action {
+      script      = "gs://dataproc-initialization-actions/stackdriver/stackdriver.sh"
+      timeout_sec = 500
+    }
+  }
 }
 ```
 
@@ -99,21 +93,21 @@ resource "google_dataproc_cluster" "mycluster" {
 
 ```hcl
 resource "google_dataproc_cluster" "accelerated_cluster" {
-    name   = "my-cluster-with-gpu"
-    region = "us-central1"
+  name   = "my-cluster-with-gpu"
+  region = "us-central1"
 
-    cluster_config {
-        gce_cluster_config {
-            zone = "us-central1-a"
-        }
-
-        master_config {
-            accelerators {
-                accelerator_type  = "nvidia-tesla-k80"
-                accelerator_count = "1"
-            }
-        }
+  cluster_config {
+    gce_cluster_config {
+      zone = "us-central1-a"
     }
+
+    master_config {
+      accelerators {
+        accelerator_type  = "nvidia-tesla-k80"
+        accelerator_count = "1"
+      }
+    }
+  }
 }
 ```
 
@@ -178,6 +172,9 @@ The `cluster_config` block supports:
 * `software_config` (Optional) The config settings for software inside the cluster.
    Structure defined below.
 
+* `autoscaling_config` (Optional)  The autoscaling policy config associated with the cluster.
+   Structure defined below.
+
 * `initialization_action` (Optional) Commands to execute on each node after config is completed.
    You can specify multiple versions of these. Structure defined below.
 
@@ -188,18 +185,17 @@ The `cluster_config` block supports:
 The `cluster_config.gce_cluster_config` block supports:
 
 ```hcl
-    cluster_config {
-        gce_cluster_config {
+  cluster_config {
+    gce_cluster_config {
+      zone = "us-central1-a"
 
-            zone = "us-central1-a"
+      # One of the below to hook into a custom network / subnetwork
+      network    = google_compute_network.dataproc_network.name
+      subnetwork = google_compute_network.dataproc_subnetwork.name
 
-            # One of the below to hook into a custom network / subnetwork
-            network    = "${google_compute_network.dataproc_network.name}"
-            subnetwork = "${google_compute_network.dataproc_subnetwork.name}"
-
-            tags    = ["foo", "bar"]
-        }
+      tags = ["foo", "bar"]
     }
+  }
 ```
 
 * `zone` - (Optional, Computed) The GCP zone where your data is stored and used (i.e. where
@@ -247,18 +243,19 @@ The `cluster_config.gce_cluster_config` block supports:
 The `cluster_config.master_config` block supports:
 
 ```hcl
-    cluster_config {
-        master_config {
-            num_instances     = 1
-            machine_type      = "n1-standard-1"
-            min_cpu_platform  = "Intel Skylake"
-            disk_config {
-                boot_disk_type    = "pd-ssd"
-                boot_disk_size_gb = 15
-                num_local_ssds    = 1
-            }
-        }
+cluster_config {
+  master_config {
+    num_instances    = 1
+    machine_type     = "n1-standard-1"
+    min_cpu_platform = "Intel Skylake"
+
+    disk_config {
+      boot_disk_type    = "pd-ssd"
+      boot_disk_size_gb = 15
+      num_local_ssds    = 1
     }
+  }
+}
 ```
 
 * `num_instances`- (Optional, Computed) Specifies the number of master nodes to create.
@@ -268,7 +265,7 @@ The `cluster_config.master_config` block supports:
    to create for the master. If not specified, GCP will default to a predetermined
    computed value (currently `n1-standard-4`).
 
-* `min_cpu_platform` - (Optional, Computed, [Beta](https://terraform.io/docs/providers/google/provider_versions.html)) The name of a minimum generation of CPU family
+* `min_cpu_platform` - (Optional, Computed) The name of a minimum generation of CPU family
    for the master. If not specified, GCP will default to a predetermined computed value
    for each zone. See [the guide](https://cloud.google.com/compute/docs/instances/specify-min-cpu-platform)
    for details about which CPU families are available (and defaulted) for each zone.
@@ -305,18 +302,19 @@ if you are trying to use accelerators in a given zone.
 The `cluster_config.worker_config` block supports:
 
 ```hcl
-    cluster_config {
-        worker_config {
-            num_instances     = 3
-            machine_type      = "n1-standard-1"
-            min_cpu_platform  = "Intel Skylake"
-            disk_config {
-                boot_disk_type    = "pd-standard"
-                boot_disk_size_gb = 15
-                num_local_ssds    = 1
-            }
-        }
+cluster_config {
+  worker_config {
+    num_instances    = 3
+    machine_type     = "n1-standard-1"
+    min_cpu_platform = "Intel Skylake"
+
+    disk_config {
+      boot_disk_type    = "pd-standard"
+      boot_disk_size_gb = 15
+      num_local_ssds    = 1
     }
+  }
+}
 ```
 
 * `num_instances`- (Optional, Computed) Specifies the number of worker nodes to create.
@@ -331,7 +329,7 @@ The `cluster_config.worker_config` block supports:
    to create for the worker nodes. If not specified, GCP will default to a predetermined
    computed value (currently `n1-standard-4`).
 
-* `min_cpu_platform` - (Optional, Computed, [Beta](https://terraform.io/docs/providers/google/provider_versions.html)) The name of a minimum generation of CPU family
+* `min_cpu_platform` - (Optional, Computed) The name of a minimum generation of CPU family
    for the master. If not specified, GCP will default to a predetermined computed value
    for each zone. See [the guide](https://cloud.google.com/compute/docs/instances/specify-min-cpu-platform)
    for details about which CPU families are available (and defaulted) for each zone.
@@ -367,16 +365,17 @@ if you are trying to use accelerators in a given zone.
 The `cluster_config.preemptible_worker_config` block supports:
 
 ```hcl
-    cluster_config {
-        preemptible_worker_config {
-            num_instances     = 1
-            disk_config {
-                boot_disk_type    = "pd-standard"
-                boot_disk_size_gb = 15
-                num_local_ssds    = 1
-            }
-        }
+cluster_config {
+  preemptible_worker_config {
+    num_instances = 1
+
+    disk_config {
+      boot_disk_type    = "pd-standard"
+      boot_disk_size_gb = 15
+      num_local_ssds    = 1
     }
+  }
+}
 ```
 
 Note: Unlike `worker_config`, you cannot set the `machine_type` value directly. This
@@ -403,15 +402,16 @@ will be set for you based on whatever was set for the `worker_config.machine_typ
 The `cluster_config.software_config` block supports:
 
 ```hcl
-    cluster_config {
-        # Override or set some custom properties
-        software_config {
-            image_version       = "1.3.7-deb9"
-            override_properties = {
-                "dataproc:dataproc.allow.zero.workers" = "true"
-            }
-        }
+cluster_config {
+  # Override or set some custom properties
+  software_config {
+    image_version = "1.3.7-deb9"
+
+    override_properties = {
+      "dataproc:dataproc.allow.zero.workers" = "true"
     }
+  }
+}
 ```
 
 * `image_version` - (Optional, Computed) The Cloud Dataproc image version to use
@@ -427,16 +427,37 @@ The `cluster_config.software_config` block supports:
 
 - - -
 
+The `cluster_config.autoscaling_config` block supports:
+
+```hcl
+cluster_config {
+  # Override or set some custom properties
+  autoscaling_config {
+    policy_uri = "projects/projectId/locations/region/autoscalingPolicies/policyId"
+  }
+}
+```
+
+* `policy_uri` - (Required) The autoscaling policy used by the cluster.
+
+Only resource names including projectid and location (region) are valid. Examples:
+
+`https://www.googleapis.com/compute/v1/projects/[projectId]/locations/[dataproc_region]/autoscalingPolicies/[policy_id]`
+`projects/[projectId]/locations/[dataproc_region]/autoscalingPolicies/[policy_id]`
+Note that the policy must be in the same project and Cloud Dataproc region.
+
+- - -
+
 The `initialization_action` block (Optional) can be specified multiple times and supports:
 
 ```hcl
-    cluster_config {
-        # You can define multiple initialization_action blocks
-        initialization_action {
-            script      = "gs://dataproc-initialization-actions/stackdriver/stackdriver.sh"
-            timeout_sec = 500
-        }
-    }
+cluster_config {
+  # You can define multiple initialization_action blocks
+  initialization_action {
+    script      = "gs://dataproc-initialization-actions/stackdriver/stackdriver.sh"
+    timeout_sec = 500
+  }
+}
 ```
 
 * `script`- (Required) The script to be executed during initialization of the cluster.
@@ -451,11 +472,10 @@ The `initialization_action` block (Optional) can be specified multiple times and
 The `encryption_config` block supports:
 
 ```hcl
-    cluster_config {
-        encryption_config {
-            kms_key_name = "projects/projectId/locations/region/keyRings/keyRingName/cryptoKeys/keyName"
-        }
-    }
+cluster_config {
+  encryption_config {
+    kms_key_name = "projects/projectId/locations/region/keyRings/keyRingName/cryptoKeys/keyName"
+  }
 }
 ```
 

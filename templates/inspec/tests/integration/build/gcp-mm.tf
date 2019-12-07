@@ -209,6 +209,10 @@ variable "spannerdatabase" {
   type = "map"
 }
 
+variable "scheduler_job" {
+  type = "map"
+}
+
 
 resource "google_compute_ssl_policy" "custom-ssl-policy" {
   name            = "${var.ssl_policy["name"]}"
@@ -608,7 +612,7 @@ resource "google_cloudfunctions_function" "function" {
   trigger_http          = "${var.cloudfunction["trigger_http"]}"
   timeout               = "${var.cloudfunction["timeout"]}"
   entry_point           = "${var.cloudfunction["entry_point"]}"
-  runtime               = "nodejs6"
+  runtime               = "nodejs8"
 
   environment_variables = {
     MY_ENV_VAR = "${var.cloudfunction["env_var_value"]}"
@@ -876,6 +880,12 @@ resource "google_project_service" "project" {
   service = var.service["name"]
 }
 
+resource "google_service_account" "spanner_service_account" {
+  project = "${var.gcp_project_id}"
+  account_id   = "${var.gcp_service_account_display_name}-sp"
+  display_name = "${var.gcp_service_account_display_name}-sp"
+}
+
 resource "google_spanner_instance" "spanner_instance" {
   project      = "${var.gcp_project_id}"
   config       = "${var.spannerinstance["config"]}"
@@ -887,9 +897,32 @@ resource "google_spanner_instance" "spanner_instance" {
   }
 }
 
+resource "google_spanner_instance_iam_binding" "instance" {
+  instance = google_spanner_instance.spanner_instance.name
+  role     = "roles/editor"
+
+  members = [
+    "serviceAccount:${google_service_account.spanner_service_account.email}",
+  ]
+}
+
 resource "google_spanner_database" "database" {
   project      = "${var.gcp_project_id}"
   instance     = "${google_spanner_instance.spanner_instance.name}"
   name         = "${var.spannerdatabase["name"]}"
   ddl          = ["${var.spannerdatabase["ddl"]}"]
+}
+
+resource "google_cloud_scheduler_job" "job" {
+  project  = var.gcp_project_id
+  region   = var.scheduler_job["region"]
+  name     = var.scheduler_job["name"]
+  description = var.scheduler_job["description"]
+  schedule = var.scheduler_job["schedule"]
+  time_zone = var.scheduler_job["time_zone"]
+
+  http_target {
+    http_method = var.scheduler_job["http_method"]
+    uri = var.scheduler_job["http_target_uri"]
+  }
 }
