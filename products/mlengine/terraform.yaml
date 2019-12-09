@@ -33,6 +33,30 @@ overrides: !ruby/object:Overrides::ResourceOverrides
         max_size: 1
   Version: !ruby/object:Overrides::Terraform::ResourceOverride
     exclude: true
+  Job: !ruby/object:Overrides::Terraform::ResourceOverride
+    custom_code: !ruby/object:Provider::Terraform::CustomCode
+      custom_delete: templates/terraform/custom_delete/skip_delete.go.erb
+    properties:
+      jobId: !ruby/object:Overrides::Terraform::PropertyOverride
+#        custom_expand: 'templates/terraform/custom_expand/mlengine_job_id.erb'  
+    examples:
+      - !ruby/object:Provider::Terraform::Examples
+        name: "ml_job_training"
+        primary_resource_id: "default"
+        vars:
+          gcs_job_dir: "gs://cloud-samples-data/scikit_learn_job_dir"
+          gcs_pkg_uri: "gs://cloud-samples-data/scikit_learn_job_dir/packages/fd65c711be463b2d1e841325d389b6c557db097c2281d40423c8451579238523/census_training-0.0.0.tar.gz"
+      - !ruby/object:Provider::Terraform::Examples
+        name: "ml_job_tensor"
+        primary_resource_id: "default"
+        vars:
+          gcs_job_dir: "gs://cloud-samples-data/tensorflow_census_training"
+          gcs_pkg_uri: "gs://cloud-samples-data/tensorflow_census_training/packages/aa1821b516689e2b95d2a0dec00302e50314e20e8ee303721ca3f31fd46091e3/preprocessing-1.0.tar.gz"
+      - !ruby/object:Provider::Terraform::Examples
+        name: "ml_job_container"
+        primary_resource_id: "default"
+        vars:
+          gcp_img_uri: "gcr.io/test-proj-234209/mnist_pytorch_custom_container:mnist_pytorch_cpu"
 # This is for copying files over
 files: !ruby/object:Provider::Config::Files
   # These files have templating (ERB) code that will be run.
