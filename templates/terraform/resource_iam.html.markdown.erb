@@ -159,7 +159,7 @@ resource "<%= resource_ns_iam -%>_binding" "editor" {
 
 ```hcl
 resource "<%= resource_ns_iam -%>_member" "editor" {
-<%= lines(compile(object.iam_policy.example_config_body)) -%
+<%= lines(compile(object.iam_policy.example_config_body)) -%>
   role = "<%= object.iam_policy.admin_iam_role || object.iam_policy.allowed_iam_role -%>"
   member = "user:jane@example.com"
 }
