@@ -5,6 +5,7 @@
 {{- $features := newStringList -}}
 {{- $improvements := newStringList -}}
 {{- $bugs := newStringList -}}
+{{- $nonote:= newStringList -}}
 {{- range . -}}
 	{{if eq "note" .Type -}}
 		{{$notes = append $notes (renderReleaseNote .) -}}
@@ -18,6 +19,7 @@
 		{{$improvements = append $improvements (renderReleaseNote .) -}}
 	{{ else if eq "bug" .Type -}}
 		{{$bugs = append $bugs (renderReleaseNote .) -}}
+	{{ else if eq "none" .Type -}}
 	{{ else -}}
 		{{$unknown = append $unknown (renderReleaseNote .) -}}
 	{{end -}}
