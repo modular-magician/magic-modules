@@ -293,7 +293,7 @@ module Provider
           { update_url: p.update_url, update_verb: p.update_verb, fingerprint: p.fingerprint_name }
         end
       else
-        update_props.group_by do |p|
+        update_props = update_props.group_by do |p|
           {
             update_url: p.update_url,
             update_verb: p.update_verb,
@@ -301,6 +301,7 @@ module Provider
             fingerprint_name: p.fingerprint_name
           }
         end
+        update_props.sort_by { |k, _| k.nil? ? "" : k[:update_id].to_s }
       end
     end
 
