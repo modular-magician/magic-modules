@@ -95,6 +95,12 @@ overrides: !ruby/object:Overrides::ResourceOverrides
     exclude: true
   TargetSslProxy: !ruby/object:Overrides::Inspec::ResourceOverride
     exclude: true
+  UrlMap: !ruby/object:Overrides::Inspec::ResourceOverride
+    properties:
+      pathMatchers.routeRules: !ruby/object:Overrides::Inspec::PropertyOverride
+        exclude: true
+      pathMatchers.pathRules: !ruby/object:Overrides::Inspec::PropertyOverride
+        exclude: true
   VpnTunnel: !ruby/object:Overrides::Inspec::ResourceOverride
     exclude: true
   Zone: !ruby/object:Overrides::Inspec::ResourceOverride

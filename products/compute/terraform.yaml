@@ -408,25 +408,28 @@ overrides: !ruby/object:Overrides::ResourceOverrides
         name: "kmsKeySelfLink"
         description: |
           The self link of the encryption key used to encrypt the disk. Also called KmsKeyName
-          in the cloud console. In order to use this additional
-          IAM permissions need to be set on the Compute Engine Service Agent. See
-          https://cloud.google.com/compute/docs/disks/customer-managed-encryption#encrypt_a_new_persistent_disk_with_your_own_keys
+          in the cloud console. Your project's Compute Engine System service account
+          (`service-{{PROJECT_NUMBER}}@compute-system.iam.gserviceaccount.com`) must have
+          `roles/cloudkms.cryptoKeyEncrypterDecrypter` to use this feature.
+          See https://cloud.google.com/compute/docs/disks/customer-managed-encryption#encrypt_a_new_persistent_disk_with_your_own_keys
       sourceSnapshotEncryptionKey.kmsKeyName: !ruby/object:Overrides::Terraform::PropertyOverride
         diff_suppress_func: 'compareSelfLinkRelativePaths'
         name: "kmsKeySelfLink"
         description: |
           The self link of the encryption key used to encrypt the disk. Also called KmsKeyName
-          in the cloud console. In order to use this additional
-          IAM permissions need to be set on the Compute Engine Service Agent. See
-          https://cloud.google.com/compute/docs/disks/customer-managed-encryption#encrypt_a_new_persistent_disk_with_your_own_keys
+          in the cloud console. Your project's Compute Engine System service account
+          (`service-{{PROJECT_NUMBER}}@compute-system.iam.gserviceaccount.com`) must have
+          `roles/cloudkms.cryptoKeyEncrypterDecrypter` to use this feature.
+          See https://cloud.google.com/compute/docs/disks/customer-managed-encryption#encrypt_a_new_persistent_disk_with_your_own_keys
       sourceImageEncryptionKey.kmsKeyName: !ruby/object:Overrides::Terraform::PropertyOverride
         diff_suppress_func: 'compareSelfLinkRelativePaths'
         name: "kmsKeySelfLink"
         description: |
           The self link of the encryption key used to encrypt the disk. Also called KmsKeyName
-          in the cloud console. In order to use this additional
-          IAM permissions need to be set on the Compute Engine Service Agent. See
-          https://cloud.google.com/compute/docs/disks/customer-managed-encryption#encrypt_a_new_persistent_disk_with_your_own_keys
+          in the cloud console. Your project's Compute Engine System service account
+          (`service-{{PROJECT_NUMBER}}@compute-system.iam.gserviceaccount.com`) must have
+          `roles/cloudkms.cryptoKeyEncrypterDecrypter` to use this feature.
+          See https://cloud.google.com/compute/docs/disks/customer-managed-encryption#encrypt_a_new_persistent_disk_with_your_own_keys
       physicalBlockSizeBytes: !ruby/object:Overrides::Terraform::PropertyOverride
         default_from_api: true
       resourcePolicies: !ruby/object:Overrides::Terraform::PropertyOverride
@@ -1244,6 +1247,34 @@ overrides: !ruby/object:Overrides::ResourceOverrides
           login_region_backend_service_name: "login"
           home_region_backend_service_name: "home"
           region_health_check_name: "health-check"
+      - !ruby/object:Provider::Terraform::Examples
+        name: "region_url_map_l7_ilb_path"
+        primary_resource_id: "regionurlmap"
+        vars:
+          region_url_map_name: "regionurlmap"
+          home_region_backend_service_name: "home"
+          region_health_check_name: "health-check"
+      - !ruby/object:Provider::Terraform::Examples
+        name: "region_url_map_l7_ilb_path_partial"
+        primary_resource_id: "regionurlmap"
+        vars:
+          region_url_map_name: "regionurlmap"
+          home_region_backend_service_name: "home"
+          region_health_check_name: "health-check"
+      - !ruby/object:Provider::Terraform::Examples
+        name: "region_url_map_l7_ilb_route"
+        primary_resource_id: "regionurlmap"
+        vars:
+          region_url_map_name: "regionurlmap"
+          home_region_backend_service_name: "home"
+          region_health_check_name: "health-check"
+      - !ruby/object:Provider::Terraform::Examples
+        name: "region_url_map_l7_ilb_route_partial"
+        primary_resource_id: "regionurlmap"
+        vars:
+          region_url_map_name: "regionurlmap"
+          home_region_backend_service_name: "home"
+          region_health_check_name: "health-check"
     properties:
       region: !ruby/object:Overrides::Terraform::PropertyOverride
         default_from_api: true
@@ -1308,16 +1339,15 @@ overrides: !ruby/object:Overrides::ResourceOverrides
           route_name: "network-route"
           network_name: "compute-network"
       - !ruby/object:Provider::Terraform::Examples
-        name: "route_ilb_beta"
-        min_version: "beta"
-        primary_resource_id: "route-ilb-beta"
+        name: "route_ilb"
+        primary_resource_id: "route-ilb"
         vars:
           network_name: "compute-network"
           subnet_name: "compute-subnet"
           forwarding_rule_name: "compute-forwarding-rule"
           health_check_name: "proxy-health-check"
           backend_name: "compute-backend"
-          route_name: "route-ilb-beta"
+          route_name: "route-ilb"
     properties:
       name: !ruby/object:Overrides::Terraform::PropertyOverride
         validation: !ruby/object:Provider::Terraform::Validation
@@ -1326,6 +1356,7 @@ overrides: !ruby/object:Overrides::ResourceOverrides
         diff_suppress_func: 'compareSelfLinkOrResourceName'
       priority: !ruby/object:Overrides::Terraform::PropertyOverride
         default_value: 1000
+        send_empty_value: true
       nextHopIp: !ruby/object:Overrides::Terraform::PropertyOverride
         default_from_api: true
       nextHopGateway: !ruby/object:Overrides::Terraform::PropertyOverride
@@ -1726,8 +1757,6 @@ overrides: !ruby/object:Overrides::ResourceOverrides
       secondaryIpRanges.ipCidrRange: !ruby/object:Overrides::Terraform::PropertyOverride
         validation: !ruby/object:Provider::Terraform::Validation
           function: 'validateIpCidrRange'
-      fingerprint: !ruby/object:Overrides::Terraform::PropertyOverride
-        exclude: false
       logConfig: !ruby/object:Overrides::Terraform::PropertyOverride
         send_empty_value: true
         custom_expand: 'templates/terraform/custom_expand/subnetwork_log_config.go.erb'
@@ -1990,8 +2019,6 @@ overrides: !ruby/object:Overrides::ResourceOverrides
           url_map_name: "urlmap"
           home_backend_service_name: "home"
           health_check_name: "health-check"
-          backend_bucket_name: "static-asset-backend-bucket"
-          storage_bucket_name: "static-asset-bucket"
       - !ruby/object:Provider::Terraform::Examples
         name: "url_map_traffic_director_route_partial"
         primary_resource_id: "urlmap"
@@ -1999,8 +2026,20 @@ overrides: !ruby/object:Overrides::ResourceOverrides
           url_map_name: "urlmap"
           home_backend_service_name: "home"
           health_check_name: "health-check"
-          backend_bucket_name: "static-asset-backend-bucket"
-          storage_bucket_name: "static-asset-bucket"
+      - !ruby/object:Provider::Terraform::Examples
+        name: "url_map_traffic_director_path"
+        primary_resource_id: "urlmap"
+        vars:
+          url_map_name: "urlmap"
+          home_backend_service_name: "home"
+          health_check_name: "health-check"
+      - !ruby/object:Provider::Terraform::Examples
+        name: "url_map_traffic_director_path_partial"
+        primary_resource_id: "urlmap"
+        vars:
+          url_map_name: "urlmap"
+          home_backend_service_name: "home"
+          health_check_name: "health-check"
     properties:
       id: !ruby/object:Overrides::Terraform::PropertyOverride
         name: "map_id"

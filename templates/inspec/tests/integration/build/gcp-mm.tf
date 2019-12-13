@@ -880,6 +880,12 @@ resource "google_project_service" "project" {
   service = var.service["name"]
 }
 
+resource "google_service_account" "spanner_service_account" {
+  project = "${var.gcp_project_id}"
+  account_id   = "${var.gcp_service_account_display_name}-sp"
+  display_name = "${var.gcp_service_account_display_name}-sp"
+}
+
 resource "google_spanner_instance" "spanner_instance" {
   project      = "${var.gcp_project_id}"
   config       = "${var.spannerinstance["config"]}"
@@ -889,6 +895,16 @@ resource "google_spanner_instance" "spanner_instance" {
   labels = {
     "${var.spannerinstance["label_key"]}" = "${var.spannerinstance["label_value"]}"
   }
+}
+
+resource "google_spanner_instance_iam_binding" "instance" {
+  project  = "${var.gcp_project_id}"
+  instance = google_spanner_instance.spanner_instance.name
+  role     = "roles/editor"
+
+  members = [
+    "serviceAccount:${google_service_account.spanner_service_account.email}",
+  ]
 }
 
 resource "google_spanner_database" "database" {
@@ -910,4 +926,24 @@ resource "google_cloud_scheduler_job" "job" {
     http_method = var.scheduler_job["http_method"]
     uri = var.scheduler_job["http_target_uri"]
   }
+}
+
+variable "service_perimeter" {
+  type = "map"
+}
+
+resource "google_access_context_manager_service_perimeter" "service-perimeter" {
+  count  = "${var.gcp_organization_id == "" ? 0 : var.gcp_enable_privileged_resources}"
+  parent = "accessPolicies/${google_access_context_manager_access_policy.access-policy.0.name}"
+  name   = "accessPolicies/${google_access_context_manager_access_policy.access-policy.0.name}/servicePerimeters/${var.service_perimeter["name"]}"
+  title  = var.service_perimeter["title"]
+  status {
+    restricted_services = [var.service_perimeter["restricted_service"]]
+  }
+}
+
+resource "google_access_context_manager_access_policy" "access-policy" {
+  count  = "${var.gcp_organization_id == "" ? 0 : var.gcp_enable_privileged_resources}"
+  parent = "organizations/${var.gcp_organization_id}"
+  title  = var.service_perimeter["policy_title"]
 }
