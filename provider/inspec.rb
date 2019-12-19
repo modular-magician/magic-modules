@@ -51,6 +51,8 @@ module Provider
       # If this is a privileged resource, which will make integration tests unusable
       # unless the user is an admin of the GCP organization
       attr_accessor :privileged
+
+      attr_accessor :ga_version
     end
 
     # Subclass of ProductFileTemplate with InSpec specific fields
@@ -64,6 +66,7 @@ module Provider
     def generate_resource(data)
       target_folder = File.join(data.output_folder, 'libraries')
       name = data.object.name.underscore
+      data.ga_version = data.product.version_obj_or_closest('ga')
 
       data.generate(
         'templates/inspec/singular_resource.erb',
@@ -265,7 +268,9 @@ module Provider
     # Recursively calls itself on any arrays or nested objects within this property, indenting
     # further for each call
     def markdown_format(property, indent = 1)
-      prop_description = "`#{property.out_name}`: #{property.description.split("\n").join(' ')}"
+      beta_description = property.min_version.name == 'beta' ? '(Beta only) ' : ''
+      desc = "#{beta_description}#{property.description.split("\n").join(' ')}"
+      prop_description = "`#{property.out_name}`: #{desc}"
       description = "#{'  ' * indent}* #{prop_description}"
       if nested_object?(property)
         description_arr = [description]
