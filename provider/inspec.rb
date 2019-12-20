@@ -341,5 +341,18 @@ module Provider
     def extract_identifiers(url)
       url.scan(/({{)(\w+)(}})/).map { |arr| arr[1] }
     end
+
+    def has_beta(object)
+      beta_api_url(object) != ga_api_url(object)
+    end
+
+    def beta_api_url(object)
+      object.product_url || object.__product.base_url
+    end
+
+    def ga_api_url(object)
+      ga_version = object.__product.version_obj_or_closest('ga')
+      object.product_url || ga_version.base_url
+    end
   end
 end
