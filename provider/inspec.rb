@@ -339,7 +339,7 @@ module Provider
       url.scan(/({{)(\w+)(}})/).map { |arr| arr[1] }
     end
 
-    def has_beta(object)
+    def beta?(object)
       beta_api_url(object) != ga_api_url(object)
     end
 
