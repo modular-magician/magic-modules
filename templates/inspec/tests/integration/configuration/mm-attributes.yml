@@ -413,3 +413,9 @@ project_exclusion:
   name: inspec-project-exclusion
   description: My project exclusion description
   filter: resource.type = gce_instance AND severity <= DEBUG
+
+dns_managed_zone:
+  # managed zone dns_name must be randomly generated, so it happens in the other script
+  name: example-zone
+  description: example description
+  dnssec_config_state: 'on'
