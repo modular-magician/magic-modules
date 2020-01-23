@@ -30,6 +30,7 @@ module Overrides
           plural_custom_logic
           plural_custom_attr_readers
           resource_name
+          plural_fetch_verb
         ]
       end
 
@@ -59,6 +60,9 @@ module Overrides
         # Overrides the resource name. In some cases we need to match legacy resources which
         # do not have product namespaces, or other irregularities
         check :resource_name, type: String
+
+        # Some resources (organizations) use Post instead of Get for fetching their plural version
+        check :plural_fetch_verb, type: Symbol, default: :GET, allowed: %i[POST GET]
       end
     end
   end
