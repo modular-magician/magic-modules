@@ -1,19 +1,20 @@
 [submodule "build/ansible"]
 	path = build/ansible
-	url = https://github.com/ansible-collections/ansible_collections_google
-	branch = master
+	url = https://github.com/modular-magician/ansible_collections_google.git
+	branch = codegen-sha-7c79c219
 [submodule "build/terraform"]
 	path = build/terraform
-	url = https://github.com/terraform-providers/terraform-provider-google
-	branch = master
+	url = https://github.com/modular-magician/terraform-provider-google.git
+	branch = codegen-sha-7c79c219
 [submodule "build/terraform-beta"]
 	path = build/terraform-beta
-	url = https://github.com/terraform-providers/terraform-provider-google-beta
-	branch = master
+	url = https://github.com/modular-magician/terraform-provider-google-beta.git
+	branch = codegen-sha-7c79c219
 [submodule "build/inspec"]
 	path = build/inspec
-	url = https://github.com/modular-magician/inspec-gcp
+	url = https://github.com/modular-magician/inspec-gcp.git
+	branch = codegen-sha-7c79c219
 [submodule "build/terraform-mapper"]
 	path = build/terraform-mapper
-	url = https://github.com/GoogleCloudPlatform/terraform-google-conversion.git
-    branch = master
+	url = https://github.com/modular-magician/terraform-google-conversion.git
+	branch = codegen-sha-7c79c219
