@@ -54,9 +54,9 @@ module Provider
                            object: object)
         else
           compile_template 'templates/terraform/expand_property_method.erb',
-                         prefix: prefix,
-                         property: property,
-                         object: object
+                           prefix: prefix,
+                           property: property,
+                           object: object
         end
       end
 
