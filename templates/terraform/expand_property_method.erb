@@ -12,13 +12,6 @@
   # See the License for the specific language governing permissions and
   # limitations under the License.
 -%>
-<% if property.custom_expand -%>
-<%= lines(compile_template(property.custom_expand,
-                           prefix: prefix,
-                           property: property,
-                           object: object)) -%>
-<% else -%>
-
 <%# Generate expanders for Maps %>
 <%   if property.is_a?(Api::Type::Map) -%>
 func expand<%= prefix -%><%= titlelize_property(property) -%>(v interface{}, d TerraformResourceData, config *Config) (map[string]interface{}, error) {
@@ -180,5 +173,3 @@ so we treat the key as a property of the object in Terraform schema. %>
 <%=      lines(build_expand_method(prefix + titlelize_property(property), prop, object), 1) -%>
 <%   end -%>
 <% end -%>
-
-<% end # custom_code check -%>
