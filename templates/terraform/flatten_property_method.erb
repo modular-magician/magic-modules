@@ -12,11 +12,6 @@
   # See the License for the specific language governing permissions and
   # limitations under the License.
 -%>
-<% if property.custom_flatten -%>
-<%= lines(compile_template(property.custom_flatten,
-                           prefix: prefix,
-                           property: property)) -%>
-<% else -%>
 <% if tf_types.include?(property.class) -%>
 func flatten<%= prefix -%><%= titlelize_property(property) -%>(v interface{}, d *schema.ResourceData) interface{} {
 <% if property.is_a?(Api::Type::NestedObject) -%>
@@ -131,4 +126,3 @@ func flatten<%= prefix -%><%= titlelize_property(property) -%>(v interface{}, d 
 <% else -%>
   // TODO: Property '<%= property.name -%>' of type <%= property.class -%> is not supported
 <% end # tf_types.include?(property.class) -%>
-<% end # custom code check -%>
