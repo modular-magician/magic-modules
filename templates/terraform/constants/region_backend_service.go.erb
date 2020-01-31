@@ -78,11 +78,7 @@ func validateInternalBackendServiceBackends(backends []interface{}, d *schema.Re
 }
 
 func customDiffRegionBackendService(d *schema.ResourceDiff, meta interface{}) error {
-	v, ok := d.GetOk("backend")
-	if !ok {
-		return nil
-	}
-	if v == nil {
+	if v, ok := d.GetOk("backend"); !ok || v == nil {
 		return nil
 	}
 
