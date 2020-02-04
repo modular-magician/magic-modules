@@ -163,11 +163,11 @@ module Provider
         #   - "%{my_var}" for overrides that have custom Golang values
         rand_vars = vars.map do |k, v|
           # Some resources only allow underscores.
-          test_v = "tf_test_#{v}" if v.include?("_") else "tf-test-#{v}"
+          prefixed = v.include?("_") ? "tf_test_#{v}" : "tf-test-#{v}"
 
           # Random suffix is 10 characters and standard name length <= 64
-          test_v = "#{test_v[0...54]}%{random_suffix}"
-          [k, test_v]
+          prefixed = "#{prefixed[0...54]}%{random_suffix}"
+          [k, prefixed]
         end
 
         rand_vars = rand_vars.to_h
