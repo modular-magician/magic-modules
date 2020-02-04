@@ -40,7 +40,7 @@ overrides: !ruby/object:Overrides::ResourceOverrides
           idp_entity_id: idp-entity
           sp_entity_id: sp-entity
         test_vars_overrides:
-          name: "saml.tf-config"
+          name: '"saml.tf-config"'
   TenantInboundSamlConfig: !ruby/object:Overrides::Terraform::ResourceOverride
     properties:
       name: !ruby/object:Overrides::Terraform::PropertyOverride
@@ -53,7 +53,7 @@ overrides: !ruby/object:Overrides::ResourceOverrides
           idp_entity_id: idp-entity
           sp_entity_id: sp-entity
         test_vars_overrides:
-          name: "saml.tf-config"
+          name: '"saml.tf-config"'
   OauthIdpConfig: !ruby/object:Overrides::Terraform::ResourceOverride
     properties:
       name: !ruby/object:Overrides::Terraform::PropertyOverride
@@ -63,7 +63,7 @@ overrides: !ruby/object:Overrides::ResourceOverrides
         name: "identity_platform_oauth_idp_config_basic"
         primary_resource_id: "oauth_idp_config"
         test_vars_overrides:
-          name: "oidc.oauth-idp-config"
+          name: '"oidc.oauth-idp-config"'
   TenantOauthIdpConfig: !ruby/object:Overrides::Terraform::ResourceOverride
     properties:
       name: !ruby/object:Overrides::Terraform::PropertyOverride
@@ -73,7 +73,7 @@ overrides: !ruby/object:Overrides::ResourceOverrides
         name: "identity_platform_tenant_oauth_idp_config_basic"
         primary_resource_id: "tenant_oauth_idp_config"
         test_vars_overrides:
-          name: "oidc.oauth-idp-config"
+          name: '"oidc.oauth-idp-config"'
   Tenant: !ruby/object:Overrides::Terraform::ResourceOverride
     properties:
       name: !ruby/object:Overrides::Terraform::PropertyOverride
