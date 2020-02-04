@@ -161,7 +161,16 @@ module Provider
         # Construct map for vars to inject into config - will have
         #   - "a-example-var-value%{random_suffix}""
         #   - "%{my_var}" for overrides that have custom Golang values
-        rand_vars = vars.map { |k, v| [k, "#{v}%{random_suffix}"] }.to_h
+        rand_vars = vars.map do |k, v|
+          # Some resources only allow underscores.
+          prefixed = v.include?('_') ? "tf_test_#{v}" : "tf-test-#{v}"
+
+          # Random suffix is 10 characters and standard name length <= 64
+          prefixed = "#{prefixed[0...54]}%{random_suffix}"
+          [k, prefixed]
+        end
+
+        rand_vars = rand_vars.to_h
         overrides = test_vars_overrides.map { |k, _| [k, "%{#{k}}"] }.to_h
         body = lines(compile_file(
                        {
