@@ -37,9 +37,10 @@ overrides: !ruby/object:Overrides::ResourceOverrides
         name: "identity_platform_inbound_saml_config_basic"
         primary_resource_id: "saml_config"
         vars:
-          name: saml.tf-config
-          idp_entity_id: tf-idp
-          sp_entity_id: tf-sp
+          idp_entity_id: idp-entity
+          sp_entity_id: sp-entity
+        test_vars_overrides:
+          name: '"saml.tf-config"'
   TenantInboundSamlConfig: !ruby/object:Overrides::Terraform::ResourceOverride
     properties:
       name: !ruby/object:Overrides::Terraform::PropertyOverride
@@ -49,9 +50,10 @@ overrides: !ruby/object:Overrides::ResourceOverrides
         name: "identity_platform_tenant_inbound_saml_config_basic"
         primary_resource_id: "tenant_saml_config"
         vars:
-          name: saml.tf-config
-          idp_entity_id: tf-idp
-          sp_entity_id: tf-sp
+          idp_entity_id: idp-entity
+          sp_entity_id: sp-entity
+        test_vars_overrides:
+          name: '"saml.tf-config"'
   OauthIdpConfig: !ruby/object:Overrides::Terraform::ResourceOverride
     properties:
       name: !ruby/object:Overrides::Terraform::PropertyOverride
@@ -60,8 +62,8 @@ overrides: !ruby/object:Overrides::ResourceOverrides
       - !ruby/object:Provider::Terraform::Examples
         name: "identity_platform_oauth_idp_config_basic"
         primary_resource_id: "oauth_idp_config"
-        vars:
-          name: oidc.oauth-idp-config
+        test_vars_overrides:
+          name: '"oidc.oauth-idp-config"'
   TenantOauthIdpConfig: !ruby/object:Overrides::Terraform::ResourceOverride
     properties:
       name: !ruby/object:Overrides::Terraform::PropertyOverride
@@ -70,8 +72,8 @@ overrides: !ruby/object:Overrides::ResourceOverrides
       - !ruby/object:Provider::Terraform::Examples
         name: "identity_platform_tenant_oauth_idp_config_basic"
         primary_resource_id: "tenant_oauth_idp_config"
-        vars:
-          name: oidc.oauth-idp-config
+        test_vars_overrides:
+          name: '"oidc.oauth-idp-config"'
   Tenant: !ruby/object:Overrides::Terraform::ResourceOverride
     properties:
       name: !ruby/object:Overrides::Terraform::PropertyOverride
