@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.org/GoogleCloudPlatform/magic-modules.svg?branch=master)](https://travis-ci.org/GoogleCloudPlatform/magic-modules)
-
+ 
 
 # Magic Modules
 
