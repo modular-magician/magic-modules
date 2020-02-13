@@ -15,7 +15,6 @@ require 'api/object'
 require 'compile/core'
 require 'provider/config'
 require 'provider/core'
-require 'provider/ansible/manifest'
 
 module Provider
   module Ansible
@@ -26,8 +25,9 @@ module Provider
     module ResourceRef
       # Builds out a list of statements that handle ResourceRef creation
       def resourceref_handlers(object)
-        rrefs = nonvirtual_rrefs(object)
+        rrefs = nonreadonly_rrefs(object)
         return unless rrefs.any?
+
         comments = [
           '# Converts data from:',
           '# foo:',
@@ -42,7 +42,7 @@ module Provider
 
       def resourceref_handler(rref)
         rref_path = path_for_rref(rref)
-        value_path = quote_string(Google::StringUtils.underscore(rref.imports))
+        value_path = quote_string(rref.imports)
         format([
                  ["module.set_value_for_resource(#{rref_path}, #{value_path})"],
                  [
@@ -63,7 +63,7 @@ module Provider
       def path_for_rref(rref)
         past_values = []
         until rref.nil?
-          past_values << Google::StringUtils.underscore(rref.name)
+          past_values << rref.name.underscore
           # TODO(alexstephen): Investigate a better way to handle parent
           # pointers on Arrays of NestedObjects
           rref = if rref.is_a?(Api::Type::NestedObject) && \

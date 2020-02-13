@@ -7,11 +7,12 @@ platform: linux
 image_resource:
     type: docker-image
     source:
-        repository: nmckinley/hub
-        tag: 'latest'
+        repository: gcr.io/magic-modules/hub
+        tag: '1.0'
 
 inputs:
     - name: magic-modules
+    - name: mm-initial-pr
 
 outputs:
     - name: magic-modules-with-comment
@@ -21,4 +22,6 @@ run:
 
 params:
   GITHUB_TOKEN: ""
-  TERRAFORM_REPO: ""
+  ANSIBLE_REPO_USER: ""
+  INSPEC_REPO_USER: ""
+  TERRAFORM_VERSIONS: ""

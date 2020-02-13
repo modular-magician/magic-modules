@@ -12,68 +12,77 @@
 # limitations under the License.
 
 --- !ruby/object:Provider::Ansible::Config
-manifest: !ruby/object:Provider::Ansible::Manifest
-  metadata_version: '1.1'
-  status:
-    - preview
-  supported_by: 'community'
-  requirements:
-    - python >= 2.6
-    - requests >= 2.18.4
-    - google-auth >= 1.3.0
-  version_added: '2.5'
-  author: Google Inc. (@googlecloudplatform)
 # This is where custom code would be defined eventually.
-objects: !ruby/object:Api::Resource::HashArray
-  Project:
-    # TODO(alexstephen): Re-evaluate merging Project into Ansible
-    skip: true
-  ResourceRecordSet:
-    version_added: '2.6'
+datasources: !ruby/object:Overrides::ResourceOverrides
+  Project: !ruby/object:Overrides::Ansible::ResourceOverride
+    exclude: true
+  ResourceRecordSet: !ruby/object:Overrides::Ansible::ResourceOverride
+    facts: !ruby/object:Provider::Ansible::FactsOverride
+      has_filters: false
+      test: !ruby/object:Provider::Ansible::AnsibleFactsTestInformation
+        exists: |
+          "'www.testzone-4.com.'in \"{{ results['resources'] | map(attribute='name') | list }}\""
+        does_not_exist: |
+          "'www.testzone-4.com.'not in \"{{ results['resources'] | map(attribute='name') | list }}\""
+    base_url: "projects/{{project}}/managedZones/{{managed_zone}}/rrsets"
+  ManagedZone: !ruby/object:Overrides::Ansible::ResourceOverride
+    facts: !ruby/object:Provider::Ansible::FactsOverride
+      filter: !ruby/object:Provider::Ansible::FilterProp
+        name: dnsName
+        description: Restricts the list to return only zones with this domain name.
+      query_options: false
+      filter_api_param: dnsName
+overrides: !ruby/object:Overrides::ResourceOverrides
+  ResourceRecordSet: !ruby/object:Overrides::Ansible::ResourceOverride
+    access_api_results: true
     imports:
       - copy
       - datetime
       - time
-    create: |
-      change = create_change(None, updated_record(module), module)
-      change_id = int(change['id'])
-      if change['status'] == 'pending':
-          wait_for_change_to_complete(change_id, module)
-      return fetch_wrapped_resource(module, 'dns#resourceRecordSet',
-                                    'dns#resourceRecordSetsListResponse',
-                                    'rrsets')
-    delete: |
-      change = create_change(fetch, None, module)
-      change_id = int(change['id'])
-      if change['status'] == 'pending':
-          wait_for_change_to_complete(change_id, module)
-      return fetch_wrapped_resource(module, 'dns#resourceRecordSet',
-                                    'dns#resourceRecordSetsListResponse',
-                                    'rrsets')
-    update: |
-      change = create_change(fetch, updated_record(module), module)
-      change_id = int(change['id'])
-      if change['status'] == 'pending':
-          wait_for_change_to_complete(change_id, module)
-      return fetch_wrapped_resource(module, 'dns#resourceRecordSet',
-                                    'dns#resourceRecordSetsListResponse',
-                                    'rrsets')
-    access_api_results: true
+    custom_code: !ruby/object:Provider::Ansible::CustomCode
+      pre_action: |
+        if 'dnsName' not in module.params.get('managed_zone') or 'name' not in module.params.get('managed_zone'):
+          module.fail_json(msg="managed_zone dictionary must contain both the name of the zone and the dns name of the zone")
+      create: |
+        change = create_change(None, updated_record(module), module)
+        change_id = int(change['id'])
+        if change['status'] == 'pending':
+            wait_for_change_to_complete(change_id, module)
+        return fetch_wrapped_resource(module, 'dns#resourceRecordSet',
+                                      'dns#resourceRecordSetsListResponse',
+                                      'rrsets')
+      delete: |
+        change = create_change(fetch, None, module)
+        change_id = int(change['id'])
+        if change['status'] == 'pending':
+            wait_for_change_to_complete(change_id, module)
+        return fetch_wrapped_resource(module, 'dns#resourceRecordSet',
+                                      'dns#resourceRecordSetsListResponse',
+                                      'rrsets')
+      update: |
+        change = create_change(fetch, updated_record(module), module)
+        change_id = int(change['id'])
+        if change['status'] == 'pending':
+            wait_for_change_to_complete(change_id, module)
+        return fetch_wrapped_resource(module, 'dns#resourceRecordSet',
+                                      'dns#resourceRecordSetsListResponse',
+                                      'rrsets')
     provider_helpers:
-      visible:
-        unwrap_resource: false
-        resource_to_request: false
-        return_if_object: false
-      include:
-        - 'products/dns/helpers/ansible_provider_resource_set.py.erb'
-examples: !ruby/object:Api::Resource::HashArray
+      - 'products/dns/helpers/ansible/provider_resource_set.py.erb'
+    hidden:
+      - unwrap_resource
+      - resource_to_request
+      - return_if_object
+    properties:
+      managed_zone: !ruby/object:Overrides::Ansible::PropertyOverride
+        description: |
+          Identifies the managed zone addressed by this request. This must be a dictionary that
+          contains both a 'name' key and a 'dnsName' key. You can pass in the results of the
+          gcp_dns_managed_zone module, which will contain both.
+        contain_extra_docs: false
+  Project: !ruby/object:Overrides::Ansible::ResourceOverride
+    # TODO(alexstephen): Re-evaluate merging Project into Ansible
+    exclude: true
 files: !ruby/object:Provider::Config::Files
-  copy:
-  compile:
-<%= indent(compile('provider/ansible/common~compile.yaml'), 4) %>
-tests: !ruby/object:Api::Resource::HashArray
-# This would be for custom network responses. Tests work by running some block
-# of autogenerated Chef/Puppet code and then verifying the network calls.
-# The network call verifications are automatically generated, but can be
-# overriden.
-test_data: !ruby/object:Provider::Config::TestData
+  resource:
+<%= lines(indent(compile('provider/ansible/resource~compile.yaml'), 4)) -%>

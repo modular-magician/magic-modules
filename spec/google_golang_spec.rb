@@ -37,6 +37,31 @@ describe Google::GolangUtils do
       it { is_expected.to eq '0.987' }
     end
 
+    describe 'symbol' do
+      subject { golang.go_literal(:NONE) }
+      it { is_expected.to eq '"NONE"' }
+    end
+
+    describe 'empty_array' do
+      subject { golang.go_literal([]) }
+      it { is_expected.to eq '[]string{}' }
+    end
+
+    describe 'string_array_single' do
+      subject { golang.go_literal(['abc']) }
+      it { is_expected.to eq '[]string{"abc"}' }
+    end
+
+    describe 'string_array_multiple' do
+      subject { golang.go_literal(%w[abc def]) }
+      it { is_expected.to eq '[]string{"abc", "def"}' }
+    end
+
+    describe 'int_array' do
+      subject { -> { golang.go_literal([1, 2]) } }
+      it { is_expected.to raise_error(/Unsupported/) }
+    end
+
     describe 'unknown type' do
       subject { -> { golang.go_literal(Class.new) } }
       it { is_expected.to raise_error(/Unsupported/) }

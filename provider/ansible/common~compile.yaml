@@ -1,4 +1,4 @@
-# Copyright 2018 Google Inc.
+# Copyright 2019 Google Inc.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -10,22 +10,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 # These files contains code that needs to be compiled before being delivered to
 # the final module tree structure:
-'lib/ansible/module_utils/gcp_utils.py': 'provider/ansible/gcp_utils.py'
-'lib/ansible/utils/module_docs_fragments/gcp.py':
-  'provider/ansible/gcp_doc_frag.py'
-'test/integration/cloud-config-gcp.yml.template':
-  'provider/ansible/test_template.yaml'
-'test/runner/lib/cloud/gcp.py': 'provider/ansible/gcp_integration_runner.py'
-<%
-  api.objects.map do |object|
-    ["gcp_#{object.__product.prefix[1..-1]}",
-     Google::StringUtils.underscore(object.name)].join('_')
-  end.each do |name|
--%>
-'test/integration/targets/<%= name -%>/aliases': 'templates/ansible/aliases'
-'test/integration/targets/<%= name -%>/defaults/main.yml': 'templates/ansible/defaults_main.yaml'
-'test/integration/targets/<%= name -%>/meta/main.yml': 'provider/ansible/blank_file.yaml'
-<% end -%>
+'README.md': 'templates/ansible/README.md.erb'

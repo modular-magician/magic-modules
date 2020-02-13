@@ -1,0 +1,203 @@
+---
+steps:
+    # The GCB / GH integration doesn't satisfy our use case perfectly.
+    # It doesn't check out the merge commit, and it doesn't check out the repo
+    # itself - it only gives us the actual code, not the repo. So we need
+    # to handle that access ourselves - which means deleting the code
+    # and cloning the repo to the present directory.  We need to use
+    # 'sh' to evaluate the '*' arguments, which otherwise would be
+    # passed literally to 'rm'.
+    - name: 'alpine'
+      args:
+          - sh
+          - -c
+          - rm -rf ./* ./.* || true
+    - name: 'gcr.io/cloud-builders/git'
+      args:
+          - clone
+          - https://github.com/GoogleCloudPlatform/magic-modules
+          - .
+    # We need to configure git since creating the merge commit is
+    # technically a commit.
+    - name: 'gcr.io/cloud-builders/git'
+      args:
+          - config
+          - --global
+          - user.email
+          - magic-modules+differ@google.com
+    - name: 'gcr.io/cloud-builders/git'
+      args:
+          - config
+          - --global
+          - user.name
+          - "Modular Magician Diff Process"
+    # Then we check out the branch provided, and merge it into
+    # the base branch provided.  This matches the behavior
+    # we're used to from Concourse.
+    - name: 'gcr.io/cloud-builders/git'
+      args:
+          - remote
+          - add
+          - head
+          - $_HEAD_REPO_URL
+
+    - name: 'gcr.io/cloud-builders/git'
+      args:
+          - fetch
+          - head
+          - $_HEAD_BRANCH
+
+    - name: 'gcr.io/cloud-builders/git'
+      args:
+          - checkout
+          - origin/$_BASE_BRANCH
+    - name: 'gcr.io/cloud-builders/git'
+      id: merged
+      args:
+          - merge
+          - --no-ff
+          - head/$_HEAD_BRANCH
+
+    - name: 'gcr.io/graphite-docker-images/downstream-builder'
+      secretEnv: ["GITHUB_TOKEN"]
+      id: tpg-head
+      waitFor: ["merged"]
+      args:
+          - 'head'
+          - 'terraform'
+          - 'ga'
+          - $_PR_NUMBER
+
+    - name: 'gcr.io/graphite-docker-images/downstream-builder'
+      secretEnv: ["GITHUB_TOKEN"]
+      waitFor: ["merged"]
+      args:
+          - 'base'
+          - 'terraform'
+          - 'ga'
+          - $_PR_NUMBER
+
+    - name: 'gcr.io/graphite-docker-images/downstream-builder'
+      secretEnv: ["GITHUB_TOKEN"]
+      id: tpgb-head
+      waitFor: ["merged"]
+      args:
+          - 'head'
+          - 'terraform'
+          - 'beta'
+          - $_PR_NUMBER
+
+    - name: 'gcr.io/graphite-docker-images/downstream-builder'
+      secretEnv: ["GITHUB_TOKEN"]
+      waitFor: ["merged"]
+      args:
+          - 'base'
+          - 'terraform'
+          - 'beta'
+          - $_PR_NUMBER
+
+    - name: 'gcr.io/graphite-docker-images/downstream-builder'
+      secretEnv: ["GITHUB_TOKEN"]
+      waitFor: ["merged"]
+      args:
+          - 'head'
+          - 'ansible'
+          - 'ga'
+          - $_PR_NUMBER
+
+    - name: 'gcr.io/graphite-docker-images/downstream-builder'
+      secretEnv: ["GITHUB_TOKEN"]
+      waitFor: ["merged"]
+      args:
+          - 'base'
+          - 'ansible'
+          - 'ga'
+          - $_PR_NUMBER
+
+    - name: 'gcr.io/graphite-docker-images/downstream-builder'
+      secretEnv: ["GITHUB_TOKEN"]
+      waitFor: ["merged"]
+      args:
+          - 'head'
+          - 'inspec'
+          - 'beta'
+          - $_PR_NUMBER
+
+    - name: 'gcr.io/graphite-docker-images/downstream-builder'
+      secretEnv: ["GITHUB_TOKEN"]
+      waitFor: ["merged"]
+      args:
+          - 'base'
+          - 'inspec'
+          - 'beta'
+          - $_PR_NUMBER
+
+    - name: 'gcr.io/graphite-docker-images/downstream-builder'
+      secretEnv: ["GITHUB_TOKEN"]
+      waitFor: ["merged"]
+      args:
+          - 'head'
+          - 'tf-conversion'
+          - 'ga'
+          - $_PR_NUMBER
+
+    - name: 'gcr.io/graphite-docker-images/downstream-builder'
+      secretEnv: ["GITHUB_TOKEN"]
+      waitFor: ["merged"]
+      args:
+          - 'base'
+          - 'tf-conversion'
+          - 'ga'
+          - $_PR_NUMBER
+
+    - name: 'gcr.io/graphite-docker-images/downstream-builder'
+      secretEnv: ["GITHUB_TOKEN"]
+      waitFor: ["merged"]
+      args:
+          - 'head'
+          - 'tf-oics'
+          - 'beta'
+          - $_PR_NUMBER
+
+    - name: 'gcr.io/graphite-docker-images/downstream-builder'
+      secretEnv: ["GITHUB_TOKEN"]
+      waitFor: ["merged"]
+      args:
+          - 'base'
+          - 'tf-oics'
+          - 'beta'
+          - $_PR_NUMBER
+
+    - name: 'gcr.io/graphite-docker-images/github-differ'
+      id: diff
+      secretEnv: ["GITHUB_TOKEN"]
+      args:
+          - $_PR_NUMBER
+
+    - name: 'gcr.io/graphite-docker-images/changelog-checker'
+      secretEnv: ["GITHUB_TOKEN"]
+      waitFor: ["diff"]
+      args:
+          - $_PR_NUMBER
+
+    - name: 'gcr.io/graphite-docker-images/terraform-tester'
+      secretEnv: ["GITHUB_TOKEN"]
+      waitFor: ["diff"]
+      args:
+          - 'beta'
+          - $_PR_NUMBER
+
+    - name: 'gcr.io/graphite-docker-images/terraform-tester'
+      secretEnv: ["GITHUB_TOKEN"]
+      waitFor: ["diff"]
+      args:
+          - 'ga'
+          - $_PR_NUMBER
+
+options:
+    machineType: 'N1_HIGHCPU_32'
+
+secrets:
+    - kmsKeyName: projects/graphite-docker-images/locations/global/keyRings/token-keyring/cryptoKeys/github-token
+      secretEnv:
+          GITHUB_TOKEN: CiQADkR4NnCVXo1OLSWFuPX7eSiifaOfQVzSYmKi2jZdVbKlfYMSUQBfF82vNAgpvSVyhzM8JsQaP6Oky0SAdoR5fPED5cU3qxsCB9wArmdGcgQoRzP7S6jEWHRcvxv/xauznjkJQMWCORzcbUbk6T7k80bdo2mpqw==

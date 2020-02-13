@@ -1,12 +1,20 @@
-<%
-  nested_properties = effective_nested_properties(config, property)
-  if !nested_properties.empty?
--%>
-The `<%= Google::StringUtils.underscore(property.name) -%>` block <%= if property.output then "contains" else "supports" end -%>:
-<% nested_properties.each do |prop| -%>
-<%= build_property_documentation(config, prop) -%>
+
+<% if property.flatten_object -%>
+<% property.nested_properties.each do |prop| -%>
+<%= lines(build_nested_property_documentation(prop)) -%>
 <% end -%>
-<% nested_properties.each do |prop| -%>
-  <%= build_nested_property_documentation(config, prop) -%>
+<%
+  elsif property.nested_properties?
+-%>
+The `<%= property.name.underscore -%>` block <%= if property.output then "contains" else "supports" end -%>:
+<%- if property.is_a?(Api::Type::Map) %>
+* `<%= property.key_name.underscore -%>` - (Required) The identifier for this object. Format specified above.
+<% end -%>
+<% property.nested_properties.each do |prop| -%>
+<%= lines(build_property_documentation(prop)) -%>
+<% end -%>
+
+<% property.nested_properties.each do |prop| -%>
+<%= lines(build_nested_property_documentation(prop)) -%>
 <% end -%>
 <% end -%>

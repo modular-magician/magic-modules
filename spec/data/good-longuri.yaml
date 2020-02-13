@@ -12,9 +12,11 @@
 # limitations under the License.
 
 --- !ruby/object:Api::Product
-name: My Product
-prefix: myproduct
-base_url: http://myproduct.google.com/myapi/v123
+name: MyProduct
+versions:
+  - !ruby/object:Api::Product::Version
+    name: ga
+    base_url: http://myproduct.google.com/myapi/v123
 scopes:
   - http://scope-to-my-api/
 objects:

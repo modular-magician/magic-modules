@@ -14,20 +14,6 @@
 module Google
   # Helper class to process and mutate strings.
   class StringUtils
-    # Converts string from underscore to camel case
-    def self.camelize(source, style = :lower)
-      camelized = source.gsub(/_(.)/, &:upcase).delete('_')
-      case style
-      when :lower
-        camelized[0] = camelized[0].downcase
-      when :upper
-        camelized[0] = camelized[0].upcase
-      else
-        raise "Unknown camel case style: #{style}"
-      end
-      camelized
-    end
-
     # Converts string from camel case to underscore
     def self.underscore(source)
       source.gsub(/::/, '/')
@@ -38,15 +24,19 @@ module Google
             .downcase
     end
 
-    # Add spaces before every capitalized word except first.
-    def self.uncombine(source)
-      source.gsub(/(?=[A-Z])/, ' ').strip
-    end
-
     # rubocop:disable Style/SafeNavigation # support Ruby < 2.3.0
     def self.symbolize(key)
       key.to_sym unless key.nil?
     end
     # rubocop:enable Style/SafeNavigation
+
+    # Returns all the characters up until the period (.) or returns text
+    # unchanged if there is no period.
+    def self.first_sentence(text)
+      period_pos = text.index(/[\.\?!]/)
+      return text if period_pos.nil?
+
+      text[0, period_pos + 1]
+    end
   end
 end

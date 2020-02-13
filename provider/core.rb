@@ -12,531 +12,324 @@
 # limitations under the License.
 
 require 'compile/core'
-require 'dependencies/dependency_graph'
 require 'fileutils'
+require 'google/extensions'
 require 'google/logger'
-require 'pathname'
-require 'provider/properties'
-require 'provider/end2end/core'
-require 'provider/test_matrix'
-require 'provider/test_data/spec_formatter'
-require 'provider/test_data/constants'
-require 'provider/test_data/property'
-require 'provider/test_data/create_data'
-require 'provider/test_data/expectations'
+require 'json'
+require 'overrides/runner'
+require 'provider/file_template'
 
 module Provider
-  DEFAULT_FORMAT_OPTIONS = {
-    indent: 0,
-    start_indent: 0,
-    max_columns: 80,
-    quiet: false
-  }.freeze
-
   # Basic functionality for code generator providers. Provides basic services,
   # such as compiling and including files, formatting data, etc.
   class Core
     include Compile::Core
-    include Provider::Properties
-    include Provider::End2End::Core
 
-    attr_reader :test_data
-
-    def initialize(config, api)
+    def initialize(config, api, version_name, start_time)
       @config = config
       @api = api
-      @property = Provider::TestData::Property.new(self)
-      @constants = Provider::TestData::Constants.new(self)
-      @data_gen = Provider::TestData::Generator.new
-      @create_data = Provider::TestData::CreateData.new(self, @data_gen)
-      @prop_data = Provider::TestData::Expectations.new(self, @data_gen)
-      @generated = []
-      @sourced = []
+
+      # @target_version_name is the version specified by MM for this generation
+      # run. That's distinct from @version below, which is the best-fit version
+      # supported by the product.
+      # These values will often match, but if a product supports only GA while
+      # MM is ran @ beta, @target_version_name will be at beta and @version will
+      # be @ GA.
+      # This matters for Terraform, where the primary folder for a provider
+      # needs to match the provider name.
+      @target_version_name = version_name
+
+      @version = @api.version_obj_or_closest(version_name)
+      @api.set_properties_based_on_version(@version)
+
+      # The compiler will error out if a file has been written in this compiler
+      # run already. Instead of storing all the modified files in state we'll
+      # use the time the file was modified.
+      @start_time = start_time
+      @py_format_enabled = check_pyformat
+      @go_format_enabled = check_goformat
     end
 
-    # Main entry point for the compiler. As this method is simply invoking other
-    # generators, it is okay to ignore Rubocop warnings about method size and
-    # complexity.
-    #
-    # rubocop:disable Metrics/AbcSize
-    # rubocop:disable Metrics/CyclomaticComplexity
-    # rubocop:disable Metrics/PerceivedComplexity
-    def generate(output_folder, types)
+    # This provides the ProductFileTemplate class with access to a provider.
+    def provider_binding
+      binding
+    end
+
+    def check_pyformat
+      if system('python3 -m black --help > /dev/null')
+        true
+      else
+        Google::LOGGER.warn 'Either python3 or black is not installed; python ' \
+          'code will be poorly formatted and may not pass linter checks.'
+        false
+      end
+    end
+
+    def check_goformat
+      if system('which gofmt > /dev/null') && system('which goimports > /dev/null')
+        true
+      else
+        Google::LOGGER.warn 'Either gofmt or goimports is not installed; go ' \
+          'code will be poorly formatted and will likely not compile.'
+        false
+      end
+    end
+
+    # Main entry point for generation.
+    def generate(output_folder, types, product_path, dump_yaml)
       generate_objects(output_folder, types)
-      generate_client_functions(output_folder) unless @config.functions.nil?
       copy_files(output_folder) \
         unless @config.files.nil? || @config.files.copy.nil?
-      compile_examples(output_folder) unless @config.examples.nil?
-      compile_end2end_tests(output_folder) unless @config.examples.nil?
-      compile_network_data(output_folder) \
-        unless @config.test_data.nil? || @config.test_data.network.nil?
-      compile_changelog(output_folder) unless @config.changelog.nil?
       # Compilation has to be the last step, as some files (e.g.
       # CONTRIBUTING.md) may depend on the list of all files previously copied
       # or compiled.
-      compile_files(output_folder) \
+      # common-compile.yaml is a special file that will get compiled by the last product
+      # used in a single invocation of the compiled. It should not contain product-specific
+      # information; instead, it should be run-specific such as the version to compile at.
+      compile_product_files(output_folder) \
         unless @config.files.nil? || @config.files.compile.nil?
-      apply_file_acls(output_folder) \
-        unless @config.files.nil? || @config.files.permissions.nil?
-      verify_test_matrixes
+
+      generate_datasources(output_folder, types) \
+        unless @config.datasources.nil?
+
+      generate_operation(output_folder, types)
+
+      # Write a file with the final version of the api, after overrides
+      # have been applied.
+      return unless dump_yaml
+
+      raise 'Path to output the final yaml was not specified.' \
+        if product_path.nil? || product_path == ''
+
+      File.open("#{product_path}/final_api.yaml", 'w') do |file|
+        file.write("# This is a generated file, its contents will be overwritten.\n")
+        file.write(YAML.dump(@api))
+      end
     end
-    # rubocop:enable Metrics/AbcSize
-    # rubocop:enable Metrics/CyclomaticComplexity
-    # rubocop:enable Metrics/PerceivedComplexity
+
+    def generate_operation(output_folder, types); end
 
     def copy_files(output_folder)
-      @config.files.copy.each do |target, source|
-        target_file = File.join(output_folder, target)
-        target_dir = File.dirname(target_file)
-        @sourced << relative_path(target_file, output_folder)
-        Google::LOGGER.info "Copying #{source} => #{target}"
-        FileUtils.mkpath target_dir unless Dir.exist?(target_dir)
-        FileUtils.cp source, target_file
-      end
+      copy_file_list(output_folder, @config.files.copy)
     end
 
-    def compile_files(output_folder)
-      compile_file_list(output_folder, @config.files.compile)
+    def copy_common_files(output_folder, provider_name = nil)
+      # version_name is actually used because all of the variables in scope in this method
+      # are made available within the templates by the compile call.
+      # TODO: remove version_name, use @target_version_name or pass it in expicitly
+      # rubocop:disable Lint/UselessAssignment
+      version_name = @target_version_name
+      # rubocop:enable Lint/UselessAssignment
+      provider_name ||= self.class.name.split('::').last.downcase
+      return unless File.exist?("provider/#{provider_name}/common~copy.yaml")
+
+      Google::LOGGER.info "Copying common files for #{provider_name}"
+      files = YAML.safe_load(compile("provider/#{provider_name}/common~copy.yaml"))
+      copy_file_list(output_folder, files)
     end
 
-    def compile_examples(output_folder)
-      compile_file_map(
-        output_folder,
-        @config.examples,
-        lambda do |_object, file|
-          ["examples/#{file}",
-           "products/#{@api.prefix[1..-1]}/files/examples~#{file}"]
-        end
-      )
-    end
+    def copy_file_list(output_folder, files)
+      files.map do |target, source|
+        Thread.new do
+          target_file = File.join(output_folder, target)
+          target_dir = File.dirname(target_file)
+          Google::LOGGER.debug "Copying #{source} => #{target}"
+          FileUtils.mkpath target_dir unless Dir.exist?(target_dir)
 
-    def compile_network_data(output_folder)
-      compile_file_map(
-        output_folder,
-        @config.test_data.network,
-        lambda do |object, file|
-          type = Google::StringUtils.underscore(object.name)
-          ["spec/data/network/#{object.out_name}/#{file}.yaml",
-           "products/#{@api.prefix[1..-1]}/files/spec~#{type}~#{file}.yaml"]
-        end
-      )
-    end
-
-    # Generate the CHANGELOG.md file with the history of the module.
-    def compile_changelog(output_folder)
-      FileUtils.mkpath output_folder
-      generate_file(
-        changes: @config.changelog,
-        template: 'templates/CHANGELOG.md.erb',
-        output_folder: output_folder,
-        out_file: File.join(output_folder, 'CHANGELOG.md')
-      )
-    end
-
-    def apply_file_acls(output_folder)
-      @config.files.permissions.each do |perm|
-        Google::LOGGER.info "Permission #{perm.path} => #{perm.acl}"
-        FileUtils.chmod perm.acl, File.join(output_folder, perm.path)
-      end
-    end
-
-    def compile_file_map(output_folder, section, mapper)
-      create_object_list(section, mapper).each do |o|
-        compile_file_list(
-          output_folder,
-          o
-        )
-      end
-    end
-
-    # Creates an object list by calling a lambda
-    # This can be useful for converting a list of config values to something
-    # less human-centric.
-    def create_object_list(section, mapper)
-      @api.objects
-          .select { |o| section.key?(o.name) }
-          .map do |o|
-            Hash[section[o.name].map { |file| mapper.call(o, file) }]
+          # If we've modified a file since starting an MM run, it's a reasonable
+          # assumption that it was this run that modified it.
+          if File.exist?(target_file) && File.mtime(target_file) > @start_time
+            raise "#{target_file} was already modified during this run. #{File.mtime(target_file)}"
           end
-    end
 
-    def list_manual_network_data
-      test_data = @config&.test_data&.network || {}
-      create_object_list(
-        test_data,
-        lambda do |object, file|
-          type = Google::StringUtils.underscore(object.name)
-          ["spec/data/network/#{object.out_name}/#{file}.yaml",
-           "products/#{@api.prefix[1..-1]}/files/spec~#{type}~#{file}.yaml"]
+          FileUtils.copy_entry source, target_file
         end
-      )
+      end.map(&:join)
     end
 
-    # rubocop:disable Metrics/MethodLength
-    def compile_file_list(output_folder, files, data = {})
-      files.each do |target, source|
-        Google::LOGGER.info "Compiling #{source} => #{target}"
-        target_file = File.join(output_folder, target)
-                          .gsub('{{product_name}}', @api.prefix[1..-1])
-        generate_file(
-          data.clone.merge(
-            name: target,
-            product: @api,
-            object: {},
-            config: {},
-            scopes: @api.scopes,
-            manifest: @config.manifest,
-            tests: '',
-            template: source,
-            generated_files: @generated,
-            sourced_files: @sourced,
-            compiler: compiler,
-            output_folder: output_folder,
-            out_file: target_file,
-            prop_ns_dir: @api.prefix[1..-1].downcase,
-            product_ns: Google::StringUtils.camelize(@api.prefix[1..-1], :upper)
-          )
-        )
-      end
+    # Compiles files specified within the product
+    def compile_product_files(output_folder)
+      file_template = ProductFileTemplate.new(
+        output_folder,
+        nil,
+        @api,
+        @target_version_name,
+        build_env
+      )
+      compile_file_list(output_folder, @config.files.compile, file_template)
     end
-    # rubocop:enable Metrics/MethodLength
+
+    # Compiles files that are shared at the provider level
+    def compile_common_files(
+      output_folder,
+      products,
+      common_compile_file,
+      override_path = nil
+    )
+      return unless File.exist?(common_compile_file)
+
+      files = YAML.safe_load(compile(common_compile_file))
+      return unless files
+
+      file_template = ProviderFileTemplate.new(
+        output_folder,
+        @target_version_name,
+        build_env,
+        products,
+        override_path
+      )
+      compile_file_list(output_folder, files, file_template)
+    end
+
+    def compile_file_list(output_folder, files, file_template)
+      files.map do |target, source|
+        Thread.new do
+          Google::LOGGER.debug "Compiling #{source} => #{target}"
+          target_file = File.join(output_folder, target)
+          file_template.generate(source, target_file, self)
+        end
+      end.map(&:join)
+    end
 
     def generate_objects(output_folder, types)
-      @api.objects.each do |object|
+      (@api.objects || []).each do |object|
         if !types.empty? && !types.include?(object.name)
           Google::LOGGER.info "Excluding #{object.name} per user request"
         elsif types.empty? && object.exclude
           Google::LOGGER.info "Excluding #{object.name} per API catalog"
+        elsif types.empty? && object.not_in_version?(@version)
+          Google::LOGGER.info "Excluding #{object.name} per API version"
         else
-          generate_object object, output_folder
+          Google::LOGGER.info "Generating #{object.name}"
+          # exclude_if_not_in_version must be called in order to filter out
+          # beta properties that are nested within GA resources
+          object.exclude_if_not_in_version!(@version)
+
+          # Make object immutable.
+          object.freeze
+          object.all_user_properties.each(&:freeze)
+
+          generate_object object, output_folder, @target_version_name
         end
       end
     end
 
-    def generate_object(object, output_folder)
-      data = build_object_data(object, output_folder)
-      return if data[:config]['skip']
+    def generate_object(object, output_folder, version_name)
+      data = build_object_data(object, output_folder, version_name)
+      unless object.exclude_resource
+        Google::LOGGER.debug "Generating #{object.name} resource"
+        generate_resource data.clone
+        Google::LOGGER.debug "Generating #{object.name} tests"
+        generate_resource_tests data.clone
+        generate_resource_sweepers data.clone
+        generate_resource_files data.clone
+      end
 
-      generate_resource data
-      generate_resource_tests data
-      generate_properties data, object.all_user_properties
-      generate_network_datas data, object
+      # if iam_policy is not defined or excluded, don't generate it
+      return if object.iam_policy.nil? || object.iam_policy.exclude
+
+      Google::LOGGER.debug "Generating #{object.name} IAM policy"
+      generate_iam_policy data.clone
     end
 
-    # rubocop:disable Metrics/MethodLength
-    # Generates all 6 network data files for a object.
-    # This includes all combinations of seeds [0-2] and title == / != name
-    # Each data file is a YAML file with all properties possible on an object.
-    #
-    # @config.test_data lists all files that are written by hand and will not
-    # be generated.
-    #
-    # Requires:
-    #  object: The Api::Resource used as basis for the network data.
-    #  data: A hash with values:
-    #    output_folder: root folder for generated module
-    def generate_network_datas(data, object)
-      target_folder = File.join(data[:output_folder],
-                                'spec', 'data', 'network', object.out_name)
-      FileUtils.mkpath target_folder
+    # Generate files at a per-resource basis.
+    def generate_resource_files(data) end
 
-      # Create list of compiled network data
-      manual = list_manual_network_data
-      3.times.each do |id|
-        %w[name title].each do |name|
-          out_file = File.join(target_folder, "success#{id + 1}~#{name}.yaml")
-          next if manual.include? out_file
-          next if true?(Google::HashUtils.navigate(data[:config], %w[manual]))
+    def generate_datasources(output_folder, types)
+      # We need to apply overrides for datasources
+      @api = Overrides::Runner.build(@api, @config.datasources,
+                                     @config.resource_override,
+                                     @config.property_override)
+      @api.validate
 
-          generate_network_data data.clone.merge(
-            out_file: File.join(target_folder, "success#{id + 1}~#{name}.yaml"),
-            id: id,
-            title: name,
-            object: object
+      @api.set_properties_based_on_version(@version)
+      @api.objects.each do |object|
+        if !types.empty? && !types.include?(object.name)
+          Google::LOGGER.info(
+            "Excluding #{object.name} datasource per user request"
           )
+        elsif types.empty? && object.exclude
+          Google::LOGGER.info(
+            "Excluding #{object.name} datasource per API catalog"
+          )
+        elsif types.empty? && object.not_in_version?(@version)
+          Google::LOGGER.info(
+            "Excluding #{object.name} datasource per API version"
+          )
+        else
+          generate_datasource object, output_folder
         end
       end
     end
-    # rubocop:enable Metrics/MethodLength
 
-    # Generates a single network data file for unit testing.
-    # Required values in data:
-    #   out_file: path of data file to create
-    #   id: a seed value
-    #   title: The name of object who is unit tested with this spec file
-    #   object: The Api::Resource used as basis for the network data
-    def generate_network_data(data)
-      formatter = Provider::TestData::SpecFormatter.new(self)
+    def generate_datasource(object, output_folder)
+      data = build_object_data(object, output_folder, @target_version_name)
 
-      name = "title#{data[:id]}" if data[:title] == 'title'
-      name = "test name##{data[:id]} data" if data[:title] == 'name'
-      generate_file data.clone.merge(
-        template: 'templates/network_spec.yaml.erb',
-        test_data: formatter.generate(data[:object], '', data[:object].kind,
-                                      data[:id],
-                                      name: name)
-      )
+      compile_datasource data.clone
     end
 
-    def build_object_data(object, output_folder)
+    def build_object_data(object, output_folder, version)
+      ProductFileTemplate.file_for_resource(output_folder, object, version, @config, build_env)
+    end
+
+    def build_env
       {
-        name: object.out_name,
-        object: object,
-        config: (@config.objects || {}).select { |o, _v| o == object.name }
-                                       .fetch(object.name, {}),
-        tests: (@config.tests || {}).select { |o, _v| o == object.name }
-                                    .fetch(object.name, {}),
-        output_folder: output_folder,
-        product_name: object.__product.prefix[1..-1]
+        pyformat_enabled: @py_format_enabled,
+        goformat_enabled: @go_format_enabled,
+        start_time: @start_time
       }
     end
 
-    def generate_resource_file(data)
-      generate_file(data.clone.merge(
-        # Override with provider specific template for this object, if needed
-        template: Google::HashUtils.navigate(data[:config], ['template',
-                                                             data[:type]],
-                                             data[:default_template]),
-        product_ns:
-          Google::StringUtils.camelize(data[:object].__product.prefix[1..-1],
-                                       :upper)
-      ))
-    end
-
-    def generate_client_functions(output_folder)
-      @config.functions.each do |fn|
-        info = generate_client_function(output_folder, fn)
-        FileUtils.mkpath info[:target_folder]
-        generate_file info.clone
+    # Filter the properties to keep only the ones requiring custom update
+    # method and group them by update url & verb.
+    def properties_by_custom_update(properties, behavior = :new)
+      update_props = properties.reject do |p|
+        p.update_url.nil? || p.update_verb.nil? || p.update_verb == :NOOP
       end
-    end
 
-    # rubocop:disable Metrics/AbcSize
-    def format_expand_variables(obj_url)
-      obj_url = obj_url.split("\n") unless obj_url.is_a?(Array)
-      if obj_url.size > 1
-        ['[',
-         indent_list(obj_url.map { |u| quote_string(u) }, 2),
-         '].join,']
+      # TODO(rambleraptor): Add support to Ansible for one-at-a-time updates.
+      if behavior == :old
+        update_props.group_by do |p|
+          { update_url: p.update_url, update_verb: p.update_verb, fingerprint: p.fingerprint_name }
+        end
       else
-        vars = quote_string(obj_url[0])
-        vars_parts = obj_url[0].split('/')
-        format([
-                 [[vars, ','].join],
-                 # vars is too big to fit, split in half
-                 vars_parts.each_slice((vars_parts.size / 2.0).round).to_a
-                   .map { |p| quote_string(p.join('/')) + ',' }
-               ], 0, 8)
-      end
-    end
-    # rubocop:enable Metrics/AbcSize
-
-    def build_url(product_url, obj_url, extra = false)
-      extra_arg = ''
-      extra_arg = ', extra_data' if obj_url.to_s.include?('<|extra|>') || extra
-      ['URI.join(',
-       indent([quote_string(product_url) + ',',
-               'expand_variables(',
-               indent(format_expand_variables(obj_url), 2),
-               indent('data' + extra_arg, 2),
-               ')'], 2),
-       ')'].join("\n")
-    end
-
-    def async_operation_url(resource)
-      build_url(resource.__product.base_url, resource.async.operation.base_url,
-                true)
-    end
-
-    def collection_url(resource)
-      base_url = resource.base_url.split("\n").map(&:strip).compact
-      build_url(resource.__product.base_url, base_url)
-    end
-
-    def self_link_raw_url(resource)
-      base_url = resource.__product.base_url.split("\n").map(&:strip).compact
-      if resource.self_link.nil?
-        [base_url, [resource.base_url, '{{name}}'].join('/')]
-      else
-        self_link = resource.self_link.split("\n").map(&:strip).compact
-        [base_url, self_link]
+        update_props.group_by do |p|
+          {
+            update_url: p.update_url,
+            update_verb: p.update_verb,
+            update_id: p.update_id,
+            fingerprint_name: p.fingerprint_name
+          }
+        end
       end
     end
 
-    def self_link_url(resource)
-      (product_url, resource_url) = self_link_raw_url(resource)
-      build_url(product_url, resource_url)
+    # Takes a update_url and returns the list of custom updatable properties
+    # that can be updated at that URL. This allows flattened objects
+    # to determine which parent property in the API should be updated with
+    # the contents of the flattened object
+    def custom_update_properties_by_key(properties, key)
+      properties_by_custom_update(properties).select do |k, _|
+        k[:update_url] == key[:update_url] &&
+          k[:update_id] == key[:update_id] &&
+          k[:fingerprint_name] == key[:fingerprint_name]
+      end.first.last
+      # .first is to grab the element from the select which returns a list
+      # .last is because properties_by_custom_update returns a list of
+      # [{update_url}, [properties,...]] and we only need the 2nd part
     end
 
-    def extract_variables(template)
-      template.scan(/{{[^}]*}}/)
-              .map { |v| v.gsub(/{{([^}]*)}}/, '\1') }
-              .map(&:to_sym)
+    def update_url(resource, url_part)
+      [resource.__product.base_url, update_uri(resource, url_part)].flatten.join
     end
 
-    def variable_type(object, var)
-      return Api::Type::String::PROJECT if var == :project
-      return Api::Type::String::NAME if var == :name
-      v = object.all_user_properties
-                .select { |p| p.out_name.to_sym == var || p.name.to_sym == var }
-                .first
-      return v.property if v.is_a?(Api::Type::ResourceRef)
-      v
+    def update_uri(resource, url_part)
+      return resource.self_link_uri if url_part.nil?
+
+      url_part
     end
 
-    # Used to convert a string 'a b c' into a\ b\ c for use in %w[...] form
-    def str2warray(value)
-      unquote_string(value).gsub(/ /, '\\ ')
-    end
-
-    def unquote_string(value)
-      return value.gsub(/"(.*)"/, '\1') if value.start_with?('"')
-      return value.gsub(/'(.*)'/, '\1') if value.start_with?("'")
-      value
-    end
-
-    # TODO(alexstephen): Retire in favor of a real code object.
-    # No validation is possible on get_code_multiline
-    def get_code_multiline(config, node)
-      search = node.class <= Array ? node : [node]
-      Google::HashUtils.navigate(config, search)
-    end
-
-    def true?(obj)
-      obj.to_s.casecmp('true').zero?
-    end
-
-    def false?(obj)
-      obj.to_s.casecmp('false').zero?
-    end
-
-    def emit_method(name, args, code, file_name, opts = {})
-      method_decl = "def #{name}"
-      method_decl << "(#{args.join(', ')})" unless args.empty?
-      (rubo_off, rubo_on) = emit_rubo_pair(file_name, name, opts)
-      [
-        (rubo_off unless rubo_off.empty?),
-        method_decl,
-        indent(code, 2),
-        'end',
-        (rubo_on unless rubo_on.empty?)
-      ].compact.join("\n")
-    end
-
-    def emit_rubo_pair(file_name, name, opts = {})
-      [
-        emit_rubo_item(file_name, name, :disabled, opts),
-        emit_rubo_item(file_name, name, :enabled, opts)
-      ]
-    end
-
-    def emit_rubo_item(file_name, name, state, opts = {})
-      [
-        (if opts.key?(:class_name)
-           get_rubocop_exceptions(file_name, :function,
-                                  [opts[:class_name], name].join('.'), state)
-         end),
-        get_rubocop_exceptions(file_name, :function, name, state)
-      ].compact.flatten
-    end
-
-    def emit_rubocop(ctx, pinpoint, name, state)
-      get_rubocop_exceptions(ctx.local_variable_get(:file_relative), pinpoint,
-                             name, state).join("\n")
-    end
-
-    # TODO(nelsonjr): Track usage of exceptions and fail if some are
-    # left unused. E.g. we change the function/class name and the setting
-    # in the YAML file is now useless.
-    def get_rubocop_exceptions(file_name, pinpoint, name, state)
-      name = name.flatten.join(' > ') if pinpoint == :test
-      flags = get_style_exceptions(file_name, pinpoint, name)
-      flags = flags.reverse if state == :enabled
-      flags.map do |e|
-        "# rubocop:#{state == :enabled ? 'enable' : 'disable'} #{e}"
-      end
-    end
-
-    def get_style_exceptions(file_name, type, name)
-      styles = @config.style
-      return [] if styles.nil?
-      styles.select { |s| s.name == file_name }
-            .map(&:pinpoints)
-            .flatten
-            .select { |ps| ps.any? { |k, v| k.to_sym == type && v == name } }
-            .map { |p| p['exceptions'] }
-            .flatten
-            .sort
-    end
-
-    def emit_link(name, url, emit_self, extra_data = false)
-      (params, fn_args) = emit_link_var_args(url, extra_data)
-      code = ["def #{emit_self ? 'self.' : ''}#{name}(#{fn_args})",
-              indent(url, 2).gsub("'<|extra|>'", 'extra'),
-              'end']
-
-      if emit_self
-        self_code = ['', "def #{name}(#{fn_args})",
-                     "  self.class.#{name}(#{params.join(', ')})",
-                     'end']
-      end
-
-      (code + (self_code || [])).join("\n")
-    end
-
-    # Formats the code and returns the first candidate that fits the alloted
-    # column limit.
-    def format(sources, indent = 0, start_indent = 0,
-               max_columns = DEFAULT_FORMAT_OPTIONS[:max_columns])
-      format2(sources, indent: indent,
-                       start_indent: start_indent,
-                       max_columns: max_columns)
-    end
-
-    # TODO(nelsonjr): Make format2 into format and fix all references throughout
-    # the code base.
-    def format2(sources, overrides = {})
-      options = DEFAULT_FORMAT_OPTIONS.merge(overrides)
-      output = ''
-      avail_columns = options[:max_columns] - options[:start_indent]
-      sources.each do |attempt|
-        output = indent(attempt, options[:indent])
-        return output if format_fits?(output, options[:start_indent],
-                                      options[:max_columns])
-      end
-      unless options[:on_misfit].nil?
-        (alt_fit, alt_output) = options[:on_misfit].call(sources, output,
-                                                         options, avail_columns)
-        return alt_output if alt_fit
-      end
-      fail_and_log_format_error output, options, avail_columns \
-        unless options[:quiet]
-    end
-
-    def fail_and_log_format_error(output, options, avail_columns)
-      Google::LOGGER.info [
-        ["No code option fits in #{avail_columns} columns",
-         "w/ #{options[:start_indent]} left indent:"].join(' '),
-        format_sources(output.split("\n"), options[:start_indent],
-                       options[:max_columns]),
-        (unless options[:on_misfit].nil?
-           format_sources(alt_output.split("\n"), options[:start_indent],
-                          options[:max_columns])
-         end)
-      ].compact.join("\n")
-      raise ArgumentError, "No code fits in #{avail_columns}"
-    end
-
-    def format_fits?(output, start_indent,
-                     max_columns = DEFAULT_FORMAT_OPTIONS[:max_columns])
-      output = output.flatten.join("\n") if output.is_a?(::Array)
-      output = output.split("\n") unless output.is_a?(::Array)
-      output.select { |l| l.length > (max_columns - start_indent) }.empty?
-    end
-
-    def relative_path(target, base)
-      Pathname.new(target).relative_path_from(Pathname.new(base))
-    end
+    def generate_iam_policy(data) end
 
     # TODO(nelsonjr): Review all object interfaces and move to private methods
     # that should not be exposed outside the object hierarchy.
@@ -546,180 +339,9 @@ module Provider
       requires.concat(properties.collect(&:requires))
     end
 
-    def emit_requires(requires)
-      requires.flatten.sort.uniq.map { |r| "require '#{r}'" }.join("\n")
-    end
-
-    def check_requires(object, *requires)
-      return if @config.objects[object.name]&.key?('requires').nil?
-      requires_list = @config.objects[object.name]['requires']
-      missing = requires.flatten.reject { |r| requires_list.any?(r) }
-      raise <<~ERROR unless missing.empty?
-        Including #{__FILE__} needs the following requires: #{missing}
-        Please add them to 'object > requires' section of <provider>.yaml
-      ERROR
-    end
-
-    def emit_link_var_args(url, extra_data)
-      params = emit_link_var_args_list(url, extra_data,
-                                       %w[data extra extra_data])
-      defaults = emit_link_var_args_list(url, extra_data,
-                                         [nil, "''", '{}'])
-      [params.compact, params.zip(defaults)
-                             .reject { |p| p[0].nil? }
-                             .map { |p| p[1].nil? ? p[0] : "#{p[0]} = #{p[1]}" }
-                             .join(', ')]
-    end
-
-    def emit_link_var_args_list(url, extra_data, args_list)
-      [args_list[0],
-       (args_list[1] if url.include?('<|extra|>')),
-       (args_list[2] if url.include?('<|extra|>') || extra_data)]
-    end
-
-    def generate_file(data)
-      file_folder = File.dirname(data[:out_file])
-      file_relative = relative_path(data[:out_file], data[:output_folder]).to_s
-      FileUtils.mkpath file_folder unless Dir.exist?(file_folder)
-      @generated << relative_path(data[:out_file], data[:output_folder])
-      ctx = binding
-      data.each { |name, value| ctx.local_variable_set(name, value) }
-      generate_file_write ctx, data
-    end
-
-    def generate_file_write(ctx, data)
-      Google::LOGGER.info "Generating #{data[:name]} #{data[:type]}"
-      write_file data[:out_file], compile_file(ctx, data[:template])
-    end
-
-    def compile_file(ctx, source)
-      compile_string(ctx, File.read(source))
-    rescue StandardError => e
-      puts "Error compiling file: #{source}"
-      raise e
-    end
-
-    # Write the output to a file. We write one line at a time so tests can
-    # reason about what's being written and validate the output.
-    def write_file(out_file, output)
-      File.open(out_file, 'w') { |f| output.each { |l| f.write("#{l}\n") } }
-    end
-
-    def wrap_field(field, spaces)
-      avail_columns = DEFAULT_FORMAT_OPTIONS[:max_columns] - spaces - 5
-      indent(field.scan(/\S.{0,#{avail_columns}}\S(?=\s|$)|\S+/), 2)
-    end
-
-    def verify_test_matrixes
-      Provider::TestMatrix::Registry.instance.verify_all
-    end
-
-    def format_section_ruler(size)
-      size_pad = (size - size.to_s.length - 4) # < + > + 2 spaces around number.
-      return unless size_pad.positive?
-      ['<',
-       '-' * (size_pad / 2), ' ', size.to_s, ' ', '-' * (size_pad / 2),
-       (size_pad.even? ? '' : '-'),
-       '>'].join
-    end
-
-    def format_box(existing, size)
-      result = []
-      result << ['+', '-' * size, '+'].join
-      result << ['|', format_section_ruler(existing),
-                 format_section_ruler(size - existing), '|'].join
-      result << yield
-      result << ['+', '-' * size, '+'].join
-      result.join("\n")
-    end
-
-    def format_sources(sources, existing, size)
-      format_box(existing, size) do
-        sources.map do |source|
-          source.split("\n").map do |l|
-            right_pad_len = size - existing - l.length
-            right_pad = right_pad_len.positive? ? ' ' * right_pad_len : ''
-            '|' + '.' * existing + l + right_pad + '|'
-          end
-        end
-      end
-    end
-
-    def emit_user_agent(product, extra, notes, file_name)
-      prov_text = Google::StringUtils.camelize(self.class.name.split('::').last,
-                                               :upper)
-      prod_text = Google::StringUtils.camelize(product, :upper)
-      ua_generator = notes.map { |n| "# #{n}" }.concat(
-        [
-          "version = '1.0.0'",
-          '[',
-          indent_list([
-            "\"Google#{prov_text}#{prod_text}/\#{version}\"",
-            extra
-          ].compact, 2),
-          "].join(' ')"
-        ]
-      )
-      emit_method('generate_user_agent', [], ua_generator.compact, file_name)
-    end
-
     def provider_name
       self.class.name.split('::').last.downcase
     end
-
-    # Returns true if this module needs access to the saved API response
-    # This response is stored in the @fetched variable
-    # Requires:
-    #   config: The config for an object
-    #   object: An Api::Resource object
-    def save_api_results?(config, object)
-      fetched_props = object.exported_properties.select do |p|
-        p.is_a? Api::Type::FetchedExternal
-      end
-      Google::HashUtils.navigate(config, %w[access_api_results]) || \
-        !fetched_props.empty?
-    end
-
-    # Generates the documentation for the client side function to be
-    # included in the module. Call this function immediately before the function
-    # definition and the code generator will use data from api.yaml to build the
-    # documentation comment block.
-    #
-    # rubocop: Method returns a big array. Easier to read a single block
-    # rubocop:disable Metrics/AbcSize
-    # rubocop:disable Metrics/MethodLength
-    def emit_function_doc(function)
-      [
-        function.description.strip,
-        '',
-        'Arguments:',
-        indent(function.arguments.map do |arg|
-                 [
-                   "- #{arg.name}: #{arg.type.split('::').last.downcase}",
-                   indent(arg.description.strip.split("\n"), 2)
-                 ]
-               end, 2),
-        (
-          unless function.examples.nil?
-            [
-              '',
-              'Examples:',
-              indent(function.examples.map { |eg| "- #{eg}" }, 2)
-            ]
-          end
-        ),
-        (
-          unless function.notes.nil?
-            [
-              '',
-              function.notes.strip
-            ]
-          end
-        )
-      ].compact.flatten.join("\n").split("\n").map { |l| "# #{l}".strip }
-    end
-    # rubocop:enable Metrics/MethodLength
-    # rubocop:enable Metrics/AbcSize
 
     # Determines the copyright year. If the file already exists we'll attempt to
     # recognize the copyright year, and if it finds it will keep it.

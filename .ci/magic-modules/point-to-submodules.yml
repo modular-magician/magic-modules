@@ -7,8 +7,8 @@ platform: linux
 image_resource:
     type: docker-image
     source:
-        repository: nmckinley/go-ruby
-        tag: '1.9-2.5'
+        repository: gcr.io/magic-modules/go-ruby
+        tag: '1.11.5-2.6.0'
 
 inputs:
     - name: magic-modules-branched
@@ -22,3 +22,8 @@ run:
 params:
   GH_USERNAME: ""
   CREDS: ""
+  TERRAFORM_ENABLED: false
+  TERRAFORM_VERSIONS: ""
+  ANSIBLE_ENABLED: false
+  INSPEC_ENABLED: false
+

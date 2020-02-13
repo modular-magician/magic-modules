@@ -11,64 +11,45 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'google/python_utils'
+
 module Provider
   module Ansible
     # Responsible for building out the AnsibleModule code.
     # AnsibleModule is responsible for input validation.
     module Module
-      # Returns the Python dictionary representing a simple property for
-      # validation.
-      def python_dict_for_property(prop, config)
-        if prop.is_a?(Api::Type::Array) && \
-           prop.item_type.is_a?(Api::Type::NestedObject)
-          nested_obj_dict(prop, config, prop.item_type.properties)
-        elsif prop.is_a? Api::Type::NestedObject
-          nested_obj_dict(prop, config, prop.properties)
-        else
-          name = Google::StringUtils.underscore(prop.out_name)
-          "#{name}=dict(#{prop_options(prop, config).join(', ')})"
-        end
-      end
-
-      private
-
-      # Creates a Python dictionary representing a nested object property
-      # for validation.
-      def nested_obj_dict(prop, config, properties)
-        name = Google::StringUtils.underscore(prop.out_name)
-        options = prop_options(prop, config).join(', ')
-        [
-          "#{name}=dict(#{options}, options=dict(",
-          indent_list(properties.map do |p|
-            python_dict_for_property(p, config)
-          end, 4),
-          '))'
-        ]
-      end
-
+      include Google::PythonUtils
       # Returns an array of all base options for a given property.
-      # rubocop:disable Metrics/AbcSize
-      # rubocop:disable Metrics/MethodLength
-      def prop_options(prop, config)
-        [
-          ('required=True' if prop.required),
-          "type=#{quote_string(python_type(prop))}",
-          (if prop.is_a? Api::Type::Enum
-             "choices=[#{prop.values.map do |x|
-                           quote_string(x.to_s)
-                         end.join(', ')}]"
-           end),
-          ("elements=#{quote_string(python_type(prop.item_type))}" \
-            if prop.is_a? Api::Type::Array),
-          (if config['aliases']&.keys&.include?(prop.name)
-             "aliases=[#{config['aliases'][prop.name].map do |x|
-                           quote_string(x)
-                         end.join(', ')}]"
-           end)
-        ].compact
+      def ansible_module(properties)
+        properties.reject(&:output)
+                  .map { |x| python_dict_for_property(x) }
+                  .reduce({}, :merge)
       end
-      # rubocop:enable Metrics/AbcSize
-      # rubocop:enable Metrics/MethodLength
+
+      def python_dict_for_property(prop)
+        {
+          prop.name.underscore => {
+            'required' => (true if prop.required && !prop.default_value),
+            'default' => prop.default_value,
+            'type' => python_type(prop),
+            'elements' => (python_type(prop.item_type) \
+              if prop.is_a?(Api::Type::Array) && python_type(prop.item_type)),
+            'aliases' => prop.aliases,
+            'options' => (if prop.nested_properties?
+                            prop.nested_properties.reject(&:output)
+                                                  .map { |x| python_dict_for_property(x) }
+                                                  .reduce({}, :merge)
+                          end
+                         )
+          }.reject { |_, v| v.nil? }
+        }
+      end
+
+      # GcpModule is acting as a dictionary and doesn't need the dict() notation on
+      # the first level.
+      def remove_outside_dict(contents)
+        contents.sub('dict(', '').chomp(')')
+      end
     end
   end
 end

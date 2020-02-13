@@ -11,17 +11,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'simplecov'
-SimpleCov.start
-
 RSpec.configure do |config|
   config.mock_with :mocha
 end
 
 $LOAD_PATH.unshift(File.expand_path('.'))
-
-# Prevents any network access during tests
-require 'network_blocker'
 
 ENV['GOOGLE_LOGGER'] = '0' unless ENV['RSPEC_DEBUG']
 
@@ -54,6 +48,7 @@ RSpec::Matchers.define :contain_array do |expected|
       start = actual.index(expected[0])
       actual = actual.drop(start) unless start.nil?
       return true if actual[0, expected.size] == expected
+
       actual = actual.drop(1)
     end
     false
@@ -62,4 +57,4 @@ end
 
 require 'pp'
 
-Google::LOGGER.info 'Runing tests'
+Google::LOGGER.info 'Running tests'

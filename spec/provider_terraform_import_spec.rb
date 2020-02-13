@@ -12,6 +12,7 @@
 # limitations under the License.
 
 require 'spec_helper'
+require 'provider/terraform'
 
 class File
   class << self
@@ -22,19 +23,22 @@ end
 
 describe Provider::Terraform do
   context 'static' do
-    let(:config) { Provider::Config.parse('spec/data/terraform-config.yaml') }
-    let(:product) { Api::Compiler.new('spec/data/good-file.yaml').run }
-    let(:provider) { Provider::Terraform.new(config, product) }
+    let(:product) { Api::Compiler.new(File.read('spec/data/good-file.yaml')).run }
+    let(:config) do
+      Provider::Config.parse('spec/data/terraform-config.yaml', product)[1]
+    end
+    let(:provider) { Provider::Terraform.new(config, product, 'ga', Time.now) }
 
     before do
       allow_open 'spec/data/good-file.yaml'
       allow_open 'spec/data/terraform-config.yaml'
       product.validate
+      config.validate
     end
 
-    describe '#import_id_formats' do
+    describe '#import_id_formats_from_resource' do
       subject do
-        provider.import_id_formats(
+        provider.import_id_formats_from_resource(
           resource(
             'base_url: "projects/{{project}}/regions/{{region}}/subnetworks"'
           )
@@ -45,6 +49,7 @@ describe Provider::Terraform do
         is_expected.to contain_exactly(
           'projects/{{project}}/regions/{{region}}/subnetworks/{{name}}',
           '{{project}}/{{region}}/{{name}}',
+          '{{region}}/{{name}}',
           '{{name}}'
         )
       end
@@ -56,9 +61,15 @@ describe Provider::Terraform do
     end
 
     def resource(*data)
-      Google::YamlValidator.parse(['--- !ruby/object:Api::Resource']
-                                    .concat(data)
-                                    .join("\n"))
+      res = Google::YamlValidator.parse(['--- !ruby/object:Api::Resource']
+                                 .concat(["name: 'testobject'"])
+                                 .concat(data)
+                                 .join("\n"))
+      product.objects.append(res)
+      new_product = Overrides::Runner.build(product, config.overrides,
+                                            config.resource_override,
+                                            config.property_override)
+      new_product.objects.last
     end
   end
 end

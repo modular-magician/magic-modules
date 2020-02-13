@@ -25,9 +25,13 @@ module Google
     # quotes in the string like "\"foo\"" which is not a pattern we want to
     # see in our yaml config files.
     def go_literal(value)
-      if value.is_a?(String)
+      if value.is_a?(String) || value.is_a?(Symbol)
         "\"#{value}\""
       elsif value.is_a?(Numeric)
+        value.to_s
+      elsif value.is_a?(Array) && value.all? { |v| v.is_a?(String) || v.is_a?(Symbol) }
+        "[]string{#{value.map(&method(:go_literal)).join(', ')}}"
+      elsif value.is_a?(TrueClass) || value.is_a?(FalseClass)
         value.to_s
       else
         raise "Unsupported go literal #{value}"

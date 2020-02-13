@@ -17,7 +17,17 @@ module Provider
   class Terraform < Provider::AbstractCore
     # Functions to support 'terraform import'.
     module Import
-      # Returns a list of acceptable import id formats for a given resource.
+      def import_id_formats_from_resource(resource)
+        import_id_formats(resource.import_format, resource.identity, resource.base_url)
+      end
+
+      # Returns a list of import id formats for a given resource. If an id
+      # contains provider-default values, this fn will return formats both
+      # including and omitting the value.
+      #
+      # If a resource has an explicit import_format value set, that will be the
+      # base import url used. Next, the values of `identity` will be used to
+      # construct a URL. Finally, `{{name}}` will be used by default.
       #
       # For instance, if the resource base url is:
       #   projects/{{project}}/global/networks
@@ -26,29 +36,47 @@ module Provider
       # a) self_link: projects/{{project}}/global/networks/{{name}}
       # b) short id: {{project}}/{{name}}
       # c) short id w/o defaults: {{name}}
-      #
-      # Fields with default values are `project`, `region` and `zone`.
-      def import_id_formats(resource)
-        underscored_base_url = resource.base_url
-                                       .gsub(/{{[[:word:]]+}}/) do |field_name|
-          Google::StringUtils.underscore(field_name)
+      def import_id_formats(import_format, identity, base_url)
+        if import_format.nil? || import_format.empty?
+          underscored_base_url = base_url.gsub(
+            /{{[[:word:]]+}}/, &:underscore
+          )
+
+          if identity.nil? || identity.empty?
+            id_formats = [underscored_base_url + '/{{name}}']
+          else
+            identity_path = identity.map { |v| "{{#{v.name.underscore}}}" }.join('/')
+            id_formats = [underscored_base_url + '/' + identity_path]
+          end
+        else
+          id_formats = import_format
         end
 
-        # TODO: Add support for custom import id
-        # We assume that all resources have a name field
-        self_link_id_format = underscored_base_url + '/{{name}}'
-
         # short id: {{project}}/{{zone}}/{{name}}
-        field_markers = self_link_id_format.scan(/{{[[:word:]]+}}/)
+        field_markers = id_formats[0].scan(/{{[[:word:]]+}}/)
         short_id_format = field_markers.join('/')
 
-        # short id without fields with provider-level default: {{name}}
-        field_markers.delete('{{project}}')
-        field_markers.delete('{{region}}')
-        field_markers.delete('{{zone}}')
+        # short ids without fields with provider-level defaults:
+
+        # without project
+        field_markers -= ['{{project}}']
+        short_id_default_project_format = field_markers.join('/')
+
+        # without project or location
+        field_markers -= ['{{project}}', '{{region}}', '{{zone}}']
         short_id_default_format = field_markers.join('/')
 
-        [self_link_id_format, short_id_format, short_id_default_format]
+        # If the id format can include `/` characters we cannot allow short forms such as:
+        # `{{project}}/{{%name}}` as there is no way to differentiate between
+        # project-name/resource-name and resource-name/with-slash
+        unless id_formats[0].include?('%')
+          id_formats += [short_id_format, short_id_default_project_format, short_id_default_format]
+        end
+
+        # Regexes should be unique and ordered from most specific to least specific
+        # We sort by number of `/` characters (the standard block separator)
+        # followed by number of variables (`{{`) to make `{{name}}` appear last.
+        id_formats.uniq.reject(&:empty?).sort_by { |i| [i.count('/'), i.count('{{')] }.reverse
       end
     end
   end

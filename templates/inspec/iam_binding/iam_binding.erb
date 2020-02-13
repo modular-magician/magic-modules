@@ -1,0 +1,63 @@
+# frozen_string_literal: false
+
+<%= lines(autogen_notice :ruby) -%>
+require 'gcp_backend'
+require 'google/iam/property/iam_policy_bindings'
+
+# A provider to manage <%= @api.product_full_name -%> IAM Binding resources.
+class <%= object.name -%>IamBinding < GcpResourceBase
+  name '<%= resource_name(object, product) -%>_iam_binding'
+  desc '<%= object.name -%> Iam Binding'
+  supports platform: 'gcp'
+
+  attr_reader :params
+
+  def initialize(params)
+    super(params.merge({ use_http_transport: true }))
+    raise "Expected 'role' to be defined for iam_binding resource" unless params.key?(:role)
+    @params = params
+    @fetched = @connection.fetch(product_url, resource_base_url, params, '<%= object.iam_policy.fetch_iam_policy_verb.capitalize -%>')
+    parse unless @fetched.nil?
+  end
+
+  def parse
+    @bindings = GoogleInSpec::Iam::Property::IamPolicyBindingsArray.parse(@fetched['bindings'], to_s)
+    @bindings.each do |binding|
+      next if binding.role != params[:role]
+      @members_list = binding.members
+      @iam_binding_exists = true
+    end
+  end
+
+  def exists?
+    @iam_binding_exists
+  end
+
+  def members
+    @members_list
+  end
+
+<%
+individual_url = object.iam_policy.base_url || object.self_link || object.base_url + '/{{name}}' 
+identifiers = extract_identifiers(individual_url)
+-%>
+  def to_s
+    "<%= object.name -%> IamBinding #{@params[:<%= identifiers.last.underscore -%>]} Role: #{@params[:role]}"
+  end
+
+  private
+
+  def product_url
+    '<%= object.product_url || object.__product.base_url %>'
+  end
+
+<%
+# snake_case all identifiers in the URL
+identifiers.each do |identifier|
+  individual_url = individual_url.gsub("{{#{identifier}}}", "{{#{identifier.underscore}}}")
+end
+-%>
+  def resource_base_url
+    '<%= individual_url -%><%= object.iam_policy.method_name_separator -%><%= object.iam_policy.fetch_iam_policy_method -%>'
+  end
+end

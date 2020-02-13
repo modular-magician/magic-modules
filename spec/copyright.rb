@@ -19,8 +19,8 @@ module Google
     def initialize(files)
       @input_files = files
       @copyrightable_files = {
-        /.*\.yaml$/ => /^# Copyright 201[78]/,
-        /.*\.rb$/ => /^# Copyright 201[78]/
+        /.*\.yaml$/ => /^# Copyright 20(17|18|19|20)/,
+        /.*\.rb$/ => /^# Copyright 20(17|18|19|20)/
       }
     end
 
@@ -39,12 +39,14 @@ module Google
     def exist?(files)
       not_found = files.reject { |f| File.exist?(f) }
       raise "Some files were not found: #{not_found}" unless not_found.empty?
+
       files
     end
 
     def file?(files)
       not_files = files.reject { |f| File.file?(f) }
       raise "Some inputs were not files: #{not_files}" unless not_files.empty?
+
       files
     end
 
@@ -57,7 +59,11 @@ module Google
     def notice_present?(files)
       files.select do |f|
         mark = @copyrightable_files.reject { |c, _| (c =~ f).nil? }
-        File.readlines(f).select { |l| mark.values[0] =~ l }.empty?
+        File.readlines(f).select do |l|
+          mark.values[0] =~ l
+        rescue StandardError
+          mark.values[0] =~ l.force_encoding('UTF-8')
+        end.empty?
       end
     end
   end

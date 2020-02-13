@@ -1,4 +1,4 @@
-<% if false # the license inside this if block pertains to this file -%>
+<%- # the license inside this block applies to this file
 # Copyright 2017 Google Inc.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,25 +11,59 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-<% end -%>
-<!---
-<%= compile('templates/terraform/autogen_notice.erb').gsub("//", "") -%>
---->
+-%>
+<%# NOTE NOTE NOTE
+    The newlines in this file are *load bearing*.  This file outputs
+    Markdown, which is extremely sensitive to newlines.  You have got
+    to have a newline after every attribute and property, because
+    otherwise MD will think the next element is part of the previous
+    property's bullet point.  You cannot have any double newlines in the
+    middle of a property or attribute, because MD will think that the
+    empty line ends the bullet point and the indentation will be off.
+    You must have a newline before and after all --- document indicators,
+    and you must have a newline before and after all - - - hlines.
+    You cannot have more than one blank line between properties.
+    The --- document indicator must be the first line of the file.
+    As long as you only use `build_property_documentation`, it all works
+    fine - but when you need to add custom docs (notes, etc), you need
+    to remember these things.
+
+    Know also that the `lines` function in heavy use in MagicModules will
+    strip exactly one trailing newline - unless that's what you've designed
+    your docstring for, it's easier to insert newlines where you need them
+    manually.  That's why, in this file, we use `lines` on anything which
+    is generated from a ruby function, but skip it on anything that is
+    directly inserted from YAML.
+-%>
 <%
-  api_name_lower = product_ns.downcase
-  properties = effective_properties(config, object.all_user_properties)
+  tf_product = (@config.legacy_name || product_ns).underscore
+  tf_subcategory = (object.__product.display_name)
+  terraform_name = object.legacy_name || "google_#{tf_product}_#{object.name.underscore}"
+  properties = object.all_user_properties
+  # In order of preference, use TF override,
+  # general defined timeouts, or default Timeouts
+  timeouts = object.timeouts
+  timeouts ||= object&.async&.operation&.timeouts
+  timeouts ||= Api::Timeouts.new
 -%>
 ---
+<%= lines(autogen_notice :yaml) -%>
+subcategory: "<%= tf_subcategory -%>"
 layout: "google"
-page_title: "Google: google_<%= api_name_lower -%>_<%= object.out_name -%>"
-sidebar_current: "docs-google-<%= api_name_lower -%>-<%= object.out_name.gsub("_", "-") -%>"
+page_title: "Google: <%= terraform_name -%>"
+sidebar_current: "docs-<%= terraform_name.gsub("_", "-") -%>"
 description: |-
-  <%= object.description.lines.first -%>
+<%= indent(object.description.first_sentence, 2) %>
 ---
 
-# google\_<%= api_name_lower -%>\_<%= object.out_name.gsub("_", "\\_") %>
+# <%= terraform_name.gsub("_", "\\_") %>
 
 <%= lines(object.description) -%>
+
+<% if object.min_version.name == 'beta' -%>
+~> **Warning:** This resource is in beta, and should be used with the terraform-provider-google-beta provider.
+See [Provider Versions](https://terraform.io/docs/providers/google/guides/provider_versions.html) for more details on beta resources.
+<% end -%>
 
 <% if !object.references.nil? -%>
 To get more information about <%= object.name -%>, see:
@@ -44,54 +78,84 @@ To get more information about <%= object.name -%>, see:
 <%     end # object...guides.each -%>
 <%   end # object...guides.empty? -%>
 <% end # object...api.nil? -%>
+<%- unless object.docs.warning.nil? -%>
 
-## Example Usage
+~> **Warning:** <%= object.docs.warning -%>
+<%- end -%>
 
-```hcl
-resource "google_<%= api_name_lower -%>_<%= object.out_name -%>" "default" {
-  TODO: Add fields
-}
-```
+<%#- We over-generate examples/oics buttons here; they'll all be _valid_ just not necessarily intended for this provider version.
+     Unless/Until we split our docs, this is a non-issue. -%>
+<% unless object.examples.empty? -%>
+  <%- object.examples.each do |example| -%>
+    <%- unless example.skip_test -%>
+<div class = "oics-button" style="float: right; margin: 0 0 -15px">
+  <a href="<%= example.oics_link %>" target="_blank">
+    <img alt="Open in Cloud Shell" src="//gstatic.com/cloudssh/images/open-btn.svg" style="max-height: 44px; margin: 32px auto; max-width: 100%;">
+  </a>
+</div>
+    <%- end -%>
+## Example Usage - <%= example.name.camelize(:upper).titleize %>
 
+
+<%= example.config_documentation -%>
+  <%- end %>
+<%- end -%>
 ## Argument Reference
 
 The following arguments are supported:
 
-<% properties.select(&:required).each do |prop| -%>
-<%= lines(build_property_documentation(config, prop)) -%>
+<% object.root_properties.select(&:required).each do |prop| -%>
+<%= lines(build_property_documentation(prop)) -%>
 <% end -%>
 
 <% properties.select(&:required).each do |prop| -%>
-<%= lines(build_nested_property_documentation(config, prop)) -%>
+<%= lines(build_nested_property_documentation(prop)) -%>
+<% end -%>
+<%- unless object.docs.required_properties.nil? -%>
+<%= "\n" + object.docs.required_properties -%>
 <% end -%>
 
 - - -
 
-<% properties.reject(&:required).reject(&:output).each do |prop| -%>
-<%= lines(build_property_documentation(config, prop)) -%>
+<% object.root_properties.reject(&:required).reject(&:output).each do |prop| -%>
+<%=    lines(build_property_documentation(prop)) -%>
 <% end -%>
-<% if object.base_url.include?("{{project}}") -%>
-* `project` (Optional) The project in which the resource belongs.
+<% if object.base_url.include?("{{project}}")-%>
+<%# The following new line allow for project to be bullet-formatted properly. -%>
+
+* `project` - (Optional) The ID of the project in which the resource belongs.
     If it is not provided, the provider project is used.
 <% end -%>
 
+<%- unless object.virtual_fields.empty? -%>
+<%-   object.virtual_fields.each do |field| -%>
+* `<%= field.name -%>` - (Optional) <%= field.description -%>
+<%    end -%>
+<% end -%>
+<%- unless object.docs.optional_properties.nil? -%>
+<%= "\n" + object.docs.optional_properties -%>
+<% end -%>
 <% properties.reject(&:required).reject(&:output).each do |prop| -%>
-<%= lines(build_nested_property_documentation(config, prop)) -%>
+<%= lines(build_nested_property_documentation(prop)) -%>
 <% end -%>
 
 ## Attributes Reference
 
 In addition to the arguments listed above, the following computed attributes are exported:
 
-<% properties.select(&:output).each do |prop| -%>
-<%= lines(build_property_documentation(config, prop)) -%>
+* `id` - an identifier for the resource with format `<%= id_format(object) %>`
+<% object.root_properties.select(&:output).each do |prop| -%>
+<%= lines(build_property_documentation(prop)) -%>
 <% end -%>
-<% if (object.exports || []).any? { |e| e.is_a?(Api::Type::SelfLink)} -%>
+<% if object.has_self_link -%>
 * `self_link` - The URI of the created resource.
 <% end -%>
 
 <% properties.select(&:output).each do |prop| -%>
-<%= lines(build_nested_property_documentation(config, prop)) -%>
+<%= lines(build_nested_property_documentation(prop)) -%>
+<% end -%>
+<%- unless object.docs.attributes.nil? -%>
+<%= "\n" + object.docs.attributes -%>
 <% end -%>
 
 ## Timeouts
@@ -99,18 +163,29 @@ In addition to the arguments listed above, the following computed attributes are
 This resource provides the following
 [Timeouts](/docs/configuration/resources.html#timeouts) configuration options:
 
-- `create` - Default is 4 minutes.
+- `create` - Default is <%= timeouts.insert_minutes -%> minutes.
 <% if updatable?(object, properties) -%>
-- `update` - Default is 4 minutes.
+- `update` - Default is <%= timeouts.update_minutes -%> minutes.
 <% end -%>
-- `delete` - Default is 4 minutes.
+- `delete` - Default is <%= timeouts.delete_minutes -%> minutes.
 
+<% unless object.exclude_import -%>
 ## Import
 
 <%= object.name -%> can be imported using any of these accepted formats:
 
 ```
-<% import_id_formats(object).each do |id_format| -%>
-$ terraform import google_<%= api_name_lower -%>_<%= object.out_name -%>.default <%= id_format %>
+<% import_id_formats_from_resource(object).map{ |id| id.gsub('%', '') }.each do |id_format| -%>
+$ terraform import <% if object.min_version.name == 'beta' %>-provider=google-beta <% end -%><%= terraform_name -%>.default <%= id_format %>
 <% end -%>
 ```
+
+-> If you're importing a resource with beta features, make sure to include `-provider=google-beta`
+as an argument so that Terraform uses the correct provider to import your resource.
+
+<% end -%>
+<% if object.base_url.include?("{{project}}") || object.supports_indirect_user_project_override -%>
+## User Project Overrides
+
+This resource supports [User Project Overrides](https://www.terraform.io/docs/providers/google/guides/provider_reference.html#user_project_override).
+<% end -%>

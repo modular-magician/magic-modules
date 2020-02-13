@@ -22,14 +22,18 @@ end
 
 describe Provider::Terraform do
   context 'good file product' do
-    let(:config) { Provider::Config.parse('spec/data/terraform-config.yaml') }
-    let(:product) { Api::Compiler.new('spec/data/good-file.yaml').run }
-    let(:provider) { Provider::Terraform.new(config, product) }
+    let(:product) { Api::Compiler.new(File.read('spec/data/good-file.yaml')).run }
+    let(:config) do
+      Provider::Config.parse('spec/data/terraform-config.yaml', product)[1]
+    end
+    let(:provider) { Provider::Terraform.new(config, product, 'ga', Time.now) }
+    let(:resource) { product.objects[0] }
 
     before do
       allow_open 'spec/data/good-file.yaml'
       allow_open 'spec/data/terraform-config.yaml'
       product.validate
+      config.validate
     end
 
     describe '#format2regex' do
@@ -59,17 +63,79 @@ describe Provider::Terraform do
     end
 
     describe '#collection_url' do
-      subject { provider.collection_url(product.objects[0]) }
+      subject { resource.collection_url }
       it do
+        version = product.version_obj_or_closest(nil)
+        product.set_properties_based_on_version(version)
         is_expected.to eq 'http://myproduct.google.com/api/referencedresource'
       end
     end
 
-    describe '#self_link_url' do
-      subject { provider.self_link_url(product.objects[0]) }
+    describe '#collection_url beta' do
+      subject { resource.collection_url }
       it do
+        version = product.version_obj_or_closest('beta')
+        product.set_properties_based_on_version(version)
+        is_expected.to eq 'http://myproduct.google.com/api/beta/referencedresource'
+      end
+    end
+
+    describe '#self_link_url' do
+      subject { resource.self_link_url }
+      it do
+        version = product.version_obj_or_closest(nil)
+        product.set_properties_based_on_version(version)
         is_expected.to eq(
           'http://myproduct.google.com/api/referencedresource/{{name}}'
+        )
+      end
+    end
+
+    describe '#self_link_url beta' do
+      subject { resource.self_link_url }
+      it do
+        version = product.version_obj_or_closest('beta')
+        product.set_properties_based_on_version(version)
+        is_expected.to eq(
+          'http://myproduct.google.com/api/beta/referencedresource/{{name}}'
+        )
+      end
+    end
+
+    describe '#properties_by_custom_update' do
+      let(:postUrl1) { custom_update_property('p1', 'url1', :POST) }
+      let(:otherPostUrl1) { custom_update_property('p2', 'url1', :POST) }
+      let(:postUrl2) { custom_update_property('p3', 'url2', :POST) }
+      let(:putUrl2) { custom_update_property('p4', 'url2', :PUT) }
+      let(:props) do
+        [
+          custom_update_property('no-custom-update'),
+          postUrl1, otherPostUrl1, postUrl2, putUrl2
+        ]
+      end
+      subject { provider.properties_by_custom_update(props) }
+
+      it do
+        is_expected.to eq(
+          {
+            update_url: 'url1',
+            update_verb: :POST,
+            update_id: nil,
+            fingerprint_name: nil
+          } =>
+            [postUrl1, otherPostUrl1],
+          {
+            update_url: 'url2',
+            update_verb: :POST,
+            update_id: nil,
+            fingerprint_name: nil
+          } => [postUrl2],
+          {
+            update_url: 'url2',
+            update_verb: :PUT,
+            update_id: nil,
+            fingerprint_name: nil
+          } => [putUrl2]
         )
       end
     end
@@ -85,5 +151,15 @@ describe Provider::Terraform do
       format("--- !ruby/object:Api::Object::Named\nname: '%<name>s'",
              name: name)
     )
+  end
+
+  def custom_update_property(name, update_url = nil, update_verb = nil)
+    lines = []
+    lines.push '--- !ruby/object:Api::Type::String'
+    lines.push "name: '#{name}'"
+    lines.push "update_url: '#{update_url}'" unless update_url.nil?
+    lines.push "update_verb: :#{update_verb}" unless update_verb.nil?
+
+    Google::YamlValidator.parse(lines.join("\n"))
   end
 end

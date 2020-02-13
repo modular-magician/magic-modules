@@ -6,8 +6,8 @@ platform: linux
 image_resource:
     type: docker-image
     source:
-        repository: nmckinley/go-ruby
-        tag: '1.9-2.5'
+        repository: gcr.io/magic-modules/go-ruby
+        tag: '1.11.5-2.6.0'
 
 inputs:
     - name: mm-approved-prs
@@ -20,3 +20,4 @@ run:
 
 params:
     CREDS: ""
+    ALL_SUBMODULES: ""

@@ -12,28 +12,31 @@
 # limitations under the License.
 
 --- !ruby/object:Api::Product
-name: Google Cloud DNS
-prefix: gdns
-base_url: https://www.googleapis.com/dns/v1/
+name: DNS
+display_name: Cloud DNS
+versions:
+  - !ruby/object:Api::Product::Version
+    name: ga
+    base_url: https://www.googleapis.com/dns/v1/
+  - !ruby/object:Api::Product::Version
+    name: beta
+    base_url: https://www.googleapis.com/dns/v1beta2/
 scopes:
   - https://www.googleapis.com/auth/ndev.clouddns.readwrite
+apis_required:
+  - !ruby/object:Api::Product::ApiReference
+    name: Google Cloud DNS API
+    url: https://console.cloud.google.com/apis/library/dns.googleapis.com/
 objects:
-  - !ruby/object:Api::Resource
-    # We are not exposing Change directly to the customer, as we cannot
-    # guarantee idempotency of it given its transactional nature.
-    name: 'Change'
-    description: 'An atomic update to a collection of ResourceRecordSets.'
-    exclude: true
   - !ruby/object:Api::Resource
     name: 'ManagedZone'
     kind: 'dns#managedZone'
     base_url: 'projects/{{project}}/managedZones'
+    input: true
     description: |
       A zone is a subtree of the DNS namespace under one administrative
       responsibility. A ManagedZone is a resource that represents a DNS zone
       hosted by the Cloud DNS service.
-    exports:
-      - name
     properties:
       - !ruby/object:Api::Type::String
         name: 'description'
@@ -41,10 +44,96 @@ objects:
           A mutable string of at most 1024 characters associated with this
           resource for the user's convenience. Has no effect on the managed
           zone's function.
+        update_verb: :PATCH
+        update_url: 'projects/{{project}}/managedZones/{{name}}'
+        required: true
       - !ruby/object:Api::Type::String
         name: 'dnsName'
         description: |
           The DNS name of this managed zone, for instance "example.com.".
+        required: true
+      # TODO: Update support for dnssecConfig. Once this is added, property descriptions should be
+      # modified to state that properties (nonExistence, defaultKeySpecs) can only be updated while
+      # the state is "off".
+      - !ruby/object:Api::Type::NestedObject
+        name: 'dnssecConfig'
+        description: DNSSEC configuration
+        properties:
+          - !ruby/object:Api::Type::String
+            name: 'kind'
+            at_least_one_of:
+              - dnssec_config.0.kind
+              - dnssec_config.0.non_existence
+              - dnssec_config.0.state
+              - dnssec_config.0.default_key_specs
+            description: Identifies what kind of resource this is
+            default_value: 'dns#managedZoneDnsSecConfig'
+          - !ruby/object:Api::Type::Enum
+            name: 'nonExistence'
+            at_least_one_of:
+              - dnssec_config.0.kind
+              - dnssec_config.0.non_existence
+              - dnssec_config.0.state
+              - dnssec_config.0.default_key_specs
+            description: |
+              Specifies the mechanism used to provide authenticated denial-of-existence responses.
+            values:
+              - "nsec"
+              - "nsec3"
+          - !ruby/object:Api::Type::Enum
+            name: 'state'
+            at_least_one_of:
+              - dnssec_config.0.kind
+              - dnssec_config.0.non_existence
+              - dnssec_config.0.state
+              - dnssec_config.0.default_key_specs
+            description: Specifies whether DNSSEC is enabled, and what mode it is in
+            values:
+              - "off"
+              - "on"
+              - "transfer"
+          - !ruby/object:Api::Type::Array
+            name: 'defaultKeySpecs'
+            at_least_one_of:
+              - dnssec_config.0.kind
+              - dnssec_config.0.non_existence
+              - dnssec_config.0.state
+              - dnssec_config.0.default_key_specs
+            description: |
+              Specifies parameters that will be used for generating initial DnsKeys
+              for this ManagedZone. If you provide a spec for keySigning or zoneSigning,
+              you must also provide one for the other.
+            item_type: !ruby/object:Api::Type::NestedObject
+              properties:
+                - !ruby/object:Api::Type::Enum
+                  name: 'algorithm'
+                  description:
+                    String mnemonic specifying the DNSSEC algorithm of this key
+                  values:
+                    - "ecdsap256sha256"
+                    - "ecdsap384sha384"
+                    - "rsasha1"
+                    - "rsasha256"
+                    - "rsasha512"
+                - !ruby/object:Api::Type::Integer
+                  name: 'keyLength'
+                  description: Length of the keys in bits
+                - !ruby/object:Api::Type::Enum
+                  name: 'keyType'
+                  description: |
+                    Specifies whether this is a key signing key (KSK) or a zone
+                    signing key (ZSK). Key signing keys have the Secure Entry
+                    Point flag set and, when active, will only be used to sign
+                    resource record sets of type DNSKEY. Zone signing keys do
+                    not have the Secure Entry Point flag set and will be used
+                    to sign all other types of resource record sets. 
+                  values:
+                    - "keySigning"
+                    - "zoneSigning"
+                - !ruby/object:Api::Type::String
+                  name: 'kind'
+                  description: 'Identifies what kind of resource this is'
+                  default_value: 'dns#dnsKeySpec'
       - !ruby/object:Api::Type::Integer
         name: 'id'
         description: Unique identifier for the resource; defined by the server.
@@ -56,14 +145,13 @@ objects:
           Must be unique within the project.
         required: true
       - !ruby/object:Api::Type::Array
-        item_type: Api::Type::String
         name: 'nameServers'
         description: |
           Delegate your managed_zone to these virtual name servers;
           defined by the server
-        output: true
-      - !ruby/object:Api::Type::Array
         item_type: Api::Type::String
+        output: true
+      - !ruby/object:Api::Type::String
         name: 'nameServerSet'
         description: |
           Optionally specifies the NameServerSet for this ManagedZone. A
@@ -75,6 +163,202 @@ objects:
           The time that this resource was created on the server.
           This is in RFC3339 text format.
         output: true
+      - !ruby/object:Api::Type::KeyValuePairs
+        name: 'labels'
+        description: |
+          A set of key/value label pairs to assign to this ManagedZone.
+        update_verb: :PATCH
+        update_url: 'projects/{{project}}/managedZones/{{name}}'
+      - !ruby/object:Api::Type::Enum
+        name: 'visibility'
+        description: |
+          The zone's visibility: public zones are exposed to the Internet,
+          while private zones are visible only to Virtual Private Cloud resources.
+          Must be one of: `public`, `private`.
+        values:
+        - :private
+        - :public
+        default_value: :public
+      - !ruby/object:Api::Type::NestedObject
+        name: 'privateVisibilityConfig'
+        description: |
+          For privately visible zones, the set of Virtual Private Cloud
+          resources that the zone is visible from.
+        update_verb: :PATCH
+        update_url: 'projects/{{project}}/managedZones/{{name}}'
+        properties:
+          - !ruby/object:Api::Type::Array
+            name: 'networks'
+            description: 'The list of VPC networks that can see this zone.'
+            required: true
+            item_type: !ruby/object:Api::Type::NestedObject
+              properties:
+                # TODO(drebes): Make 'networkUrl' a ResourceRef once cross-module references
+                # are possible.
+                - !ruby/object:Api::Type::String
+                  name: 'networkUrl'
+                  description: |
+                    The fully qualified URL of the VPC network to bind to.
+                    This should be formatted like
+                    `https://www.googleapis.com/compute/v1/projects/{project}/global/networks/{network}`
+                  required: true
+      - !ruby/object:Api::Type::NestedObject
+        name: 'forwardingConfig'
+        description: |
+          The presence for this field indicates that outbound forwarding is enabled
+          for this zone. The value of this field contains the set of destinations
+          to forward to.
+        update_verb: :PATCH
+        update_url: 'projects/{{project}}/managedZones/{{name}}'
+        properties:
+          - !ruby/object:Api::Type::Array
+            name: 'targetNameServers'
+            required: true
+            description: |
+              List of target name servers to forward to. Cloud DNS will
+              select the best available name server if more than
+              one target is given.
+            item_type: !ruby/object:Api::Type::NestedObject
+              properties:
+                - !ruby/object:Api::Type::String
+                  name: 'ipv4Address'
+                  required: true
+                  description: 'IPv4 address of a target name server.'
+                - !ruby/object:Api::Type::Enum
+                  name: 'forwardingPath'
+                  description: |
+                    Forwarding path for this TargetNameServer. If unset or `default` Cloud DNS will make forwarding
+                    decision based on address ranges, i.e. RFC1918 addresses go to the VPC, Non-RFC1918 addresses go
+                    to the Internet. When set to `private`, Cloud DNS will always send queries through VPC for this target
+                  values:
+                  - :default
+                  - :private
+        min_version: beta
+      - !ruby/object:Api::Type::NestedObject
+        min_version: beta
+        name: 'peeringConfig'
+        description: |
+          The presence of this field indicates that DNS Peering is enabled for this
+          zone. The value of this field contains the network to peer with.
+        update_verb: :PATCH
+        update_url: 'projects/{{project}}/managedZones/{{name}}'
+        properties:
+          - !ruby/object:Api::Type::NestedObject
+            name: 'targetNetwork'
+            required: true
+            description: 'The network with which to peer.'
+            properties:
+              # TODO(drebes): Make 'networkUrl' a ResourceRef once cross-module references
+              # are possible.
+              - !ruby/object:Api::Type::String
+                name: 'networkUrl'
+                required: true
+                description: |
+                  The fully qualified URL of the VPC network to forward queries to.
+                  This should be formatted like
+                  `https://www.googleapis.com/compute/v1/projects/{project}/global/networks/{network}`
+      - !ruby/object:Api::Type::Boolean
+        name: 'reverseLookup'
+        api_name: reverseLookupConfig
+        min_version: beta
+        description: |
+          Specifies if this is a managed reverse lookup zone. If true, Cloud DNS will resolve reverse
+          lookup queries using automatically configured records for VPC resources. This only applies
+          to networks listed under `private_visibility_config`.
+    references: !ruby/object:Api::Resource::ReferenceLinks
+      guides:
+        'Managing Zones':
+          'https://cloud.google.com/dns/zones/'
+      api: 'https://cloud.google.com/dns/api/v1/managedZones'
+  - !ruby/object:Api::Resource
+    name: 'Policy'
+    kind: 'dns#policy'
+    base_url: 'projects/{{project}}/policies'
+    input: true
+    description: |
+      A policy is a collection of DNS rules applied to one or more Virtual
+      Private Cloud resources.
+    properties:
+      - !ruby/object:Api::Type::NestedObject
+        name: 'alternativeNameServerConfig'
+        description: |
+          Sets an alternative name server for the associated networks.
+          When specified, all DNS queries are forwarded to a name server that you choose.
+          Names such as .internal are not available when an alternative name server is specified.
+        update_verb: :PATCH
+        update_url: 'projects/{{project}}/policies/{{name}}'
+        properties:
+          - !ruby/object:Api::Type::Array
+            name: 'targetNameServers'
+            required: true
+            description: |
+              Sets an alternative name server for the associated networks. When specified,
+              all DNS queries are forwarded to a name server that you choose. Names such as .internal
+              are not available when an alternative name server is specified.
+            item_type: !ruby/object:Api::Type::NestedObject
+              properties:
+                - !ruby/object:Api::Type::String
+                  name: 'ipv4Address'
+                  required: true
+                  description: 'IPv4 address to forward to.'
+      - !ruby/object:Api::Type::String
+        name: 'description'
+        description: |
+          A mutable string of at most 1024 characters associated with this
+          resource for the user's convenience. Has no effect on the policy's
+          function.
+        update_verb: :PATCH
+        update_url: 'projects/{{project}}/policies/{{name}}'
+        required: true
+      - !ruby/object:Api::Type::Boolean
+        name: 'enableInboundForwarding'
+        description: |
+          Allows networks bound to this policy to receive DNS queries sent
+          by VMs or applications over VPN connections. When enabled, a
+          virtual IP address will be allocated from each of the sub-networks
+          that are bound to this policy.
+        send_empty_value: true
+        update_verb: :PATCH
+        update_url: 'projects/{{project}}/policies/{{name}}'
+      - !ruby/object:Api::Type::Boolean
+        name: 'enableLogging'
+        description: |
+          Controls whether logging is enabled for the networks bound to this policy.
+          Defaults to no logging if not set.
+        send_empty_value: true
+        update_verb: :PATCH
+        update_url: 'projects/{{project}}/policies/{{name}}'
+      - !ruby/object:Api::Type::Integer
+        name: 'id'
+        description: Unique identifier for the resource; defined by the server.
+        output: true
+      - !ruby/object:Api::Type::String
+        name: 'name'
+        description: |
+          User assigned name for this policy.
+        required: true
+      - !ruby/object:Api::Type::Array
+        name: 'networks'
+        description: 'List of network names specifying networks to which this policy is applied.'
+        item_type: !ruby/object:Api::Type::NestedObject
+          properties:
+            # TODO(drebes): Make 'networkUrl' a ResourceRef once cross-module references
+            # are possible.
+          - !ruby/object:Api::Type::String
+              name: 'networkUrl'
+              required: true
+              description: |
+                The fully qualified URL of the VPC network to bind to.
+                This should be formatted like
+                `https://www.googleapis.com/compute/v1/projects/{project}/global/networks/{network}`
+        update_verb: :PATCH
+        update_url: 'projects/{{project}}/policies/{{name}}'
+    references: !ruby/object:Api::Resource::ReferenceLinks
+      guides:
+        'Using DNS server policies':
+          'https://cloud.google.com/dns/zones/#using-dns-server-policies'
+      api: 'https://cloud.google.com/dns/docs/reference/v1beta2/policies'
+    min_version: beta
   - !ruby/object:Api::Resource
     name: 'Project'
     kind: 'dns#project'
@@ -82,46 +366,52 @@ objects:
       A project resource. The project is a top level container for resources
       including Cloud DNS ManagedZones.
     base_url: 'projects'
-    virtual: true
+    readonly: true
+    input: true
     properties:
       - !ruby/object:Api::Type::Integer
         name: 'number'
         description: |
           Unique numeric identifier for the resource; defined by the server.
         output: true
-      - !ruby/object:Api::Type::Integer
-        name: 'quota.managedZones'
-        description: Maximum allowed number of managed zones in the project.
+      - !ruby/object:Api::Type::NestedObject
+        name: 'quota'
+        description: 'Quota allowed in project'
         output: true
-      - !ruby/object:Api::Type::Integer
-        name: 'quota.resourceRecordsPerRrset'
-        description: |
-          Maximum allowed number of ResourceRecords per ResourceRecordSet.
-        output: true
-      - !ruby/object:Api::Type::Integer
-        name: 'quota.rrsetAdditionsPerChange'
-        description: |
-          Maximum allowed number of ResourceRecordSets to add per
-          ChangesCreateRequest.
-        output: true
-      - !ruby/object:Api::Type::Integer
-        name: 'quota.rrsetDeletionsPerChange'
-        description: |
-          Maximum allowed number of ResourceRecordSets to delete per
-          ChangesCreateRequest.
-        output: true
-      - !ruby/object:Api::Type::Integer
-        name: 'quota.rrsetsPerManagedZone'
-        description: |
-          Maximum allowed number of ResourceRecordSets per zone in the
-          project.
-        output: true
-      - !ruby/object:Api::Type::Integer
-        name: 'quota.totalRrdataSizePerChange'
-        description: |
-          Maximum allowed size for total rrdata in one ChangesCreateRequest
-          in bytes.
-        output: true
+        properties:
+        - !ruby/object:Api::Type::Integer
+          name: 'managedZones'
+          description: Maximum allowed number of managed zones in the project.
+          output: true
+        - !ruby/object:Api::Type::Integer
+          name: 'resourceRecordsPerRrset'
+          description: |
+            Maximum allowed number of ResourceRecords per ResourceRecordSet.
+          output: true
+        - !ruby/object:Api::Type::Integer
+          name: 'rrsetAdditionsPerChange'
+          description: |
+            Maximum allowed number of ResourceRecordSets to add per
+            ChangesCreateRequest.
+          output: true
+        - !ruby/object:Api::Type::Integer
+          name: 'rrsetDeletionsPerChange'
+          description: |
+            Maximum allowed number of ResourceRecordSets to delete per
+            ChangesCreateRequest.
+          output: true
+        - !ruby/object:Api::Type::Integer
+          name: 'rrsetsPerManagedZone'
+          description: |
+            Maximum allowed number of ResourceRecordSets per zone in the
+            project.
+          output: true
+        - !ruby/object:Api::Type::Integer
+          name: 'totalRrdataSizePerChange'
+          description: |
+            Maximum allowed size for total rrdata in one ChangesCreateRequest
+            in bytes.
+          output: true
   - !ruby/object:Api::Resource
     name: 'ResourceRecordSet'
     kind: 'dns#resourceRecordSet'
@@ -132,15 +422,12 @@ objects:
 
       The record will include the domain/subdomain name, a type (i.e. A, AAA,
       CAA, MX, CNAME, NS, etc)
-    base_url: |
-      projects/{{project}}/managedZones/{{managed_zone}}/changes
-      <|extra|>
-    self_link: |
-      projects/{{project}}/managedZones/{{managed_zone}}/rrsets
-      ?name={{name}}&type={{type}}
-    self_link_query: !ruby/object:Api::Resource::ResponseList
+    base_url: 'projects/{{project}}/managedZones/{{managed_zone}}/changes'
+    self_link: 'projects/{{project}}/managedZones/{{managed_zone}}/rrsets?name={{name}}&type={{type}}'
+    nested_query: !ruby/object:Api::Resource::NestedQuery
       kind: 'dns#resourceRecordSetsListResponse'
-      items: 'rrsets'
+      keys: ['rrsets']
+    collection_url_key: 'rrsets'
     identity:
       - name
       - type
@@ -149,7 +436,6 @@ objects:
         name: 'managed_zone'
         description: |
           Identifies the managed zone addressed by this request.
-          Can be the managed zone name or id.
         required: true
         resource: 'ManagedZone'
         imports: 'name'
@@ -172,6 +458,7 @@ objects:
           - :SOA
           - :SPF
           - :SRV
+          - :TLSA
           - :TXT
         description: One of valid DNS resource types.
         # TODO(nelsonjr): Enforce required in provider manifest
@@ -186,4 +473,4 @@ objects:
         name: 'target'
         description: |
           As defined in RFC 1035 (section 5) and RFC 1034 (section 3.6.1)
-        field: rrdatas
+        api_name: rrdatas

@@ -12,9 +12,17 @@
 # limitations under the License.
 
 --- !ruby/object:Api::Product
-name: My Product
-prefix: myproduct
-base_url: http://myproduct.google.com/api/
+name: MyProduct
+versions:
+  - !ruby/object:Api::Product::Version
+    name: ga
+    base_url: http://myproduct.google.com/api/
+  - !ruby/object:Api::Product::Version
+    name: beta
+    base_url: http://myproduct.google.com/api/beta/
+  - !ruby/object:Api::Product::Version
+    name: alpha
+    base_url: http://myproduct.google.com/api/alpha/
 scopes:
   - http://scope-to-my-api/
 objects:
@@ -22,8 +30,6 @@ objects:
     name: 'ReferencedResource'
     kind: 'myproduct#referencedresource'
     base_url: 'referencedresource'
-    exports:
-      - name
     description: 'blah blah'
     properties:
       - !ruby/object:Api::Type::String
@@ -68,3 +74,48 @@ objects:
           - :value1
           - 'value2'
           - 3
+      - !ruby/object:Api::Type::NestedObject
+         name: 'nested-property'
+         description: 'a nested object property'
+         properties:
+           - !ruby/object:Api::Type::String
+             name: 'property1'
+             description: 'a nested property'
+      - !ruby/object:Api::Type::NestedObject
+         name: 'nested-property2'
+         description: 'a nested object property'
+         properties:
+           - !ruby/object:Api::Type::NestedObject
+             name: 'property1'
+             description: 'a nested property'
+             properties:
+               - !ruby/object:Api::Type::String
+                 name: 'property1-nested'
+                 description: 'a deeply nested property'
+      - !ruby/object:Api::Type::Array
+        name: 'array-property'
+        description: 'an array of nested object property'
+        item_type: !ruby/object:Api::Type::NestedObject
+          properties:
+            - !ruby/object:Api::Type::String
+             name: 'property1'
+             description: 'a nested property'
+      - !ruby/object:Api::Type::String
+        name: 'beta-property'
+        description: 'A property that exists in the beta API'
+        min_version: 'beta'
+      - !ruby/object:Api::Type::Map
+        name: 'namevalue-property'
+        description: 'A property that maps Strings -> NestedObject'
+        key_name: 'key'
+        value_type: !ruby/object:Api::Type::NestedObject
+          name: 'namevalue-nested'
+          properties:
+            - !ruby/object:Api::Type::String
+              name: 'nv-prop1'
+              description: 'the first property in my namevalues'
+  - !ruby/object:Api::Resource
+    name: 'TerraformImportIdTest'
+    description: 'Used for spec/provider_terraform_import_spec'
+    base_url: "projects/{{project}}/regions/{{region}}/subnetworks"
+    properties: []
